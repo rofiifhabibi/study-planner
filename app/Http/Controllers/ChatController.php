@@ -9,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
+use League\CommonMark\GithubFlavoredMarkdownConverter;
 
 class ChatController extends Controller
 {
@@ -36,14 +37,6 @@ class ChatController extends Controller
 
     public function getSessions(Request $request)
     {
-        if (! auth()->check()) {
-            return response()->json([
-                'status' => 'success',
-                'sessions' => [],
-                'is_guest' => true,
-            ]);
-        }
-
         $sessions = ChatSession::where('user_id', auth()->id())
             ->withCount('messages')
             ->latest()
@@ -52,17 +45,14 @@ class ChatController extends Controller
         return response()->json([
             'status' => 'success',
             'sessions' => $sessions,
-            'is_guest' => false,
         ]);
     }
 
     public function getMessages(Request $request, string $sessionId)
     {
-        $session = ChatSession::findOrFail($sessionId);
-
-        if (auth()->check() && $session->user_id !== auth()->id()) {
-            abort(403);
-        }
+        $session = ChatSession::where('id', $sessionId)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
 
         $messages = ChatMessage::where('chat_session_id', $sessionId)
             ->orderBy('created_at', 'asc')
@@ -77,11 +67,9 @@ class ChatController extends Controller
 
     public function deleteSession(Request $request, string $sessionId)
     {
-        $session = ChatSession::findOrFail($sessionId);
-
-        if (auth()->check() && $session->user_id !== auth()->id()) {
-            abort(403);
-        }
+        $session = ChatSession::where('id', $sessionId)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
 
         $session->delete();
 
@@ -93,13 +81,6 @@ class ChatController extends Controller
 
     public function createSession(Request $request)
     {
-        if (! auth()->check()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Silakan login untuk menyimpan percakapan.',
-            ], 401);
-        }
-
         $session = ChatSession::create([
             'id' => (string) Str::uuid(),
             'user_id' => auth()->id(),
@@ -116,12 +97,11 @@ class ChatController extends Controller
     public function sendMessage(Request $request)
     {
         $request->validate([
-            'chat_session_id' => 'nullable|string',
+            'chat_session_id' => 'required|string',
             'message' => 'required|string',
             'file_url' => 'nullable|url',
         ]);
 
-        $isGuest = ! auth()->check();
         $sessionId = $request->chat_session_id;
         $userMessage = $request->message;
         $fileUrl = $request->file_url;
@@ -139,32 +119,24 @@ class ChatController extends Controller
             ], 500);
         }
 
-        $sessionKey = null;
+        $session = ChatSession::where('id', $sessionId)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
 
-        if (! $isGuest && $sessionId) {
-            $session = ChatSession::find($sessionId);
-            if ($session && $session->user_id === auth()->id()) {
-                $sessionKey = $session->session_key;
+        ChatMessage::create([
+            'chat_session_id' => $sessionId,
+            'role' => 'user',
+            'content' => $userMessage,
+            'file_url' => $fileUrl,
+        ]);
 
-                ChatMessage::create([
-                    'chat_session_id' => $sessionId,
-                    'role' => 'user',
-                    'content' => $userMessage,
-                    'file_url' => $fileUrl,
-                ]);
-            }
-        }
-
-        $userId = $isGuest ? 'guest_'.Str::random(8) : auth()->id();
-        $memoryKey = $sessionKey
-            ? "user_{$userId}_session_{$sessionKey}"
-            : "user_{$userId}_session_".Str::random(16);
+        $memoryKey = "user_".auth()->id()."_session_".$session->session_key;
 
         try {
             $response = Http::withHeaders([
                 'X-API-KEY' => $secretKey,
             ])->timeout($timeout)->post($webhookUrl, [
-                'user_id' => $userId,
+                'user_id' => auth()->id(),
                 'session_id' => $memoryKey,
                 'message' => $userMessage,
                 'file_url' => $fileUrl,
@@ -202,12 +174,7 @@ class ChatController extends Controller
                 $aiReply = trim($aiReply);
             }
 
-            $isEmpty = empty($aiReply)
-                || $aiReply === '{}'
-                || $aiReply === '[]'
-                || $aiReply === 'null';
-
-            if ($isEmpty) {
+            if (empty($aiReply)) {
                 Log::warning('n8n respons kosong', [
                     'url' => $webhookUrl,
                     'raw_response' => $response->body(),
@@ -219,18 +186,15 @@ class ChatController extends Controller
                 ], 502);
             }
 
-            if (! $isGuest && $sessionId && isset($session) && $session) {
-                ChatMessage::create([
-                    'chat_session_id' => $sessionId,
-                    'role' => 'assistant',
-                    'content' => $aiReply,
-                ]);
-            }
+            ChatMessage::create([
+                'chat_session_id' => $sessionId,
+                'role' => 'assistant',
+                'content' => $aiReply,
+            ]);
 
             return response()->json([
                 'status' => 'success',
                 'reply' => $aiReply,
-                'is_guest' => $isGuest,
             ]);
         }
 
@@ -240,28 +204,15 @@ class ChatController extends Controller
             'body' => $response->body(),
         ]);
 
-        $errorMessage = 'Gagal mendapatkan respon dari n8n AI';
-        $n8nBody = $response->json();
-        if (is_array($n8nBody) && isset($n8nBody['message'])) {
-            $errorMessage .= ': '.$n8nBody['message'];
-        }
-
         return response()->json([
             'status' => 'error',
-            'message' => $errorMessage,
+            'message' => 'Gagal mendapatkan respon dari n8n AI',
         ], 502);
     }
 
     public function user()
     {
-        if (! auth()->check()) {
-            return response()->json([
-                'is_guest' => true,
-            ]);
-        }
-
         return response()->json([
-            'is_guest' => false,
             'user' => [
                 'id' => auth()->id(),
                 'name' => auth()->user()->name,
