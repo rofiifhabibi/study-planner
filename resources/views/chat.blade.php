@@ -23,6 +23,11 @@
         .sidebar-item.active { background-color: rgba(255, 255, 255, 0.18); color: #ffffff; font-weight: 600; }
         #messages-wrap::-webkit-scrollbar { width: 6px; }
         #messages-wrap::-webkit-scrollbar-thumb { background: #d3c2ca; border-radius: 4px; }
+        .typing-dots span { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #9ca3af; margin: 0 2px; animation: bounce 1.4s infinite ease-in-out both; }
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
     </style>
 </head>
 
@@ -180,7 +185,8 @@
 
         async function selectSession(id) {
             currentSessionId = id;
-            document.getElementById('welcome-state').remove();
+            const ws = document.getElementById('welcome-state');
+            if (ws) ws.remove();
             const c = document.getElementById('messages');
             c.innerHTML = '<div class="p-8 text-center text-gray-400">Loading...</div>';
 
@@ -197,20 +203,55 @@
         function renderMsgs(msgs) {
             const c = document.getElementById('messages');
             if (!msgs.length) { c.innerHTML = '<div class="p-8 text-center text-gray-400 text-sm">Belum ada pesan.</div>'; return; }
-            c.innerHTML = msgs.map(m => `
-                <div class="mb-4 ${m.role === 'user' ? 'text-right' : 'text-left'}">
-                    <div class="inline-block p-3 rounded-2xl ${m.role === 'user' ? 'bg-[#5B1744] text-white' : 'bg-white border border-gray-100 shadow-sm'} text-sm">
-                        ${m.content}
-                    </div>
+            c.innerHTML = '';
+            msgs.forEach(m => appendMessage(m.content, m.role));
+        }
+
+        function appendMessage(content, role) {
+            const c = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.className = `mb-4 ${role === 'user' ? 'text-right' : 'text-left'}`;
+            div.innerHTML = `
+                <div class="inline-block p-3 rounded-2xl ${role === 'user' ? 'bg-[#5B1744] text-white' : 'bg-white border border-gray-100 shadow-sm'} text-sm">
+                    ${content}
                 </div>
-            `).join('');
+            `;
+            c.appendChild(div);
             const wrap = document.getElementById('messages-wrap');
             wrap.scrollTop = wrap.scrollHeight;
         }
 
-        async function createSession() {
+        function appendLoadingMessage() {
+            const c = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.id = 'loading-message';
+            div.className = 'mb-4 text-left';
+            div.innerHTML = `
+                <div class="inline-block p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
+                    <div class="typing-dots flex items-center gap-0">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            `;
+            c.appendChild(div);
+            const wrap = document.getElementById('messages-wrap');
+            wrap.scrollTop = wrap.scrollHeight;
+        }
+
+        function removeLoadingMessage() {
+            const loading = document.getElementById('loading-message');
+            if (loading) loading.remove();
+        }
+
+        async function createSession(title = null) {
             try {
-                const res = await apiFetch(`${API_BASE}/chat/session`, { method: 'POST', headers: { 'Content-Type': 'application/json' } });
+                const body = {};
+                if (title) body.title = title;
+                const res = await apiFetch(`${API_BASE}/chat/session`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
                 const data = await res.json();
                 if (data.status === 'success') {
                     selectSession(data.session.id);
@@ -227,20 +268,37 @@
             e.preventDefault();
             const input = document.getElementById('chat-input');
             const msg = input.value.trim();
-            if (!msg || !currentSessionId) return;
+            if (!msg) return;
 
+            if (!currentSessionId) {
+                const title = msg.length > 50 ? msg.substring(0, 50) + '...' : msg;
+                await createSession(title);
+            }
+
+            appendMessage(msg, 'user');
+            input.value = '';
             input.disabled = true;
+            toggleSend();
+            appendLoadingMessage();
+
             try {
-                await apiFetch(`${API_BASE}/chat/send`, {
+                const res = await apiFetch(`${API_BASE}/chat/send`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ message: msg, chat_session_id: currentSessionId })
                 });
-                input.value = '';
-                await selectSession(currentSessionId);
+                const data = await res.json();
+                removeLoadingMessage();
+                if (data.status === 'success') {
+                    appendMessage(data.reply, 'assistant');
+                } else {
+                    appendMessage('Maaf, terjadi kesalahan saat memproses pesan.', 'assistant');
+                }
+            } catch (e) {
+                removeLoadingMessage();
+                appendMessage('Gagal terhubung ke AI.', 'assistant');
             } finally {
                 input.disabled = false;
-                toggleSend();
                 input.focus();
             }
         }

@@ -81,10 +81,12 @@ class ChatController extends Controller
 
     public function createSession(Request $request)
     {
+        $title = $request->input('title', 'Chat '.now()->format('d M Y H:i'));
+
         $session = ChatSession::create([
             'id' => (string) Str::uuid(),
             'user_id' => auth()->id(),
-            'title' => 'Chat '.now()->format('d M Y H:i'),
+            'title' => $title,
             'session_key' => Str::random(32),
         ]);
 
