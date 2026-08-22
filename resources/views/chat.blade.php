@@ -13,6 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 
     <style>
         * { scroll-behavior: smooth; box-sizing: border-box; }
@@ -28,6 +29,28 @@
         .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
         .typing-dots span:nth-child(3) { animation-delay: 0s; }
         @keyframes bounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
+
+        .ai-content p { margin: 0 0 0.5rem 0; line-height: 1.6; }
+        .ai-content p:last-child { margin-bottom: 0; }
+        .ai-content ul, .ai-content ol { margin: 0.5rem 0; padding-left: 1.25rem; }
+        .ai-content ul { list-style-type: disc; }
+        .ai-content ol { list-style-type: decimal; }
+        .ai-content li { margin: 0.25rem 0; line-height: 1.5; }
+        .ai-content li > p { margin: 0; }
+        .ai-content strong { font-weight: 700; }
+        .ai-content em { font-style: italic; }
+        .ai-content code { background: #f4e7ef; color: #5B1744; padding: 0.15rem 0.4rem; border-radius: 0.375rem; font-size: 0.8em; }
+        .ai-content pre { background: #1e1e2e; color: #cdd6f4; padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 0.5rem 0; font-size: 0.8rem; line-height: 1.5; }
+        .ai-content pre code { background: none; color: inherit; padding: 0; font-size: 0.8rem; }
+        .ai-content h1, .ai-content h2, .ai-content h3 { font-weight: 700; margin: 0.75rem 0 0.5rem 0; }
+        .ai-content h1 { font-size: 1.1em; }
+        .ai-content h2 { font-size: 1.05em; }
+        .ai-content h3 { font-size: 1em; }
+        .ai-content blockquote { border-left: 3px solid #d3c2ca; padding-left: 0.75rem; margin: 0.5rem 0; color: #6b7280; font-style: italic; }
+        .ai-content table { border-collapse: collapse; width: 100%; margin: 0.5rem 0; font-size: 0.85em; }
+        .ai-content th, .ai-content td { border: 1px solid #e5e7eb; padding: 0.4rem 0.6rem; text-align: left; }
+        .ai-content th { background: #f9fafb; font-weight: 600; }
+        .ai-content hr { border: none; border-top: 1px solid #e5e7eb; margin: 0.75rem 0; }
     </style>
 </head>
 
@@ -211,11 +234,12 @@
             const c = document.getElementById('messages');
             const div = document.createElement('div');
             div.className = `mb-4 ${role === 'user' ? 'text-right' : 'text-left'}`;
-            div.innerHTML = `
-                <div class="inline-block p-3 rounded-2xl ${role === 'user' ? 'bg-[#5B1744] text-white' : 'bg-white border border-gray-100 shadow-sm'} text-sm">
-                    ${content}
-                </div>
-            `;
+
+            const rendered = role === 'assistant'
+                ? `<div class="ai-content inline-block p-4 rounded-2xl bg-white border border-gray-100 shadow-sm text-sm text-left max-w-full">${marked.parse(content)}</div>`
+                : `<div class="inline-block p-4 rounded-2xl bg-[#5B1744] text-white text-sm text-left">${content}</div>`;
+
+            div.innerHTML = rendered;
             c.appendChild(div);
             const wrap = document.getElementById('messages-wrap');
             wrap.scrollTop = wrap.scrollHeight;
@@ -254,9 +278,11 @@
                 });
                 const data = await res.json();
                 if (data.status === 'success') {
-                    selectSession(data.session.id);
+                    await selectSession(data.session.id);
+                    return data.session.id;
                 }
             } catch (e) {}
+            return null;
         }
 
         async function deleteSession(id, event) {
@@ -270,22 +296,28 @@
             const msg = input.value.trim();
             if (!msg) return;
 
-            if (!currentSessionId) {
-                const title = msg.length > 50 ? msg.substring(0, 50) + '...' : msg;
-                await createSession(title);
-            }
-
-            appendMessage(msg, 'user');
+            const userMsg = msg;
+            appendMessage(userMsg, 'user');
             input.value = '';
             input.disabled = true;
             toggleSend();
             appendLoadingMessage();
 
             try {
+                if (!currentSessionId) {
+                    const title = userMsg.length > 50 ? userMsg.substring(0, 50) + '...' : userMsg;
+                    const newId = await createSession(title);
+                    if (!newId) {
+                        removeLoadingMessage();
+                        appendMessage('Gagal membuat sesi baru.', 'assistant');
+                        return;
+                    }
+                }
+
                 const res = await apiFetch(`${API_BASE}/chat/send`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ message: msg, chat_session_id: currentSessionId })
+                    body: JSON.stringify({ message: userMsg, chat_session_id: currentSessionId })
                 });
                 const data = await res.json();
                 removeLoadingMessage();
@@ -304,7 +336,9 @@
         }
 
         function autoResize(t) { t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 160) + 'px'; }
-        
+
+        marked.setOptions({ breaks: true, gfm: true });
+
         loadSessions();
     </script>
 </body>
