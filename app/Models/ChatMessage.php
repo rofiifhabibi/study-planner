@@ -15,6 +15,11 @@ class ChatMessage extends Model
         'role',
         'content',
         'file_url',
+        'is_canceled',
+    ];
+
+    protected $casts = [
+        'is_canceled' => 'boolean',
     ];
 
     // Relasi ke ChatSession
