@@ -41,4 +41,16 @@ return [
         'timeout' => env('N8N_TIMEOUT', 90),
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', '/auth/google/callback'),
+    ],
+
+    'telegram' => [
+        'client_secret' => env('TELEGRAM_BOT_TOKEN'),
+        'bot' => env('TELEGRAM_BOT_NAME'),
+        'redirect' => env('TELEGRAM_REDIRECT_URI', '/auth/telegram/callback'),
+    ],
+
 ];

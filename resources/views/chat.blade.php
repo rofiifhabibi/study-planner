@@ -128,6 +128,23 @@
         <main class="flex-1 flex flex-col h-screen overflow-hidden">
             <header class="h-16 bg-[#FAF6F0]/80 backdrop-blur-md border-b border-[#5B1744]/5 sticky top-0 z-30 px-6 flex items-center justify-between shrink-0">
                 <span class="font-bold text-base text-[#5B1744]">AI Study Companion</span>
+
+                <div class="flex items-center gap-3">
+                    <div class="hidden sm:flex items-center gap-2.5">
+                        <div class="w-9 h-9 rounded-full bg-[#E9D5E1] text-[#5B1744] flex items-center justify-center font-bold text-xs shadow-xs">
+                            {{ $userInitial }}
+                        </div>
+                        <span class="text-xs font-semibold text-gray-700 max-w-[140px] truncate">{{ $userName }}</span>
+                    </div>
+
+                    <form method="POST" action="{{ route('logout') }}" class="m-0">
+                        @csrf
+                        <button type="submit" title="Log out"
+                            class="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:text-[#B91C1C] hover:border-[#B91C1C]/30 transition shadow-xs">
+                            <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+                        </button>
+                    </form>
+                </div>
             </header>
 
             <div class="flex-1 flex flex-col relative min-h-0" id="main">

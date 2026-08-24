@@ -242,17 +242,35 @@
                             <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#5B1744]"></span>
                         </button>
 
-                        <div class="flex items-center gap-3 pl-3 border-l border-gray-200">
-                            <div class="text-right hidden sm:block">
-                                <p class="text-xs font-bold text-gray-800">
-                                    {{ auth()->user()->name ?? 'Killa' }}
-                                </p>
-                                <p class="text-[10px] text-gray-400">
-                                    Keep going 🔥
-                                </p>
-                            </div>
-                            <div class="w-9 h-9 rounded-full bg-[#E9D5E1] text-[#5B1744] flex items-center justify-center font-bold text-xs shadow-xs">
-                                {{ strtoupper(substr(auth()->user()->name ?? 'K', 0, 1)) }}
+                        {{-- User Dropdown --}}
+                        <div class="relative">
+                            <button type="button" onclick="toggleUserMenu(event)" class="flex items-center gap-3 pl-3 border-l border-gray-200 focus:outline-none">
+                                <div class="text-right hidden sm:block">
+                                    <p class="text-xs font-bold text-gray-800">
+                                        {{ auth()->user()->name }}
+                                    </p>
+                                    <p class="text-[10px] text-gray-400">
+                                        Keep going 🔥
+                                    </p>
+                                </div>
+                                <div class="w-9 h-9 rounded-full bg-[#E9D5E1] text-[#5B1744] flex items-center justify-center font-bold text-xs shadow-xs">
+                                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                                </div>
+                            </button>
+
+                            <div id="userMenu" class="hidden absolute right-0 top-full mt-2 w-60 bg-white rounded-2xl border border-[#F0EAE1] shadow-xl shadow-[#5B1744]/10 overflow-hidden z-50">
+                                <div class="px-4 py-3 border-b border-[#F0EAE1]">
+                                    <p class="text-xs font-bold text-gray-800 truncate">{{ auth()->user()->name }}</p>
+                                    <p class="text-[10px] text-gray-400 truncate">{{ auth()->user()->email }}</p>
+                                </div>
+                                <form method="POST" action="{{ route('logout') }}">
+                                    @csrf
+                                    <button type="submit"
+                                        class="w-full px-4 py-3 flex items-center gap-2 text-left text-xs font-semibold text-[#B91C1C] hover:bg-[#FAF6F0] transition">
+                                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                                        Logout
+                                    </button>
+                                </form>
                             </div>
                         </div>
                     </div>
@@ -570,6 +588,18 @@
             if (event.key === 'Escape') {
                 closeTaskModal();
                 closeSidebar();
+            }
+        });
+
+        function toggleUserMenu(event) {
+            event.stopPropagation();
+            document.getElementById('userMenu').classList.toggle('hidden');
+        }
+
+        document.addEventListener('click', (event) => {
+            const menu = document.getElementById('userMenu');
+            if (menu && ! menu.contains(event.target)) {
+                menu.classList.add('hidden');
             }
         });
     </script>

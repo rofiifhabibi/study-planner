@@ -1,19 +1,71 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
+<html lang="en">
 <head>
-    <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Verify Email - Study Planner</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <style>*{margin:0;padding:0;box-sizing:border-box}body{font-family:'Inter',system-ui,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;background:#0f0f0f;color:#ececec}.wrap{width:100%;max-width:400px;padding:20px}.logo{text-align:center;margin-bottom:28px}.logo .ico{width:48px;height:48px;border-radius:50%;background:#10a37f;display:inline-flex;align-items:center;justify-content:center;margin-bottom:12px}.logo .ico svg{width:24px;height:24px;color:#fff}.logo h1{font-size:20px;font-weight:600;color:#ececec}.logo p{font-size:13px;color:#525252;margin-top:4px;max-width:280px;margin-left:auto;margin-right:auto}.btn{width:100%;padding:11px;border:none;border-radius:10px;background:#10a37f;color:#fff;font-size:14px;font-weight:600;font-family:inherit;cursor:pointer;transition:background .15s;margin-bottom:12px}.btn:hover{background:#0e8c6c}.links{text-align:center;margin-top:12px;font-size:13px}.links a{color:#10a37f;text-decoration:none;font-weight:500}.alert{padding:10px 14px;border-radius:10px;font-size:13px;margin-bottom:16px}.alert-success{background:#0a2e1f;color:#34d399;border:1px solid #064e32}.back{text-align:center;margin-top:20px}.back a{font-size:12px;color:#444;text-decoration:none}</style>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+    </style>
 </head>
-<body>
-    <div class="wrap">
-        <div class="logo"><div class="ico"><svg fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5"><path stroke-linecap="round" stroke-linejoin="round" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"/></svg></div><h1>Verify Email</h1><p>We've sent a verification link to your email.</p></div>
-        @if(session('status'))<div class="alert alert-success">{{ session('status') }}</div>@endif
-        <form method="POST" action="{{ route('verification.send') }}">@csrf<button type="submit" class="btn">Resend Verification Email</button></form>
-        <div class="links"><a href="{{ route('logout') }}" onclick="event.preventDefault();document.getElementById('logout-form').submit();">Sign out</a></div>
-        <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display:none">@csrf @method('DELETE')</form>
-        <div class="back"><a href="{{ route('chat') }}">&larr; Back to Chat</a></div>
+<body class="bg-[#FAF8F5] min-h-screen flex items-center justify-center p-4">
+
+    <div class="w-full max-w-[420px] bg-white rounded-[32px] border border-[#F0EAE1] p-8 shadow-sm">
+
+        <!-- Logo Header -->
+        <div class="flex justify-center mb-6">
+            <div class="w-16 h-16 bg-[#4A1B36] rounded-full flex items-center justify-center text-white text-2xl font-bold">
+                S
+            </div>
+        </div>
+
+        <!-- Title -->
+        <div class="text-center mb-6">
+            <h1 class="text-2xl font-bold text-[#4A1B36] mb-2">Verify Your Email</h1>
+            <p class="text-sm text-gray-500 leading-relaxed">
+                Thanks for signing up! We've sent a verification link to
+                <span class="font-semibold text-gray-700 break-all">{{ auth()->user()->email }}</span>.
+                Please click it to activate your account.
+            </p>
+        </div>
+
+        @if (session('status') === 'verification-link-sent')
+            <div class="flex items-start gap-2 bg-green-50 border border-green-200 text-green-700 text-xs rounded-2xl px-4 py-3 mb-5">
+                <i class="fa-solid fa-circle-check mt-0.5"></i>
+                <span>A new verification link has been sent to your email address.</span>
+            </div>
+        @endif
+
+        <!-- Resend Button -->
+        <form method="POST" action="{{ route('verification.send') }}">
+            @csrf
+            <button type="submit"
+                class="w-full bg-[#4A1B36] hover:bg-[#381428] text-white font-semibold py-3.5 rounded-full flex items-center justify-center gap-2 transition duration-200 shadow-md">
+                <i class="fa-regular fa-paper-plane text-sm"></i>
+                <span>Resend Verification Email</span>
+            </button>
+        </form>
+
+        <!-- Divider -->
+        <div class="relative flex py-6 items-center">
+            <div class="flex-grow border-t border-gray-200"></div>
+            <span class="flex-shrink mx-4 text-[11px] font-semibold text-gray-400 uppercase tracking-wider">OR</span>
+            <div class="flex-grow border-t border-gray-200"></div>
+        </div>
+
+        <!-- Sign out -->
+        <div class="text-center">
+            <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();"
+                class="text-xs font-medium text-[#4A1B36] hover:underline">
+                <i class="fa-solid fa-arrow-right-from-bracket mr-1"></i> Sign Out
+            </a>
+            <form id="logout-form" method="POST" action="{{ route('logout') }}" style="display:none">@csrf</form>
+        </div>
+
     </div>
+
 </body>
 </html>

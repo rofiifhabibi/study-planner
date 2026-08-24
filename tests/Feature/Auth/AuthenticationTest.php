@@ -39,3 +39,22 @@ test('users can logout', function () {
     $this->assertGuest();
     $response->assertRedirect('/');
 });
+
+test('dashboard renders the logout form', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->get('/dashboard');
+
+    $response->assertOk();
+    $response->assertSee(route('logout'), false);
+    $response->assertSee('name="_token"', false);
+});
+
+test('chat page renders the logout form', function () {
+    $user = User::factory()->create();
+
+    $response = $this->actingAs($user)->get('/chat');
+
+    $response->assertOk();
+    $response->assertSee(route('logout'), false);
+});
