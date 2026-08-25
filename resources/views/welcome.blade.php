@@ -183,7 +183,7 @@
                     hover:-translate-y-0.5
                     transition">
 
-                    Get Started
+                    Sign Up
                 </a>
 
             </div>

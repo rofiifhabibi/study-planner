@@ -88,6 +88,14 @@
             <div class="flex-grow border-t border-gray-200"></div>
         </div>
 
+        <!-- Link ke Register -->
+        <div class="text-center mb-4">
+            <p class="text-xs text-gray-500">
+                Don't have an account?
+                <a href="{{ route('register') }}" class="text-[#4A1B36] font-semibold hover:underline">Sign Up</a>
+            </p>
+        </div>
+
         <!-- Social Buttons -->
         <div class="grid grid-cols-2 gap-3">
             <a href="{{ route('auth.google.redirect') }}" class="flex items-center justify-center gap-2 bg-[#F5F2ED] hover:bg-[#ECE6DE] text-gray-800 text-xs font-medium py-3 px-4 rounded-full border border-transparent transition">

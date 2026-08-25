@@ -96,6 +96,9 @@
         </div>
     </aside>
 
+    <!-- Overlay for Mobile Drawer -->
+    <div id="overlay" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 hidden md:hidden"></div>
+
     <!-- Confirmation Modal -->
     <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
         <div class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
@@ -127,7 +130,12 @@
     <!-- MAIN -->
         <main class="flex-1 flex flex-col h-screen overflow-hidden">
             <header class="h-16 bg-[#FAF6F0]/80 backdrop-blur-md border-b border-[#5B1744]/5 sticky top-0 z-30 px-6 flex items-center justify-between shrink-0">
-                <span class="font-bold text-base text-[#5B1744]">AI Study Companion</span>
+                <div class="flex items-center gap-3">
+                    <button type="button" id="menuButton" class="md:hidden w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-700 shadow-xs">
+                        <i class="fa-solid fa-bars text-sm"></i>
+                    </button>
+                    <span class="font-bold text-base text-[#5B1744]">AI Study Companion</span>
+                </div>
 
                 <div class="flex items-center gap-3">
                     <div class="hidden sm:flex items-center gap-2.5">
@@ -163,8 +171,8 @@
                             <span><i class="fa-solid fa-pen mr-2"></i>Mengedit pesan</span>
                             <button type="button" onclick="stopEditing()" class="hover:underline">Batal edit</button>
                         </div>
-                        <div class="flex items-center gap-2 bg-white p-2 pl-4 rounded-full border border-[#5B1744]/10 shadow-xl shadow-[#5B1744]/15 focus-within:border-[#5B1744]/40 focus-within:shadow-2xl transition-shadow">
-                            <textarea id="chat-input" rows="1" placeholder="Ask anything..." oninput="autoResize(this);toggleSend()" class="flex-1 bg-transparent border-none focus:ring-0 p-1 resize-none outline-none text-sm"></textarea>
+                        <div id="input-shell" class="flex items-center gap-2 bg-white p-2 pl-4 rounded-full border border-[#5B1744]/10 shadow-xl shadow-[#5B1744]/15 focus-within:border-[#5B1744]/40 focus-within:shadow-2xl transition-shadow">
+                            <textarea id="chat-input" rows="1" placeholder="Ask anything..." oninput="autoResize(this);toggleSend()" class="flex-1 bg-transparent border-none focus:ring-0 p-1 resize-none outline-none text-sm max-h-40 [overflow-wrap:anywhere]"></textarea>
                             <button type="submit" class="w-10 h-10 rounded-full bg-[#5B1744] text-white flex items-center justify-center disabled:opacity-50 shrink-0" id="btn-send" disabled>
                                 <span class="material-symbols-outlined text-sm">send</span>
                             </button>
@@ -177,6 +185,34 @@
 
     <script>
         const API_BASE = '{{ url("/api") }}';
+
+        // Mobile drawer
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
+
+        document.getElementById('menuButton')?.addEventListener('click', () => {
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+        });
+
+        function closeSidebar() {
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
+        }
+
+        overlay?.addEventListener('click', closeSidebar);
+
+        sidebar?.addEventListener('click', (event) => {
+            if (window.innerWidth < 768 && event.target.closest('a, button')) {
+                closeSidebar();
+            }
+        });
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && window.innerWidth < 768) {
+                closeSidebar();
+            }
+        });
         let currentSessionId = new URLSearchParams(window.location.search).get('session');
         let editingMessageId = null;
         let sessionToDelete = null;
@@ -504,8 +540,8 @@
             }
 
             const rendered = role === 'assistant'
-                ? `<div class="ai-content inline-block p-4 rounded-2xl bg-white border border-gray-100 shadow-sm text-sm text-left max-w-full">${marked.parse(messageContent)}</div>`
-                : `<div class="inline-block p-4 rounded-2xl bg-[#5B1744] text-white text-sm text-left">${messageContent}</div>`;
+                ? `<div class="ai-content inline-block p-4 rounded-2xl bg-white border border-gray-100 shadow-sm text-sm text-left max-w-full break-words [overflow-wrap:anywhere]">${marked.parse(messageContent)}</div>`
+                : `<div class="inline-block p-4 rounded-2xl bg-[#5B1744] text-white text-sm text-left max-w-full break-words [overflow-wrap:anywhere]">${messageContent}</div>`;
 
             div.innerHTML = rendered + actionsHtml;
             c.appendChild(div);
@@ -708,7 +744,17 @@
             if (el) el.remove();
         }
 
-        function autoResize(t) { t.style.height = 'auto'; t.style.height = Math.min(t.scrollHeight, 160) + 'px'; }
+        function autoResize(t) {
+            t.style.height = 'auto';
+            const h = Math.min(t.scrollHeight, 160);
+            t.style.height = h + 'px';
+            const shell = document.getElementById('input-shell');
+            const isTall = h > 44;
+            shell.classList.toggle('rounded-full', !isTall);
+            shell.classList.toggle('rounded-3xl', isTall);
+            shell.classList.toggle('items-center', !isTall);
+            shell.classList.toggle('items-end', isTall);
+        }
 
         marked.setOptions({ breaks: true, gfm: true });
 

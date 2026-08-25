@@ -181,24 +181,34 @@
 
             {{-- Profile --}}
             <div class="p-4 border-t border-white/10">
-                <div class="flex items-center justify-between gap-3">
-                    <div class="flex items-center gap-3 min-w-0">
-                        <div class="w-9 h-9 rounded-full bg-[#E7C8DB] text-[#5B1744] flex items-center justify-center font-bold text-xs shrink-0">
+                <div role="button" tabindex="0" onclick="openProfileModal()"
+                    onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();openProfileModal();}"
+                    class="w-full flex items-center justify-between gap-3 rounded-xl hover:bg-white/10 transition p-2 -m-2 text-left focus:outline-none cursor-pointer">
+                    <span class="flex items-center gap-3 min-w-0">
+                        <span class="w-9 h-9 rounded-full bg-[#E7C8DB] text-[#5B1744] flex items-center justify-center font-bold text-xs shrink-0">
                             {{ strtoupper(substr(auth()->user()->name ?? 'K', 0, 1)) }}
-                        </div>
-                        <div class="min-w-0">
-                            <p class="font-semibold text-xs text-white truncate">
+                        </span>
+                        <span class="min-w-0">
+                            <span class="block font-semibold text-xs text-white truncate">
                                 {{ auth()->user()->name ?? 'Killa' }}
-                            </p>
-                            <p class="text-[10px] text-white/50 truncate">
-                                Student Account
-                            </p>
-                        </div>
-                    </div>
+                            </span>
+                            <span class="block text-[10px] text-white/50 truncate">
+                                {{ auth()->user()->email }}
+                            </span>
+                        </span>
+                    </span>
 
-                    <a href="#" class="text-white/50 hover:text-white transition p-1.5 rounded-lg hover:bg-white/10">
-                        <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
-                    </a>
+                    <span class="flex items-center gap-1 shrink-0 text-white/50">
+                        <i class="fa-solid fa-pen-to-square text-xs" title="Edit profile"></i>
+
+                        <form method="POST" action="{{ route('logout') }}" onclick="event.stopPropagation()">
+                            @csrf
+                            <button type="submit" title="Logout"
+                                class="text-white/50 hover:text-white transition p-1.5 rounded-lg hover:bg-white/10">
+                                <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                            </button>
+                        </form>
+                    </span>
                 </div>
             </div>
 
@@ -237,42 +247,10 @@
 
                     {{-- Right Controls --}}
                     <div class="flex items-center gap-3">
-                        <button class="relative w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:border-[#5B1744]/30 transition shadow-xs">
+                        <button type="button" class="relative w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:border-[#5B1744]/30 transition shadow-xs">
                             <i class="fa-regular fa-bell text-xs"></i>
                             <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#5B1744]"></span>
                         </button>
-
-                        {{-- User Dropdown --}}
-                        <div class="relative">
-                            <button type="button" onclick="toggleUserMenu(event)" class="flex items-center gap-3 pl-3 border-l border-gray-200 focus:outline-none">
-                                <div class="text-right hidden sm:block">
-                                    <p class="text-xs font-bold text-gray-800">
-                                        {{ auth()->user()->name }}
-                                    </p>
-                                    <p class="text-[10px] text-gray-400">
-                                        Keep going 🔥
-                                    </p>
-                                </div>
-                                <div class="w-9 h-9 rounded-full bg-[#E9D5E1] text-[#5B1744] flex items-center justify-center font-bold text-xs shadow-xs">
-                                    {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                                </div>
-                            </button>
-
-                            <div id="userMenu" class="hidden absolute right-0 top-full mt-2 w-60 bg-white rounded-2xl border border-[#F0EAE1] shadow-xl shadow-[#5B1744]/10 overflow-hidden z-50">
-                                <div class="px-4 py-3 border-b border-[#F0EAE1]">
-                                    <p class="text-xs font-bold text-gray-800 truncate">{{ auth()->user()->name }}</p>
-                                    <p class="text-[10px] text-gray-400 truncate">{{ auth()->user()->email }}</p>
-                                </div>
-                                <form method="POST" action="{{ route('logout') }}">
-                                    @csrf
-                                    <button type="submit"
-                                        class="w-full px-4 py-3 flex items-center gap-2 text-left text-xs font-semibold text-[#B91C1C] hover:bg-[#FAF6F0] transition">
-                                        <i class="fa-solid fa-arrow-right-from-bracket"></i>
-                                        Logout
-                                    </button>
-                                </form>
-                            </div>
-                        </div>
                     </div>
 
                 </div>
@@ -554,11 +532,103 @@
         </div>
     </div>
 
+    {{-- PROFILE MODAL --}}
+    <div id="profileModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div onclick="closeProfileModal()" class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
+
+        <div class="relative w-full max-w-md bg-[#FAF6F0] rounded-3xl p-6 sm:p-7 shadow-2xl fade-up max-h-[92vh] overflow-y-auto">
+            <div class="flex justify-between items-start mb-5">
+                <div>
+                    <p class="text-[9px] uppercase tracking-[.2em] text-[#5B1744] font-bold">EDIT PROFILE</p>
+                    <h2 class="text-xl font-bold text-gray-900 mt-0.5">Kelola akun Anda</h2>
+                </div>
+                <button type="button" onclick="closeProfileModal()" class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            @if (session('status') === 'profile-updated')
+                <div class="flex items-center gap-2 bg-green-50 border border-green-200 text-green-700 text-xs rounded-xl px-4 py-3 mb-4">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span>Profil berhasil diperbarui.</span>
+                </div>
+            @endif
+
+            <form method="POST" action="{{ route('profile.update') }}" class="space-y-4" onclick="event.stopPropagation()">
+                @csrf
+                @method('PUT')
+
+                <div>
+                    <label for="profile-name" class="text-xs font-bold text-gray-600">Nama</label>
+                    <input id="profile-name" type="text" name="name" value="{{ old('name', auth()->user()->name) }}" required autofocus
+                        class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744] transition">
+                    @error('name')
+                        <p class="text-[10px] text-red-500 mt-1.5">{{ $message }}</p>
+                    @enderror
+                </div>
+
+                <div>
+                    <label for="profile-email" class="text-xs font-bold text-gray-600">Email</label>
+                    <input id="profile-email" type="email" name="email" value="{{ old('email', auth()->user()->email) }}" required
+                        class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744] transition">
+                    @error('email')
+                        <p class="text-[10px] text-red-500 mt-1.5">{{ $message }}</p>
+                    @enderror
+                    <p class="text-[10px] text-gray-400 mt-1.5 flex items-center gap-1">
+                        <i class="fa-solid fa-circle-info"></i>
+                        Ganti email akan meminta verifikasi ulang.
+                    </p>
+                </div>
+
+                <button type="submit"
+                    class="w-full py-3 rounded-xl bg-[#5B1744] text-white text-xs font-bold hover:bg-[#481236] transition shadow-xs mt-2">
+                    Simpan Perubahan
+                </button>
+            </form>
+
+            <div class="my-6 border-t border-dashed border-gray-300"></div>
+
+            <div onclick="event.stopPropagation()">
+                <p class="text-[9px] uppercase tracking-[.2em] text-[#B91C1C] font-bold">DANGER ZONE</p>
+                <p class="text-xs text-gray-500 leading-relaxed mt-1.5 mb-3">
+                    Akun beserta seluruh riwayat chat dan data planner akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.
+                </p>
+
+                <form method="POST" action="{{ route('profile.destroy') }}">
+                    @csrf
+                    @method('DELETE')
+
+                    <button type="button" onclick="toggleDeleteConfirm()"
+                        class="w-full py-2.5 rounded-xl bg-white border border-[#B91C1C]/30 text-[#B91C1C] text-xs font-bold hover:bg-red-50 transition">
+                        <i class="fa-regular fa-trash-can mr-1.5"></i>Hapus Akun Permanen
+                    </button>
+
+                    <div id="deleteConfirm" class="hidden space-y-3 mt-3">
+                        <label for="delete-account-password" class="sr-only">Konfirmasi password</label>
+                        <input id="delete-account-password" type="password" name="password" required autocomplete="current-password"
+                            placeholder="Masukkan password untuk konfirmasi"
+                            class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#B91C1C] transition">
+
+                        @error('password', 'userDeletion')
+                            <p class="text-[10px] text-red-500">{{ $message }}</p>
+                        @enderror
+
+                        <button type="submit"
+                            class="w-full py-2.5 rounded-xl bg-[#B91C1C] text-white text-xs font-bold hover:bg-[#991B1B] transition shadow-xs">
+                            Ya, Saya Yakin Hapus Akun
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
     <script>
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('overlay');
         const menuButton = document.getElementById('menuButton');
         const taskModal = document.getElementById('taskModal');
+        const profileModal = document.getElementById('profileModal');
 
         menuButton?.addEventListener('click', () => {
             sidebar.classList.remove('-translate-x-full');
@@ -587,21 +657,33 @@
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {
                 closeTaskModal();
+                closeProfileModal();
                 closeSidebar();
             }
         });
 
-        function toggleUserMenu(event) {
-            event.stopPropagation();
-            document.getElementById('userMenu').classList.toggle('hidden');
+        function openProfileModal() {
+            profileModal.classList.remove('hidden');
+            profileModal.classList.add('flex');
+            document.body.classList.add('overflow-hidden');
+            document.getElementById('profile-name')?.focus();
         }
 
-        document.addEventListener('click', (event) => {
-            const menu = document.getElementById('userMenu');
-            if (menu && ! menu.contains(event.target)) {
-                menu.classList.add('hidden');
+        function closeProfileModal() {
+            profileModal.classList.add('hidden');
+            profileModal.classList.remove('flex');
+            document.body.classList.remove('overflow-hidden');
+        }
+
+        function toggleDeleteConfirm() {
+            const box = document.getElementById('deleteConfirm');
+
+            box.classList.toggle('hidden');
+
+            if (! box.classList.contains('hidden')) {
+                document.getElementById('delete-account-password')?.focus();
             }
-        });
+        }
     </script>
 
 </body>
