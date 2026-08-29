@@ -20,6 +20,8 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
         'email',
         'password',
         'google_id',
+        'google_access_token',
+        'google_refresh_token',
         'telegram_id',
     ];
 
@@ -44,5 +46,20 @@ class User extends Authenticatable implements FilamentUser, MustVerifyEmail
     public function chatSessions()
     {
         return $this->hasMany(ChatSession::class);
+    }
+
+    public function tasks()
+    {
+        return $this->hasMany(Task::class);
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class);
+    }
+
+    public function studySessions()
+    {
+        return $this->hasMany(StudySession::class);
     }
 }

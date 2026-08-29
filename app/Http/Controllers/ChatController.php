@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\ChatMessage;
 use App\Models\ChatSession;
+use App\Models\Schedule;
+use App\Services\ProgressService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -47,11 +49,20 @@ class ChatController extends Controller
             ? ChatMessage::whereIn('chat_session_id', $sessionIds)->count()
             : 0;
 
+        $progress = (new ProgressService($user->id))->getDashboardStats();
+
+        $todaySchedules = Schedule::where('user_id', $user->id)
+            ->whereDate('date', today())
+            ->orderBy('start_time')
+            ->get();
+
         return view('dashboard', [
             'user' => $user,
             'sessions' => $sessions,
             'totalSessions' => $sessions->count(),
             'totalMessages' => $totalMessages,
+            'todaySchedules' => $todaySchedules,
+            ...$progress,
         ]);
     }
 

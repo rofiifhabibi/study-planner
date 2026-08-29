@@ -30,6 +30,33 @@
         .typing-dots span:nth-child(3) { animation-delay: 0s; }
         @keyframes bounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
 
+        #mobile-float-burger {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 50;
+            display: none;
+        }
+        @media (max-width: 767px) {
+            #mobile-float-burger {
+                display: flex;
+            }
+        }
+
+        .typewriter-cursor {
+            display: inline-block;
+            width: 2px;
+            height: 1em;
+            background: #5B1744;
+            margin-left: 2px;
+            vertical-align: text-bottom;
+            animation: blink-cursor 0.8s step-end infinite;
+        }
+        @keyframes blink-cursor {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
         .ai-content p { margin: 0 0 0.5rem 0; line-height: 1.6; }
         .ai-content p:last-child { margin-bottom: 0; }
         .ai-content ul, .ai-content ol { margin: 0.5rem 0; padding-left: 1.25rem; }
@@ -92,12 +119,24 @@
                     </div>
                     <p class="font-semibold text-xs text-white truncate">{{ auth()->user()->name }}</p>
                 </div>
+                <form method="POST" action="{{ route('logout') }}" class="m-0">
+                    @csrf
+                    <button type="submit" title="Log out"
+                        class="text-white/50 hover:text-white transition p-1.5 rounded-lg hover:bg-white/10">
+                        <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                    </button>
+                </form>
             </div>
         </div>
     </aside>
 
     <!-- Overlay for Mobile Drawer -->
     <div id="overlay" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 hidden md:hidden"></div>
+
+    <!-- Floating Burger Button (Mobile) -->
+    <button type="button" id="mobile-float-burger" onclick="document.getElementById('sidebar').classList.remove('-translate-x-full'); document.getElementById('overlay').classList.remove('hidden');" class="md:hidden w-11 h-11 rounded-full bg-[#5B1744] text-white items-center justify-center shadow-lg shadow-[#5B1744]/30 active:scale-95 transition">
+        <i class="fa-solid fa-bars text-sm"></i>
+    </button>
 
     <!-- Confirmation Modal -->
     <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
@@ -138,13 +177,6 @@
                 </div>
 
                 <div class="flex items-center gap-3">
-                    <div class="hidden sm:flex items-center gap-2.5">
-                        <div class="w-9 h-9 rounded-full bg-[#E9D5E1] text-[#5B1744] flex items-center justify-center font-bold text-xs shadow-xs">
-                            {{ $userInitial }}
-                        </div>
-                        <span class="text-xs font-semibold text-gray-700 max-w-[140px] truncate">{{ $userName }}</span>
-                    </div>
-
                     <form method="POST" action="{{ route('logout') }}" class="m-0">
                         @csrf
                         <button type="submit" title="Log out"
@@ -513,7 +545,7 @@
             scrollToBottom();
         }
 
-        function appendMessage(id, content, role, canEdit = false, isCanceled = false, isPending = false) {
+        function appendMessage(id, content, role, canEdit = false, isCanceled = false, isPending = false, animate = false) {
             const c = document.getElementById('messages');
             const div = document.createElement('div');
             if (id !== null && id !== undefined) div.id = `message-${id}`;
@@ -539,13 +571,66 @@
                 `;
             }
 
-            const rendered = role === 'assistant'
-                ? `<div class="ai-content inline-block p-4 rounded-2xl bg-white border border-gray-100 shadow-sm text-sm text-left max-w-full break-words [overflow-wrap:anywhere]">${marked.parse(messageContent)}</div>`
-                : `<div class="inline-block p-4 rounded-2xl bg-[#5B1744] text-white text-sm text-left max-w-full break-words [overflow-wrap:anywhere]">${messageContent}</div>`;
+            if (role === 'assistant' && animate && messageContent) {
+                const bubble = document.createElement('div');
+                bubble.className = 'ai-content inline-block p-4 rounded-2xl bg-white border border-gray-100 shadow-sm text-sm text-left max-w-full break-words [overflow-wrap:anywhere]';
+                const cursor = document.createElement('span');
+                cursor.className = 'typewriter-cursor';
+                bubble.appendChild(cursor);
+                div.appendChild(bubble);
+                if (actionsHtml) {
+                    const actionsWrap = document.createElement('div');
+                    actionsWrap.innerHTML = actionsHtml;
+                    div.appendChild(actionsWrap);
+                }
+                c.appendChild(div);
+                scrollToBottom();
+                typewriterEffect(bubble, cursor, messageContent);
+            } else {
+                const rendered = role === 'assistant'
+                    ? `<div class="ai-content inline-block p-4 rounded-2xl bg-white border border-gray-100 shadow-sm text-sm text-left max-w-full break-words [overflow-wrap:anywhere]">${marked.parse(messageContent)}</div>`
+                    : `<div class="inline-block p-4 rounded-2xl bg-[#5B1744] text-white text-sm text-left max-w-full break-words [overflow-wrap:anywhere]">${messageContent}</div>`;
+                div.innerHTML = rendered + actionsHtml;
+                c.appendChild(div);
+                scrollToBottom();
+            }
+        }
 
-            div.innerHTML = rendered + actionsHtml;
-            c.appendChild(div);
-            scrollToBottom();
+        function typewriterEffect(container, cursor, fullText, index = 0) {
+            const plainText = stripMarkdown(fullText);
+            const chunkSize = 3;
+            const delay = 18;
+            if (index < plainText.length) {
+                const end = Math.min(index + chunkSize, plainText.length);
+                const textNode = document.createTextNode(plainText.substring(index, end));
+                container.insertBefore(textNode, cursor);
+                scrollToBottom();
+                setTimeout(() => typewriterEffect(container, cursor, fullText, end), delay);
+            } else {
+                container.innerHTML = marked.parse(fullText);
+                scrollToBottom();
+            }
+        }
+
+        function stripMarkdown(md) {
+            return md
+                .replace(/^#{1,6}\s+/gm, '')
+                .replace(/\*\*(.+?)\*\*/g, '$1')
+                .replace(/\*(.+?)\*/g, '$1')
+                .replace(/__(.+?)__/g, '$1')
+                .replace(/_(.+?)_/g, '$1')
+                .replace(/~~(.+?)~~/g, '$1')
+                .replace(/`{3,}[\s\S]*?`{3,}/g, (m) => m.replace(/`{3,}\w*\n?/g, '').replace(/`{3,}/g, ''))
+                .replace(/`(.+?)`/g, '$1')
+                .replace(/^\s*[-*+]\s+/gm, '• ')
+                .replace(/^\s*\d+\.\s+/gm, (m) => m)
+                .replace(/^\s*>\s+/gm, '')
+                .replace(/!\[.*?\]\(.*?\)/g, '')
+                .replace(/\[(.+?)\]\(.*?\)/g, '$1')
+                .replace(/---+/g, '')
+                .replace(/\|/g, ' ')
+                .replace(/\n{3,}/g, '\n\n')
+                .trim();
         }
 
         function appendLoadingMessage() {
@@ -713,7 +798,7 @@
                 if (data.status === 'success') {
                     removeMessageElement(userMessageId);
                     appendMessage(data.message_id || userMessageId, userMsg, 'user', true);
-                    appendMessage(`reply-${Date.now()}`, data.reply, 'assistant');
+                    appendMessage(`reply-${Date.now()}`, data.reply, 'assistant', false, false, false, true);
                 } else if (wasEditing) {
                     appendMessage(userMessageId, messageContents[String(userMessageId)] || userMsg, 'user', true);
                     appendMessage(null, data.message || 'Maaf, terjadi kesalahan saat memproses pesan.', 'assistant');

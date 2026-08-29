@@ -6,22 +6,24 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Task extends Model
+class Schedule extends Model
 {
     use HasFactory;
 
     protected $fillable = [
         'user_id',
         'title',
-        'description',
-        'due_date',
+        'subject',
+        'date',
+        'start_time',
+        'end_time',
         'status',
-        'category',
-        'priority',
+        'color',
+        'google_event_id',
     ];
 
     protected $casts = [
-        'due_date' => 'date',
+        'date' => 'date',
     ];
 
     public function user(): BelongsTo

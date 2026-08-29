@@ -263,6 +263,20 @@
 
                 <div class="relative max-w-7xl mx-auto px-4 sm:px-8 md:px-10 py-6 sm:py-8 space-y-6">
 
+                    {{-- Flash Messages --}}
+                    @if (session('success'))
+                        <div class="bg-green-50 border border-green-200 text-green-700 text-xs rounded-xl px-4 py-3 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-check"></i>
+                            <span>{{ session('success') }}</span>
+                        </div>
+                    @endif
+                    @if (session('error'))
+                        <div class="bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl px-4 py-3 flex items-center gap-2">
+                            <i class="fa-solid fa-circle-xmark"></i>
+                            <span>{{ session('error') }}</span>
+                        </div>
+                    @endif
+
                     {{-- Greeting Header --}}
                     <section class="fade-up flex flex-col sm:flex-row sm:items-end justify-between gap-4">
                         <div>
@@ -304,9 +318,18 @@
                                         </div>
                                     </div>
 
-                                    <p class="text-base sm:text-lg md:text-xl font-medium leading-relaxed text-white/95">
-                                        Kamu sudah menyelesaikan <span class="text-[#E9C9DA] font-bold">4 dari 6 tugas</span> hari ini. Tinggal dua lagi — jangan sampai progress bagus ini berhenti di tengah.
-                                    </p>
+                            <p class="text-base sm:text-lg md:text-xl font-medium leading-relaxed text-white/95">
+                                @if ($todayTotal > 0)
+                                    Kamu sudah menyelesaikan <span class="text-[#E9C9DA] font-bold">{{ $todayCompleted }} dari {{ $todayTotal }} tugas</span> hari ini.
+                                    @if ($todayTotal - $todayCompleted > 0)
+                                        Tinggal {{ $todayTotal - $todayCompleted }} lagi — jangan sampai progress bagus ini berhenti di tengah.
+                                    @else
+                                        Luar biasa! Semua tugas hari ini sudah selesai! 🎉
+                                    @endif
+                                @else
+                                    Belum ada tugas untuk hari ini. Mulai tambahkan tugas baru untuk hari yang produktif!
+                                @endif
+                            </p>
                                 </div>
 
                                 <div>
@@ -357,10 +380,10 @@
                     <section class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
                         @php
                             $stats = [
-                                ['label' => "Today's Tasks", 'value' => '6', 'icon' => 'fa-regular fa-circle-check', 'description' => '4 completed'],
-                                ['label' => 'Study Hours', 'value' => '3.5h', 'icon' => 'fa-regular fa-clock', 'description' => '+30 min from yesterday'],
-                                ['label' => 'Completed', 'value' => '24', 'icon' => 'fa-solid fa-chart-line', 'description' => 'This month'],
-                                ['label' => 'Study Streak', 'value' => '7', 'icon' => 'fa-solid fa-fire text-amber-500', 'description' => 'days in a row'],
+                                ['label' => "Today's Tasks", 'value' => (string) $todayTotal, 'icon' => 'fa-regular fa-circle-check', 'description' => "$todayCompleted completed"],
+                                ['label' => 'Study Hours', 'value' => $totalStudyHours . 'h', 'icon' => 'fa-regular fa-clock', 'description' => "$todayStudyMinutes min today"],
+                                ['label' => 'Completed', 'value' => (string) $totalCompleted, 'icon' => 'fa-solid fa-chart-line', 'description' => 'All time'],
+                                ['label' => 'Study Streak', 'value' => (string) $streak, 'icon' => 'fa-solid fa-fire text-amber-500', 'description' => 'days in a row'],
                             ];
                         @endphp
 
@@ -380,7 +403,124 @@
                         @endforeach
                     </section>
 
-                    {{-- Schedule + Progress --}}
+                    {{-- Study Session Timer --}}
+                    <section class="bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow">
+                        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="flex items-center gap-4">
+                                <div id="study-timer-icon" class="w-14 h-14 rounded-2xl bg-[#F4E7EF] text-[#5B1744] flex items-center justify-center text-xl shrink-0">
+                                    <i class="fa-solid fa-book-open"></i>
+                                </div>
+                                <div>
+                                    <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">STUDY SESSION</p>
+                                    <div id="study-timer-display" class="text-3xl font-bold text-[#5B1744] font-mono tabular-nums mt-1">00:00:00</div>
+                                    <p id="study-timer-status" class="text-xs text-gray-400 mt-0.5">Ready to study</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center gap-2">
+                                <div id="study-session-controls">
+                                    <button onclick="startStudySession()" class="flex items-center gap-2 px-5 py-3 rounded-full bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-semibold shadow-md shadow-[#5B1744]/20 transition">
+                                        <i class="fa-solid fa-play text-[10px]"></i>
+                                        <span>Start Session</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {{-- Tasks + Priority --}}
+                    <section id="tasks" class="grid md:grid-cols-12 gap-5">
+
+                        {{-- Tasks List --}}
+                        <div class="md:col-span-7 bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow">
+                            <div class="flex justify-between items-center mb-5">
+                                <div>
+                                    <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">TODAY'S TASKS</p>
+                                    <h2 class="text-lg font-bold text-gray-900 mt-0.5">My Tasks</h2>
+                                </div>
+                                <button onclick="openTaskModal()" class="text-xs font-semibold text-[#5B1744] hover:underline">+ Add Task</button>
+                            </div>
+
+                            <div id="task-list" class="space-y-2">
+                                @forelse ($todayTasks as $task)
+                                    <div class="task-item flex items-center gap-3 p-3.5 rounded-2xl hover:bg-[#FAF6F0]/60 transition" data-task-id="{{ $task->id }}">
+                                        <button onclick="toggleTask({{ $task->id }})" class="w-5 h-5 rounded-full border-2 {{ $task->status === 'completed' ? 'bg-[#5B1744] border-[#5B1744]' : 'border-gray-300' }} flex items-center justify-center shrink-0 transition">
+                                            @if ($task->status === 'completed')
+                                                <i class="fa-solid fa-check text-[8px] text-white"></i>
+                                            @endif
+                                        </button>
+                                        <div class="flex-1 min-w-0">
+                                            <p class="font-semibold text-xs text-gray-900 {{ $task->status === 'completed' ? 'line-through text-gray-400' : '' }}">{{ $task->title }}</p>
+                                            <p class="text-[11px] text-gray-400 mt-0.5">{{ ucfirst($task->category) }} · {{ $task->due_date->format('d M') }}</p>
+                                        </div>
+                                        <span class="text-[10px] px-2.5 py-1 rounded-full shrink-0 {{ $task->priority === 'high' ? 'bg-red-50 text-red-600' : ($task->priority === 'medium' ? 'bg-amber-50 text-amber-600' : 'bg-gray-50 text-gray-500') }}">
+                                            {{ ucfirst($task->priority) }}
+                                        </span>
+                                        <button onclick="deleteTask({{ $task->id }})" class="text-gray-400 hover:text-red-500 transition shrink-0">
+                                            <i class="fa-solid fa-trash text-[10px]"></i>
+                                        </button>
+                                    </div>
+                                @empty
+                                    <div class="text-center py-8 text-gray-400">
+                                        <i class="fa-regular fa-circle-check text-2xl mb-2"></i>
+                                        <p class="text-xs">Belum ada tugas hari ini.</p>
+                                        <button onclick="openTaskModal()" class="mt-2 text-xs text-[#5B1744] font-semibold hover:underline">Tambah tugas baru</button>
+                                    </div>
+                                @endforelse
+                            </div>
+                        </div>
+
+                        {{-- Priority Focus --}}
+                        <div class="md:col-span-5 bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow card-hover flex flex-col justify-between">
+                            <div>
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">
+                                            PRIORITY FOCUS
+                                        </p>
+                                        @php
+                                            $priorityTask = $todayTasks->where('status', 'pending')->sortBy('priority')->first();
+                                        @endphp
+                                        @if ($priorityTask)
+                                            <h3 class="text-lg font-bold text-gray-900 mt-2">
+                                                {{ $priorityTask->title }}
+                                            </h3>
+                                        @else
+                                            <h3 class="text-lg font-bold text-gray-900 mt-2">
+                                                No pending tasks
+                                            </h3>
+                                        @endif
+                                    </div>
+                                    <div class="w-8 h-8 rounded-xl bg-[#F4E7EF] text-[#5B1744] flex items-center justify-center font-bold text-xs">
+                                        !
+                                    </div>
+                                </div>
+
+                                @if ($priorityTask)
+                                    <p class="text-xs text-gray-500 mt-3 leading-relaxed">
+                                        {{ $priorityTask->description ?? 'Deadline hari ini. Fokuskan satu sesi belajar khusus untuk menyelesaikan tugas ini.' }}
+                                    </p>
+                                @else
+                                    <p class="text-xs text-gray-500 mt-3 leading-relaxed">
+                                        Semua tugas sudah selesai! Kamu hebat hari ini.
+                                    </p>
+                                @endif
+                            </div>
+
+                            <div class="mt-6 pt-4 border-t border-gray-50">
+                                <div class="flex justify-between text-xs mb-1.5">
+                                    <span class="text-gray-400 font-medium">Progress</span>
+                                    <span class="font-bold text-[#5B1744]">{{ $completionPercentage }}%</span>
+                                </div>
+                                <div class="h-2 bg-[#F4E7EF] rounded-full overflow-hidden">
+                                    <div class="h-full bg-[#5B1744] rounded-full" style="width: {{ $completionPercentage }}%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </section>
+
+                    {{-- Schedule + Progress Ring --}}
                     <section class="grid md:grid-cols-12 gap-5">
 
                         {{-- Schedule --}}
@@ -390,35 +530,40 @@
                                     <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">TODAY</p>
                                     <h2 class="text-lg font-bold text-gray-900 mt-0.5">Your schedule</h2>
                                 </div>
-                                <a href="#" class="text-xs font-semibold text-[#5B1744] hover:underline">View calendar →</a>
+                                <button onclick="openScheduleModal()" class="text-xs font-semibold text-[#5B1744] hover:underline">+ Add Schedule</button>
                             </div>
 
-                            <div class="space-y-2">
-                                @php
-                                    $schedule = [
-                                        ['time' => '09:00', 'title' => 'Review Database', 'subject' => 'Database Systems · 1h 30m', 'status' => 'Done', 'line' => 'bg-[#5B1744]', 'statusClass' => 'bg-green-50 text-green-600', 'active' => false],
-                                        ['time' => '13:00', 'title' => 'Network Assignment', 'subject' => 'Networking · 1h 30m', 'status' => 'Next', 'line' => 'bg-amber-500', 'statusClass' => 'bg-amber-50 text-amber-600 font-bold', 'active' => true],
-                                        ['time' => '19:00', 'title' => 'Study Mathematics', 'subject' => 'Mathematics · 1h', 'status' => null, 'line' => 'bg-gray-200', 'statusClass' => '', 'active' => false],
-                                    ];
-                                @endphp
-
-                                @foreach ($schedule as $item)
-                                    <div class="flex items-center gap-3 p-3.5 rounded-2xl {{ $item['active'] ? 'bg-[#FAF6F0]' : 'hover:bg-[#FAF6F0]/60' }} transition">
+                            <div class="space-y-2" id="schedule-list">
+                                @forelse ($todaySchedules as $item)
+                                    @php
+                                        $statusColors = [
+                                            'completed' => ['bg-green-50 text-green-600', 'bg-[#5B1744]'],
+                                            'active' => ['bg-amber-50 text-amber-600 font-bold', 'bg-amber-500'],
+                                            'pending' => ['bg-gray-50 text-gray-500', 'bg-gray-200'],
+                                        ];
+                                        [$statusClass, $lineColor] = $statusColors[$item->status] ?? $statusColors['pending'];
+                                        $isActive = $item->status === 'active';
+                                    @endphp
+                                    <div class="flex items-center gap-3 p-3.5 rounded-2xl {{ $isActive ? 'bg-[#FAF6F0]' : 'hover:bg-[#FAF6F0]/60' }} transition" data-schedule-id="{{ $item->id }}">
                                         <div class="w-12 text-xs font-bold text-gray-500 text-center shrink-0">
-                                            {{ $item['time'] }}
+                                            {{ $item->start_time->format('H:i') }}
                                         </div>
-                                        <div class="w-1 h-8 rounded-full {{ $item['line'] }} shrink-0"></div>
+                                        <div class="w-1 h-8 rounded-full {{ $lineColor }} shrink-0"></div>
                                         <div class="flex-1 min-w-0">
-                                            <p class="font-semibold text-xs text-gray-900 truncate">{{ $item['title'] }}</p>
-                                            <p class="text-[11px] text-gray-400 truncate mt-0.5">{{ $item['subject'] }}</p>
+                                            <p class="font-semibold text-xs text-gray-900 truncate">{{ $item->title }}</p>
+                                            <p class="text-[11px] text-gray-400 truncate mt-0.5">{{ $item->subject ?? $item->start_time->format('H:i') . ' - ' . $item->end_time->format('H:i') }}</p>
                                         </div>
-                                        @if ($item['status'])
-                                            <span class="text-[10px] px-2.5 py-1 rounded-full {{ $item['statusClass'] }} shrink-0">
-                                                {{ $item['status'] }}
-                                            </span>
-                                        @endif
+                                        <span class="text-[10px] px-2.5 py-1 rounded-full {{ $statusClass }} shrink-0">
+                                            {{ ucfirst($item->status) }}
+                                        </span>
                                     </div>
-                                @endforeach
+                                @empty
+                                    <div class="text-center py-8 text-gray-400">
+                                        <i class="fa-regular fa-calendar-check text-2xl mb-2"></i>
+                                        <p class="text-xs">Belum ada jadwal hari ini.</p>
+                                        <button onclick="openScheduleModal()" class="mt-2 text-xs text-[#5B1744] font-semibold hover:underline">Tambah jadwal baru</button>
+                                    </div>
+                                @endforelse
                             </div>
                         </div>
 
@@ -429,13 +574,17 @@
                                 <h2 class="text-lg font-bold text-gray-900 mt-0.5">This week</h2>
                             </div>
 
+                            @php
+                                $dashOffset = 402 - (402 * $completionPercentage / 100);
+                            @endphp
+
                             <div class="relative w-36 h-36 mx-auto my-4">
                                 <svg class="w-full h-full progress-ring" viewBox="0 0 160 160">
                                     <circle cx="80" cy="80" r="64" fill="none" stroke="#F4E7EF" stroke-width="12"></circle>
-                                    <circle cx="80" cy="80" r="64" fill="none" stroke="#5B1744" stroke-width="12" stroke-linecap="round" stroke-dasharray="402" stroke-dashoffset="112"></circle>
+                                    <circle cx="80" cy="80" r="64" fill="none" stroke="#5B1744" stroke-width="12" stroke-linecap="round" stroke-dasharray="402" stroke-dashoffset="{{ $dashOffset }}"></circle>
                                 </svg>
                                 <div class="absolute inset-0 flex flex-col items-center justify-center">
-                                    <span class="text-2xl font-bold text-[#5B1744]">72%</span>
+                                    <span class="text-2xl font-bold text-[#5B1744]">{{ $completionPercentage }}%</span>
                                     <span class="text-[9px] text-gray-400 uppercase font-semibold">completed</span>
                                 </div>
                             </div>
@@ -443,11 +592,11 @@
                             <div class="grid grid-cols-2 gap-3">
                                 <div class="rounded-xl bg-[#FAF6F0] p-3 text-center">
                                     <p class="text-[10px] text-gray-400 font-medium">Tasks</p>
-                                    <p class="font-bold text-xs mt-0.5 text-gray-800">18 / 25</p>
+                                    <p class="font-bold text-xs mt-0.5 text-gray-800">{{ $totalCompleted }} / {{ $totalTasks }}</p>
                                 </div>
                                 <div class="rounded-xl bg-[#FAF6F0] p-3 text-center">
                                     <p class="text-[10px] text-gray-400 font-medium">Hours</p>
-                                    <p class="font-bold text-xs mt-0.5 text-gray-800">12.5h</p>
+                                    <p class="font-bold text-xs mt-0.5 text-gray-800">{{ $totalStudyHours }}h</p>
                                 </div>
                             </div>
                         </div>
@@ -456,6 +605,47 @@
 
                 </div>
             </div>
+
+            {{-- Google Integration Panel --}}
+            <div class="bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow">
+                <div class="flex items-center gap-3 mb-4">
+                    <div class="w-9 h-9 rounded-xl bg-[#F4E7EF] text-[#5B1744] flex items-center justify-center">
+                        <i class="fa-brands fa-google text-sm"></i>
+                    </div>
+                    <div>
+                        <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">INTEGRATIONS</p>
+                        <p class="text-xs font-semibold text-gray-900">Google Calendar & Tasks</p>
+                    </div>
+                </div>
+                <div class="flex flex-wrap gap-2">
+                    <a href="{{ route('google.calendar.redirect') }}" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-semibold transition shadow-xs">
+                        <i class="fa-brands fa-google text-[10px]"></i>
+                        Connect Google
+                    </a>
+                    <form method="POST" action="{{ route('google.calendar.sync') }}" class="inline">
+                        @csrf
+                        <button type="submit" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-50 transition">
+                            <i class="fa-solid fa-arrow-up-from-bracket text-[10px]"></i>
+                            Sync to Calendar
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ route('google.calendar.pull') }}" class="inline">
+                        @csrf
+                        <button type="submit" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-50 transition">
+                            <i class="fa-solid fa-arrow-down-to-bracket text-[10px]"></i>
+                            Import from Calendar
+                        </button>
+                    </form>
+                    <form method="POST" action="{{ route('google.tasks.sync') }}" class="inline">
+                        @csrf
+                        <button type="submit" class="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-50 transition">
+                            <i class="fa-solid fa-list-check text-[10px]"></i>
+                            Sync to Google Tasks
+                        </button>
+                    </form>
+                </div>
+            </div>
+
         </main>
 
         {{-- MOBILE BOTTOM NAVIGATION (Hanya Muncul di Mobile/Layar < 768px) --}}
@@ -482,6 +672,55 @@
 
     </div>
 
+    {{-- ADD SCHEDULE MODAL --}}
+    <div id="scheduleModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div onclick="closeScheduleModal()" class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
+
+        <div class="relative w-full max-w-md bg-[#FAF6F0] rounded-3xl p-6 sm:p-7 shadow-2xl fade-up">
+            <div class="flex justify-between items-start mb-5">
+                <div>
+                    <p class="text-[9px] uppercase tracking-[.2em] text-[#5B1744] font-bold">NEW SCHEDULE</p>
+                    <h2 class="text-xl font-bold text-gray-900 mt-0.5">Add a schedule</h2>
+                </div>
+                <button onclick="closeScheduleModal()" class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            <form id="scheduleForm" class="space-y-4">
+                @csrf
+                <div>
+                    <label class="text-xs font-bold text-gray-600">Title</label>
+                    <input type="text" name="title" required placeholder="e.g. Review Database" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744] transition">
+                </div>
+
+                <div>
+                    <label class="text-xs font-bold text-gray-600">Subject</label>
+                    <input type="text" name="subject" placeholder="e.g. Database Systems" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744] transition">
+                </div>
+
+                <div class="grid grid-cols-3 gap-3">
+                    <div>
+                        <label class="text-xs font-bold text-gray-600">Date</label>
+                        <input type="date" name="date" required value="{{ date('Y-m-d') }}" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744]">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-600">Start</label>
+                        <input type="time" name="start_time" required class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744]">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-600">End</label>
+                        <input type="time" name="end_time" required class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744]">
+                    </div>
+                </div>
+
+                <button type="submit" class="w-full py-3 rounded-xl bg-[#5B1744] text-white text-xs font-bold hover:bg-[#481236] transition shadow-xs mt-2">
+                    Add to calendar
+                </button>
+            </form>
+        </div>
+    </div>
+
     {{-- ADD TASK MODAL --}}
     <div id="taskModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
         <div onclick="closeTaskModal()" class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
@@ -497,25 +736,36 @@
                 </button>
             </div>
 
-            <form action="#" method="POST" class="space-y-4">
+            <form id="taskForm" class="space-y-4">
                 @csrf
                 <div>
                     <label class="text-xs font-bold text-gray-600">Task name</label>
-                    <input type="text" name="title" placeholder="e.g. Finish networking assignment" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744] transition">
+                    <input type="text" name="title" required placeholder="e.g. Finish networking assignment" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744] transition">
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="text-xs font-bold text-gray-600">Deadline</label>
-                        <input type="date" name="deadline" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744]">
+                        <input type="date" name="due_date" required value="{{ date('Y-m-d') }}" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744]">
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-600">Category</label>
                         <select name="category" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744]">
-                            <option value="School">School</option>
-                            <option value="Project">Project</option>
-                            <option value="Study">Study</option>
-                            <option value="Personal">Personal</option>
+                            <option value="school">School</option>
+                            <option value="project">Project</option>
+                            <option value="study">Study</option>
+                            <option value="personal">Personal</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-2 gap-3">
+                    <div>
+                        <label class="text-xs font-bold text-gray-600">Priority</label>
+                        <select name="priority" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744]">
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                            <option value="low">Low</option>
                         </select>
                     </div>
                 </div>
@@ -629,6 +879,21 @@
         const menuButton = document.getElementById('menuButton');
         const taskModal = document.getElementById('taskModal');
         const profileModal = document.getElementById('profileModal');
+        const scheduleModal = document.getElementById('scheduleModal');
+
+        const API_BASE = '{{ url("/api") }}';
+
+        function getCsrfToken() {
+            const m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+            return m ? decodeURIComponent(m[1]) : '';
+        }
+        function apiFetch(url, opts = {}) {
+            const h = opts.headers || {};
+            h['X-XSRF-TOKEN'] = getCsrfToken();
+            h['Accept'] = h['Accept'] || 'application/json';
+            opts.headers = h; opts.credentials = opts.credentials || 'same-origin';
+            return fetch(url, opts);
+        }
 
         menuButton?.addEventListener('click', () => {
             sidebar.classList.remove('-translate-x-full');
@@ -654,10 +919,23 @@
             document.body.classList.remove('overflow-hidden');
         }
 
+        function openScheduleModal() {
+            scheduleModal.classList.remove('hidden');
+            scheduleModal.classList.add('flex');
+            document.body.classList.add('overflow-hidden');
+        }
+
+        function closeScheduleModal() {
+            scheduleModal.classList.add('hidden');
+            scheduleModal.classList.remove('flex');
+            document.body.classList.remove('overflow-hidden');
+        }
+
         document.addEventListener('keydown', (event) => {
             if (event.key === 'Escape') {
                 closeTaskModal();
                 closeProfileModal();
+                closeScheduleModal();
                 closeSidebar();
             }
         });
@@ -677,13 +955,254 @@
 
         function toggleDeleteConfirm() {
             const box = document.getElementById('deleteConfirm');
-
             box.classList.toggle('hidden');
-
             if (! box.classList.contains('hidden')) {
                 document.getElementById('delete-account-password')?.focus();
             }
         }
+
+        // === TASK CRUD ===
+
+        document.getElementById('taskForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const btn = form.querySelector('button[type="submit"]');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Adding...';
+
+            try {
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+
+                const res = await apiFetch(`${API_BASE}/tasks`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                });
+                const result = await res.json();
+
+                if (result.status === 'success') {
+                    closeTaskModal();
+                    form.reset();
+                    window.location.reload();
+                } else {
+                    alert(result.message || 'Gagal menambahkan tugas.');
+                }
+            } catch (err) {
+                alert('Terjadi kesalahan saat menambahkan tugas.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+
+        async function toggleTask(id) {
+            const item = document.querySelector(`[data-task-id="${id}"]`);
+            if (!item) return;
+
+            const btn = item.querySelector('button');
+            const titleEl = item.querySelector('.font-semibold');
+            const isCompleted = btn.classList.contains('bg-[#5B1744]');
+
+            try {
+                const res = await apiFetch(`${API_BASE}/tasks/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ status: isCompleted ? 'pending' : 'completed' }),
+                });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    window.location.reload();
+                }
+            } catch (err) {
+                alert('Gagal mengubah status tugas.');
+            }
+        }
+
+        async function deleteTask(id) {
+            if (!confirm('Hapus tugas ini?')) return;
+
+            try {
+                const res = await apiFetch(`${API_BASE}/tasks/${id}`, { method: 'DELETE' });
+                const result = await res.json();
+                if (result.status === 'success') {
+                    window.location.reload();
+                }
+            } catch (err) {
+                alert('Gagal menghapus tugas.');
+            }
+        }
+
+        // === SCHEDULE CRUD ===
+
+        document.getElementById('scheduleForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const form = e.target;
+            const btn = form.querySelector('button[type="submit"]');
+            const originalText = btn.textContent;
+            btn.disabled = true;
+            btn.textContent = 'Adding...';
+
+            try {
+                const formData = new FormData(form);
+                const data = Object.fromEntries(formData.entries());
+
+                const res = await apiFetch(`${API_BASE}/schedules`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                });
+                const result = await res.json();
+
+                if (result.status === 'success') {
+                    closeScheduleModal();
+                    form.reset();
+                    window.location.reload();
+                } else {
+                    alert(result.message || 'Gagal menambahkan jadwal.');
+                }
+            } catch (err) {
+                alert('Terjadi kesalahan saat menambahkan jadwal.');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = originalText;
+            }
+        });
+
+        // === STUDY SESSION TIMER ===
+
+        let studyTimerInterval = null;
+        let activeStudySession = null;
+        let elapsedAtPause = 0;
+
+        function formatStudyTime(totalSeconds) {
+            const h = Math.floor(totalSeconds / 3600);
+            const m = Math.floor((totalSeconds % 3600) / 60);
+            const s = totalSeconds % 60;
+            return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
+        }
+
+        function startStudyTimer(session) {
+            activeStudySession = session;
+            const baseSeconds = session.duration_seconds || 0;
+            const startTs = new Date(session.started_at).getTime();
+
+            function tick() {
+                const now = Date.now();
+                const elapsed = baseSeconds + Math.floor((now - startTs) / 1000);
+                document.getElementById('study-timer-display').textContent = formatStudyTime(elapsed);
+            }
+
+            tick();
+            studyTimerInterval = setInterval(tick, 1000);
+
+            document.getElementById('study-session-controls').innerHTML = `
+                <div class="flex items-center gap-2">
+                    <button onclick="pauseStudySession()" class="flex items-center gap-2 px-4 py-3 rounded-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold shadow-md transition">
+                        <i class="fa-solid fa-pause text-[10px]"></i>
+                        <span>Pause</span>
+                    </button>
+                    <button onclick="stopStudySession()" class="flex items-center gap-2 px-4 py-3 rounded-full bg-red-500 hover:bg-red-600 text-white text-xs font-semibold shadow-md transition">
+                        <i class="fa-solid fa-stop text-[10px]"></i>
+                        <span>Stop</span>
+                    </button>
+                </div>
+            `;
+            document.getElementById('study-timer-status').textContent = 'Studying: ' + session.title;
+            document.getElementById('study-timer-icon').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
+        }
+
+        async function startStudySession() {
+            const title = prompt('Judul sesi belajar:', 'Belajar hari ini');
+            if (!title) return;
+
+            try {
+                const res = await apiFetch(`${API_BASE}/study-sessions`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ title }),
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    startStudyTimer(data.session);
+                } else {
+                    alert(data.message || 'Gagal memulai sesi.');
+                }
+            } catch (err) {
+                alert('Gagal memulai sesi belajar.');
+            }
+        }
+
+        async function pauseStudySession() {
+            if (!activeStudySession) return;
+            try {
+                clearInterval(studyTimerInterval);
+                const res = await apiFetch(`${API_BASE}/study-sessions/${activeStudySession.id}/pause`, { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    activeStudySession = data.session;
+                    document.getElementById('study-timer-status').textContent = 'Paused';
+                    document.getElementById('study-timer-icon').innerHTML = '<i class="fa-solid fa-pause"></i>';
+                    document.getElementById('study-session-controls').innerHTML = `
+                        <div class="flex items-center gap-2">
+                            <button onclick="resumeStudySession()" class="flex items-center gap-2 px-4 py-3 rounded-full bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-semibold shadow-md transition">
+                                <i class="fa-solid fa-play text-[10px]"></i>
+                                <span>Resume</span>
+                            </button>
+                            <button onclick="stopStudySession()" class="flex items-center gap-2 px-4 py-3 rounded-full bg-red-500 hover:bg-red-600 text-white text-xs font-semibold shadow-md transition">
+                                <i class="fa-solid fa-stop text-[10px]"></i>
+                                <span>Stop</span>
+                            </button>
+                        </div>
+                    `;
+                }
+            } catch (err) {
+                alert('Gagal pause sesi.');
+            }
+        }
+
+        async function resumeStudySession() {
+            if (!activeStudySession) return;
+            try {
+                const res = await apiFetch(`${API_BASE}/study-sessions/${activeStudySession.id}/resume`, { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    startStudyTimer(data.session);
+                }
+            } catch (err) {
+                alert('Gagal resume sesi.');
+            }
+        }
+
+        async function stopStudySession() {
+            if (!activeStudySession) return;
+            if (!confirm('Akhiri sesi belajar ini?')) return;
+            try {
+                clearInterval(studyTimerInterval);
+                const res = await apiFetch(`${API_BASE}/study-sessions/${activeStudySession.id}/stop`, { method: 'POST' });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    const dur = data.session.formatted_duration || formatStudyTime(data.session.duration_seconds);
+                    alert('Sesi belajar selesai! Durasi: ' + dur);
+                    window.location.reload();
+                }
+            } catch (err) {
+                alert('Gagal menghentikan sesi.');
+            }
+        }
+
+        async function checkActiveStudySession() {
+            try {
+                const res = await apiFetch(`${API_BASE}/study-sessions/active`);
+                const data = await res.json();
+                if (data.session) {
+                    startStudyTimer(data.session);
+                }
+            } catch (err) {}
+        }
+
+        checkActiveStudySession();
     </script>
 
 </body>
