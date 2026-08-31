@@ -43,21 +43,15 @@
             }
         }
 
-        .typewriter-cursor {
-            display: inline-block;
-            width: 2px;
-            height: 1em;
-            background: #5B1744;
-            margin-left: 2px;
-            vertical-align: text-bottom;
-            animation: blink-cursor 0.8s step-end infinite;
+        .msg-fade {
+            animation: msgFade .5s cubic-bezier(0.22, 1, 0.36, 1) both;
         }
-        @keyframes blink-cursor {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0; }
+        @keyframes msgFade {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .ai-content p { margin: 0 0 0.5rem 0; line-height: 1.6; }
+        .ai-content p { margin: 0 0 0.85rem 0; line-height: 1.75; }
         .ai-content p:last-child { margin-bottom: 0; }
         .ai-content ul, .ai-content ol { margin: 0.5rem 0; padding-left: 1.25rem; }
         .ai-content ul { list-style-type: disc; }
@@ -87,7 +81,9 @@
         <aside id="sidebar" class="fixed md:sticky top-0 left-0 z-50 h-screen w-[260px] bg-[#5B1744] text-white flex flex-col -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0">
             <div class="p-6 pb-8">
                 <a href="/" class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-white text-[#5B1744] flex items-center justify-center font-bold text-lg shadow-sm">S</div>
+                    <div class="w-10 h-10 overflow-hidden">
+                        <img src="{{ asset('logo-chatgpt.png') }}" alt="Study Planner" class="w-full h-full object-contain">
+                    </div>
                     <div>
                         <div class="font-bold text-base tracking-tight">Study Planner</div>
                         <div class="text-[9px] text-white/50 tracking-[.2em] font-semibold">PLAN · STUDY · GROW</div>
@@ -173,7 +169,7 @@
                     <button type="button" id="menuButton" class="md:hidden w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-700 shadow-xs">
                         <i class="fa-solid fa-bars text-sm"></i>
                     </button>
-                    <span class="font-bold text-base text-[#5B1744]">AI Study Companion</span>
+                    <span class="font-bold text-base text-[#5B1744]">AI Study</span>
                 </div>
 
                 <div class="flex items-center gap-3">
@@ -191,8 +187,8 @@
                 <div class="messages-wrap flex-1 overflow-y-auto min-h-0" id="messages-wrap">
                     <div class="messages max-w-3xl mx-auto p-6 pb-36" id="messages">
                         <div class="text-center mt-20" id="welcome-state">
-                            <h2 class="text-3xl font-bold mb-3 text-gray-900">What's on the agenda today?</h2>
-                            <p class="text-gray-500">Study Planner AI siap membantu Anda.</p>
+                            <h2 class="text-3xl font-bold mb-3 text-gray-900">Mau belajar apa hari ini?</h2>
+                            <p class="text-gray-500">Ceritakan saja, kita kerjakan bareng-bareng sampai paham.</p>
                         </div>
                     </div>
                 </div>
@@ -258,9 +254,9 @@
             const c = document.getElementById('messages');
             c.innerHTML = `
                 <div class="text-center mt-20" id="welcome-state">
-                    <h2 class="text-3xl font-bold mb-3 text-gray-900">What's on the agenda today?</h2>
+                    <h2 class="text-3xl font-bold mb-3 text-gray-900">Mau belajar apa hari ini?</h2>
                     ${hintText ? `<p class="text-sm text-[#5B1744]/70 font-semibold mb-2"><i class="fa-solid fa-folder mr-1"></i>${hintText}</p>` : ''}
-                    <p class="text-gray-500">Study Planner AI siap membantu Anda.</p>
+                    <p class="text-gray-500">Ceritakan saja, kita kerjakan bareng-bareng sampai paham.</p>
                 </div>
             `;
         }
@@ -272,6 +268,7 @@
             requestAnimationFrame(jump);
             setTimeout(jump, 100);
             setTimeout(jump, 300);
+            setTimeout(jump, 500);
         }
 
         function showConfirmModal(id, type) {
@@ -549,7 +546,7 @@
             const c = document.getElementById('messages');
             const div = document.createElement('div');
             if (id !== null && id !== undefined) div.id = `message-${id}`;
-            div.className = `mb-4 ${role === 'user' ? 'text-right' : 'text-left'}`;
+            div.className = `msg-fade mb-4 ${role === 'user' ? 'text-right' : 'text-left'}`;
 
             let messageContent = content;
             let actionsHtml = '';
@@ -571,66 +568,12 @@
                 `;
             }
 
-            if (role === 'assistant' && animate && messageContent) {
-                const bubble = document.createElement('div');
-                bubble.className = 'ai-content inline-block p-4 rounded-2xl bg-white border border-gray-100 shadow-sm text-sm text-left max-w-full break-words [overflow-wrap:anywhere]';
-                const cursor = document.createElement('span');
-                cursor.className = 'typewriter-cursor';
-                bubble.appendChild(cursor);
-                div.appendChild(bubble);
-                if (actionsHtml) {
-                    const actionsWrap = document.createElement('div');
-                    actionsWrap.innerHTML = actionsHtml;
-                    div.appendChild(actionsWrap);
-                }
-                c.appendChild(div);
-                scrollToBottom();
-                typewriterEffect(bubble, cursor, messageContent);
-            } else {
-                const rendered = role === 'assistant'
-                    ? `<div class="ai-content inline-block p-4 rounded-2xl bg-white border border-gray-100 shadow-sm text-sm text-left max-w-full break-words [overflow-wrap:anywhere]">${marked.parse(messageContent)}</div>`
-                    : `<div class="inline-block p-4 rounded-2xl bg-[#5B1744] text-white text-sm text-left max-w-full break-words [overflow-wrap:anywhere]">${messageContent}</div>`;
-                div.innerHTML = rendered + actionsHtml;
-                c.appendChild(div);
-                scrollToBottom();
-            }
-        }
-
-        function typewriterEffect(container, cursor, fullText, index = 0) {
-            const plainText = stripMarkdown(fullText);
-            const chunkSize = 3;
-            const delay = 18;
-            if (index < plainText.length) {
-                const end = Math.min(index + chunkSize, plainText.length);
-                const textNode = document.createTextNode(plainText.substring(index, end));
-                container.insertBefore(textNode, cursor);
-                scrollToBottom();
-                setTimeout(() => typewriterEffect(container, cursor, fullText, end), delay);
-            } else {
-                container.innerHTML = marked.parse(fullText);
-                scrollToBottom();
-            }
-        }
-
-        function stripMarkdown(md) {
-            return md
-                .replace(/^#{1,6}\s+/gm, '')
-                .replace(/\*\*(.+?)\*\*/g, '$1')
-                .replace(/\*(.+?)\*/g, '$1')
-                .replace(/__(.+?)__/g, '$1')
-                .replace(/_(.+?)_/g, '$1')
-                .replace(/~~(.+?)~~/g, '$1')
-                .replace(/`{3,}[\s\S]*?`{3,}/g, (m) => m.replace(/`{3,}\w*\n?/g, '').replace(/`{3,}/g, ''))
-                .replace(/`(.+?)`/g, '$1')
-                .replace(/^\s*[-*+]\s+/gm, '• ')
-                .replace(/^\s*\d+\.\s+/gm, (m) => m)
-                .replace(/^\s*>\s+/gm, '')
-                .replace(/!\[.*?\]\(.*?\)/g, '')
-                .replace(/\[(.+?)\]\(.*?\)/g, '$1')
-                .replace(/---+/g, '')
-                .replace(/\|/g, ' ')
-                .replace(/\n{3,}/g, '\n\n')
-                .trim();
+            const rendered = role === 'assistant'
+                ? `<div class="ai-content leading-relaxed inline-block p-5 rounded-2xl bg-white border border-gray-100 shadow-sm text-[15px] text-left max-w-full break-words [overflow-wrap:anywhere]">${marked.parse(messageContent)}</div>`
+                : `<div class="inline-block p-4 rounded-2xl bg-[#5B1744] text-white text-sm text-left max-w-full break-words [overflow-wrap:anywhere]">${messageContent}</div>`;
+            div.innerHTML = rendered + actionsHtml;
+            c.appendChild(div);
+            scrollToBottom();
         }
 
         function appendLoadingMessage() {

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\GoogleCalendarController;
+use App\Http\Controllers\PlannerController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -12,6 +13,12 @@ Route::get('/', function () {
 Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [ChatController::class, 'dashboard'])->name('dashboard');
     Route::get('/chat', [ChatController::class, 'index'])->name('chat');
+
+    Route::get('/tasks', [PlannerController::class, 'tasks'])->name('tasks');
+    Route::get('/schedule', [PlannerController::class, 'schedule'])->name('schedule');
+    Route::get('/progress', [PlannerController::class, 'progress'])->name('progress');
+    Route::get('/integrations', [PlannerController::class, 'integrations'])->name('integrations');
+
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 

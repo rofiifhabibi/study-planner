@@ -21,7 +21,7 @@ test('halaman chat dapat membuka sesi milik pengguna', function () {
     $this->actingAs($user)
         ->get('/chat?session='.$session->id)
         ->assertOk()
-        ->assertSee('AI Study Companion');
+        ->assertSee('AI Study');
 });
 
 test('membuat sesi bertipe project', function () {

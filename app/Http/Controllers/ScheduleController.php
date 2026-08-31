@@ -3,11 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Schedule;
+use App\Services\GoogleCalendarService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class ScheduleController extends Controller
 {
+    private function calendarService(): GoogleCalendarService
+    {
+        return app(GoogleCalendarService::class, ['user' => auth()->user()]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $date = $request->query('date', now()->format('Y-m-d'));
@@ -39,6 +45,8 @@ class ScheduleController extends Controller
             ...$validated,
         ]);
 
+        $this->calendarService()->syncSchedule($schedule);
+
         return response()->json([
             'status' => 'success',
             'schedule' => $schedule,
@@ -66,6 +74,8 @@ class ScheduleController extends Controller
 
         $schedule->update($validated);
 
+        $this->calendarService()->syncSchedule($schedule);
+
         return response()->json([
             'status' => 'success',
             'schedule' => $schedule->fresh(),
@@ -80,6 +90,8 @@ class ScheduleController extends Controller
                 'message' => 'Unauthorized.',
             ], 403);
         }
+
+        $this->calendarService()->deleteEvent($schedule);
 
         $schedule->delete();
 

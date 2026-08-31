@@ -19,7 +19,7 @@ class GoogleCalendarController extends Controller
     public function callback(Request $request): RedirectResponse
     {
         if ($request->has('error')) {
-            return redirect()->route('dashboard')
+            return redirect()->route('integrations')
                 ->with('error', 'Google authorization ditolak.');
         }
 
@@ -27,11 +27,11 @@ class GoogleCalendarController extends Controller
         $success = $service->handleCallback($request->input('code'));
 
         if ($success) {
-            return redirect()->route('dashboard')
+            return redirect()->route('integrations')
                 ->with('success', 'Berhasil terhubung ke Google Calendar & Tasks!');
         }
 
-        return redirect()->route('dashboard')
+        return redirect()->route('integrations')
             ->with('error', 'Gagal terhubung ke Google. Silakan coba lagi.');
     }
 
@@ -45,7 +45,7 @@ class GoogleCalendarController extends Controller
             $message .= ' Ada '.count($result['errors']).' error.';
         }
 
-        return redirect()->route('dashboard')->with('success', $message);
+        return redirect()->route('integrations')->with('success', $message);
     }
 
     public function pullCalendar(): RedirectResponse
@@ -58,7 +58,7 @@ class GoogleCalendarController extends Controller
             $message .= ' Ada '.count($result['errors']).' error.';
         }
 
-        return redirect()->route('dashboard')->with('success', $message);
+        return redirect()->route('integrations')->with('success', $message);
     }
 
     public function syncTasks(): RedirectResponse
@@ -71,7 +71,7 @@ class GoogleCalendarController extends Controller
             $message .= ' Ada '.count($result['errors']).' error.';
         }
 
-        return redirect()->route('dashboard')->with('success', $message);
+        return redirect()->route('integrations')->with('success', $message);
     }
 
     public function status(): JsonResponse

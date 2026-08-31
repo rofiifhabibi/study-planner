@@ -36,24 +36,6 @@
             filter: blur(70px);
         }
 
-        .float {
-            animation: float 5s ease-in-out infinite;
-        }
-
-        .float-delay {
-            animation: float 6s ease-in-out infinite 1s;
-        }
-
-        @keyframes float {
-            0%, 100% {
-                transform: translateY(0);
-            }
-
-            50% {
-                transform: translateY(-12px);
-            }
-        }
-
         .fade-up {
             animation: fadeUp .8s ease forwards;
         }
@@ -104,13 +86,10 @@
             <a href="/" class="flex items-center gap-3">
 
                 <div
-                    class="w-10 h-10 rounded-xl
-                    bg-[#5B1744]
-                    text-white
-                    flex items-center justify-center
-                    font-bold text-lg">
+                    class="w-10 h-10 overflow-hidden">
 
-                    S
+                    <img src="{{ asset('logo-chatgpt.png') }}" alt="Study Planner"
+                        class="w-full h-full object-contain">
                 </div>
 
                 <div>
@@ -165,26 +144,41 @@
 
             <div class="flex items-center gap-3">
 
-                <a
-                    href="/login"
-                    class="hidden sm:block px-5 py-2.5 text-sm font-semibold
-                    hover:text-[#5B1744] transition">
+                @auth
+                    <a
+                        href="{{ route('dashboard') }}"
+                        class="px-5 py-2.5 rounded-full
+                        bg-[#5B1744] text-white
+                        text-sm font-semibold
+                        shadow-lg shadow-[#5B1744]/20
+                        hover:shadow-xl
+                        hover:-translate-y-0.5
+                        transition">
 
-                    Login
-                </a>
+                        Go to Dashboard
+                    </a>
+                @else
+                    <a
+                        href="/login"
+                        class="hidden sm:block px-5 py-2.5 text-sm font-semibold
+                        hover:text-[#5B1744] transition">
 
-                <a
-                    href="/register"
-                    class="px-5 py-2.5 rounded-full
-                    bg-[#5B1744] text-white
-                    text-sm font-semibold
-                    shadow-lg shadow-[#5B1744]/20
-                    hover:shadow-xl
-                    hover:-translate-y-0.5
-                    transition">
+                        Login
+                    </a>
 
-                    Sign Up
-                </a>
+                    <a
+                        href="/register"
+                        class="px-5 py-2.5 rounded-full
+                        bg-[#5B1744] text-white
+                        text-sm font-semibold
+                        shadow-lg shadow-[#5B1744]/20
+                        hover:shadow-xl
+                        hover:-translate-y-0.5
+                        transition">
+
+                        Sign Up
+                    </a>
+                @endauth
 
             </div>
 
@@ -435,8 +429,7 @@
                     rounded-[32px]
                     border border-gray-100
                     shadow-[0_30px_80px_rgba(91,23,68,0.12)]
-                    p-5
-                    float">
+                    p-5">
 
 
                     <!-- TOP BAR -->
@@ -1272,15 +1265,9 @@
 
         <div class="flex items-center gap-3">
 
-            <div
-                class="w-8 h-8
-                rounded-lg
-                bg-[#5B1744]
-                text-white
-                flex items-center justify-center
-                font-bold text-sm">
-
-                S
+            <div class="w-7 h-7 overflow-hidden">
+                <img src="{{ asset('logo-chatgpt.png') }}" alt="Study Planner"
+                    class="w-full h-full object-contain">
             </div>
 
             <span class="font-semibold">
@@ -1307,12 +1294,21 @@
                 AI Assistant
             </a>
 
-            <a
-                href="/login"
-                class="hover:text-[#5B1744] transition">
+            @auth
+                <a
+                    href="{{ route('dashboard') }}"
+                    class="hover:text-[#5B1744] transition">
 
-                Login
-            </a>
+                    Dashboard
+                </a>
+            @else
+                <a
+                    href="/login"
+                    class="hover:text-[#5B1744] transition">
+
+                    Login
+                </a>
+            @endauth
 
         </div>
 

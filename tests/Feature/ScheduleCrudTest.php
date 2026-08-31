@@ -2,6 +2,7 @@
 
 use App\Models\Schedule;
 use App\Models\User;
+use App\Services\GoogleCalendarService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -64,4 +65,50 @@ it('validates required fields', function () {
         ->postJson('/api/schedules', [])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['title', 'date', 'start_time', 'end_time']);
+});
+
+it('auto syncs a schedule to google calendar on create', function () {
+    $user = User::factory()->create();
+    $mock = Mockery::mock(GoogleCalendarService::class);
+    $mock->shouldReceive('syncSchedule')->once();
+    app()->bind(GoogleCalendarService::class, fn () => $mock);
+
+    $this->actingAs($user)
+        ->postJson('/api/schedules', [
+            'title' => 'Review Database',
+            'date' => now()->format('Y-m-d'),
+            'start_time' => '09:00',
+            'end_time' => '10:30',
+        ])
+        ->assertCreated();
+});
+
+it('auto syncs a schedule to google calendar on update', function () {
+    $user = User::factory()->create();
+    $schedule = Schedule::factory()->create(['user_id' => $user->id, 'status' => 'pending']);
+    $mock = Mockery::mock(GoogleCalendarService::class);
+    $mock->shouldReceive('syncSchedule')->once();
+    app()->bind(GoogleCalendarService::class, fn () => $mock);
+
+    $this->actingAs($user)
+        ->putJson("/api/schedules/{$schedule->id}", ['status' => 'completed'])
+        ->assertOk()
+        ->assertJsonFragment(['status' => 'completed']);
+});
+
+it('deletes the google calendar event when a schedule is removed', function () {
+    $user = User::factory()->create();
+    $schedule = Schedule::factory()->create([
+        'user_id' => $user->id,
+        'google_event_id' => 'abc123',
+    ]);
+    $mock = Mockery::mock(GoogleCalendarService::class);
+    $mock->shouldReceive('deleteEvent')->once();
+    app()->bind(GoogleCalendarService::class, fn () => $mock);
+
+    $this->actingAs($user)
+        ->deleteJson("/api/schedules/{$schedule->id}")
+        ->assertOk();
+
+    $this->assertDatabaseMissing('schedules', ['id' => $schedule->id]);
 });

@@ -25,7 +25,7 @@ class GoogleCalendarService
         $this->client = new Client;
         $this->client->setClientId(config('services.google.client_id'));
         $this->client->setClientSecret(config('services.google.client_secret'));
-        $this->client->setRedirectUri(config('services.google.redirect'));
+        $this->client->setRedirectUri(route('google.calendar.callback'));
         $this->client->setScopes([
             GoogleCalendar::CALENDAR,
             GoogleCalendar::CALENDAR_EVENTS,
@@ -86,9 +86,7 @@ class GoogleCalendarService
             return ['synced' => 0, 'errors' => ['Not connected to Google Calendar']];
         }
 
-        $calendar = new GoogleCalendar($this->client);
         $schedules = Schedule::where('user_id', $this->user->id)
-            ->whereNull('google_event_id')
             ->whereDate('date', '>=', now()->subWeek())
             ->get();
 
@@ -97,21 +95,7 @@ class GoogleCalendarService
 
         foreach ($schedules as $schedule) {
             try {
-                $event = new Event([
-                    'summary' => $schedule->title,
-                    'description' => $schedule->subject,
-                    'start' => [
-                        'dateTime' => $schedule->date->format('Y-m-d').'T'.$schedule->start_time.':00',
-                        'timeZone' => config('app.timezone', 'Asia/Jakarta'),
-                    ],
-                    'end' => [
-                        'dateTime' => $schedule->date->format('Y-m-d').'T'.$schedule->end_time.':00',
-                        'timeZone' => config('app.timezone', 'Asia/Jakarta'),
-                    ],
-                ]);
-
-                $createdEvent = $calendar->events->insert('primary', $event);
-                $schedule->update(['google_event_id' => $createdEvent->getId()]);
+                $this->upsertEvent($schedule);
                 $synced++;
             } catch (\Exception $e) {
                 $errors[] = "Schedule '{$schedule->title}': ".$e->getMessage();
@@ -123,6 +107,87 @@ class GoogleCalendarService
         }
 
         return ['synced' => $synced, 'errors' => $errors];
+    }
+
+    public function syncSchedule(Schedule $schedule): bool
+    {
+        if (! $this->isConnected()) {
+            return false;
+        }
+
+        try {
+            $this->upsertEvent($schedule);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Google Calendar auto-sync error', [
+                'schedule_id' => $schedule->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    public function deleteEvent(Schedule $schedule): bool
+    {
+        if (! $this->isConnected() || empty($schedule->google_event_id)) {
+            return false;
+        }
+
+        try {
+            $calendar = new GoogleCalendar($this->client);
+            $calendar->events->delete('primary', $schedule->google_event_id);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Google Calendar event delete error', [
+                'schedule_id' => $schedule->id,
+                'event_id' => $schedule->google_event_id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    private function upsertEvent(Schedule $schedule): void
+    {
+        $calendar = new GoogleCalendar($this->client);
+
+        $event = new Event([
+            'summary' => $schedule->title,
+            'description' => $schedule->subject,
+            'start' => [
+                'dateTime' => $schedule->date->format('Y-m-d').'T'.$schedule->start_time->format('H:i').':00',
+                'timeZone' => $this->calendarTimezone(),
+            ],
+            'end' => [
+                'dateTime' => $schedule->date->format('Y-m-d').'T'.$schedule->end_time->format('H:i').':00',
+                'timeZone' => $this->calendarTimezone(),
+            ],
+            'reminders' => [
+                'useDefault' => false,
+                'overrides' => [
+                    ['method' => 'popup', 'minutes' => 60],
+                    ['method' => 'popup', 'minutes' => 10],
+                ],
+            ],
+        ]);
+
+        if (! empty($schedule->google_event_id)) {
+            $calendar->events->update('primary', $schedule->google_event_id, $event);
+
+            return;
+        }
+
+        $createdEvent = $calendar->events->insert('primary', $event);
+        $schedule->update(['google_event_id' => $createdEvent->getId()]);
+    }
+
+    private function calendarTimezone(): string
+    {
+        return config('services.google.calendar_timezone', 'Asia/Jakarta');
     }
 
     public function pullEventsFromCalendar(int $daysAhead = 30): array

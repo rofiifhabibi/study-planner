@@ -1,0 +1,61 @@
+version: '3.8'
+
+services:
+  mysql_db:
+    image: mysql:8.0
+    container_name: mysql_db
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root_password_123
+      MYSQL_DATABASE: n8n_db
+      MYSQL_USER: n8n_user
+      MYSQL_PASSWORD: n8n_password_123
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./init-db:/docker-entrypoint-initdb.d
+    networks:
+      - app_network
+
+  n8n:
+    image: docker.n8n.io/n8nio/n8n:latest
+    container_name: n8n_apps
+    restart: always
+    ports:
+      - "5678:5678"
+    environment:
+      - DB_TYPE=mysqldb
+      - DB_MYSQLDB_DATABASE=n8n_db
+      - DB_MYSQLDB_HOST=mysql_db
+      - DB_MYSQLDB_PORT=3306
+      - DB_MYSQLDB_USER=n8n_user
+      - DB_MYSQLDB_PASSWORD=n8n_password_123
+    volumes:
+      - n8n_data:/home/node/.n8n
+    depends_on:
+      - mysql_db
+    networks:
+      - app_network
+
+  laravel_app:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: laravel_app
+    restart: always
+    ports:
+      # Expose port ke host agar bisa dibaca oleh Nginx Host
+      - "127.0.0.1:8000:80"
+    volumes:
+      - .:/var/www/html
+    depends_on:
+      - mysql_db
+    networks:
+      - app_network
+
+volumes:
+  n8n_data:
+  mysql_data:
+
+networks:
+  app_network:
+    driver: bridge

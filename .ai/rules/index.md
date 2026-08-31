@@ -5,3 +5,4 @@ Before planning or editing, find the row whose globs match the file's path and r
 | Applies to | Rule file |
 | --- | --- |
 | composer.json | .ai/rules/general.md |
+| app/Services/GoogleCalendarService.php | .ai/rules/services.md |

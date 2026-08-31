@@ -44,14 +44,15 @@ return [
     'google' => [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
-        'redirect' => env('GOOGLE_REDIRECT_URI', '/auth/google/callback'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', rtrim((string) env('APP_URL'), '/').'/auth/google/callback'),
+        'calendar_timezone' => env('GOOGLE_CALENDAR_TIMEZONE', 'Asia/Jakarta'),
     ],
 
     'telegram' => [
         'client_id' => null,
         'client_secret' => env('TELEGRAM_BOT_TOKEN'),
         'bot' => env('TELEGRAM_BOT_NAME'),
-        'redirect' => env('TELEGRAM_REDIRECT_URI', '/auth/telegram/callback'),
+        'redirect' => env('TELEGRAM_REDIRECT_URI', rtrim((string) env('APP_URL'), '/').'/auth/telegram/callback'),
     ],
 
 ];
