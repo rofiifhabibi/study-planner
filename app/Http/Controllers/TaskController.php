@@ -3,11 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Models\Task;
+use App\Services\GoogleCalendarService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
 class TaskController extends Controller
 {
+    private function calendarService(): GoogleCalendarService
+    {
+        return app(GoogleCalendarService::class, ['user' => auth()->user()]);
+    }
+
     public function index(Request $request): JsonResponse
     {
         $tasks = Task::where('user_id', auth()->id())
@@ -36,6 +42,8 @@ class TaskController extends Controller
             ...$validated,
         ]);
 
+        $this->calendarService()->syncTask($task);
+
         return response()->json([
             'status' => 'success',
             'task' => $task,
@@ -62,6 +70,8 @@ class TaskController extends Controller
 
         $task->update($validated);
 
+        $this->calendarService()->syncTask($task);
+
         return response()->json([
             'status' => 'success',
             'task' => $task->fresh(),
@@ -76,6 +86,8 @@ class TaskController extends Controller
                 'message' => 'Unauthorized.',
             ], 403);
         }
+
+        $this->calendarService()->deleteTaskInGoogle($task);
 
         $task->delete();
 

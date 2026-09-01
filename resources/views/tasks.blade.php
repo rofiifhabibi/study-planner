@@ -64,7 +64,7 @@
                     </button>
                     <div class="flex-1 min-w-0">
                         <p class="font-semibold text-xs text-gray-900 {{ $task->status === 'completed' ? 'line-through text-gray-400' : '' }}">{{ $task->title }}</p>
-                        <p class="text-[11px] text-gray-400 mt-0.5">{{ ucfirst($task->category) }} · {{ $task->due_date->format('d M Y') }}</p>
+                        <p class="text-[11px] text-gray-400 mt-0.5">{{ ucfirst($task->category) }} · {{ $task->due_date ? $task->due_date->format('d M Y') : 'No deadline' }}</p>
                         @if ($task->description)
                             <p class="text-[11px] text-gray-500 mt-1 leading-relaxed">{{ $task->description }}</p>
                         @endif
@@ -147,6 +147,38 @@
         </div>
     </div>
 
+    {{-- DELETE TASK CONFIRM MODAL --}}
+    <div id="deleteTaskModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div onclick="closeDeleteTaskModal()" class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
+
+        <div class="relative w-full max-w-sm bg-[#FAF6F0] rounded-3xl p-6 sm:p-7 shadow-2xl fade-up">
+            <div class="flex justify-between items-start mb-4">
+                <div>
+                    <p class="text-[9px] uppercase tracking-[.2em] text-[#B91C1C] font-bold">DELETE TASK</p>
+                    <h2 class="text-xl font-bold text-gray-900 mt-0.5">Hapus tugas ini?</h2>
+                </div>
+                <button type="button" onclick="closeDeleteTaskModal()" class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-gray-500 leading-relaxed mb-5">
+                Tugas dan item di Google Tasks akan dihapus. Tindakan ini tidak bisa dibatalkan.
+            </p>
+
+            <div class="flex gap-3">
+                <button type="button" onclick="closeDeleteTaskModal()"
+                    class="flex-1 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 text-xs font-bold hover:bg-gray-50 transition">
+                    Batal
+                </button>
+                <button type="button" id="confirmDeleteTaskBtn" onclick="confirmDeleteTask()"
+                    class="flex-1 py-2.5 rounded-xl bg-[#B91C1C] text-white text-xs font-bold hover:bg-[#991B1B] transition shadow-xs">
+                    Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+
 @endsection
 
 @push('scripts')
@@ -221,16 +253,49 @@
         }
     }
 
-    async function deleteTask(id) {
-        if (!confirm('Hapus tugas ini?')) return;
+    const deleteTaskModal = document.getElementById('deleteTaskModal');
+    let pendingDeleteTaskId = null;
+
+    function deleteTask(id) {
+        pendingDeleteTaskId = id;
+        deleteTaskModal.classList.remove('hidden');
+        deleteTaskModal.classList.add('flex');
+        document.body.classList.add('overflow-hidden');
+    }
+
+    function closeDeleteTaskModal() {
+        pendingDeleteTaskId = null;
+        deleteTaskModal.classList.add('hidden');
+        deleteTaskModal.classList.remove('flex');
+        document.body.classList.remove('overflow-hidden');
+    }
+
+    async function confirmDeleteTask() {
+        const id = pendingDeleteTaskId;
+        if (id === null) return;
+
+        const btn = document.getElementById('confirmDeleteTaskBtn');
+        const originalText = btn.textContent;
+        btn.disabled = true;
+        btn.textContent = 'Menghapus...';
+
         try {
             const res = await apiFetch(`${API_BASE}/tasks/${id}`, { method: 'DELETE' });
-            const result = await res.json();
+            const result = await res.json().catch(() => ({ status: 'error', message: 'Hapus tugas gagal.' }));
             if (result.status === 'success') {
-                window.location.reload();
+                closeDeleteTaskModal();
+                showToast(result.message || 'Tugas berhasil dihapus.', 'success');
+                setTimeout(() => window.location.reload(), 600);
+                return;
             }
+            closeDeleteTaskModal();
+            showToast(result.message || 'Gagal menghapus tugas.', 'error');
         } catch (err) {
-            alert('Gagal menghapus tugas.');
+            closeDeleteTaskModal();
+            showToast('Gagal menghapus tugas.', 'error');
+        } finally {
+            btn.disabled = false;
+            btn.textContent = originalText;
         }
     }
 

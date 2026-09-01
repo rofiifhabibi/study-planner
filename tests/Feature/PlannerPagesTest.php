@@ -27,6 +27,16 @@ it('renders the tasks page with user tasks', function () {
         ->assertSee('My Tasks');
 });
 
+it('renders a task without a due date', function () {
+    $user = User::factory()->create();
+    Task::factory()->create(['user_id' => $user->id, 'due_date' => null]);
+
+    $this->actingAs($user)
+        ->get(route('tasks'))
+        ->assertOk()
+        ->assertSee('No deadline');
+});
+
 it('renders the schedule page with today schedules', function () {
     $user = User::factory()->create();
     Schedule::factory()->create(['user_id' => $user->id, 'date' => today()]);

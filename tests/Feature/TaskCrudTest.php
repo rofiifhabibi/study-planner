@@ -2,6 +2,7 @@
 
 use App\Models\Task;
 use App\Models\User;
+use App\Services\GoogleCalendarService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 uses(RefreshDatabase::class);
@@ -78,4 +79,50 @@ it('validates required fields', function () {
         ->postJson('/api/tasks', [])
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['title', 'due_date', 'category', 'priority']);
+});
+
+it('auto syncs a task to google tasks on create', function () {
+    $user = User::factory()->create();
+    $mock = Mockery::mock(GoogleCalendarService::class);
+    $mock->shouldReceive('syncTask')->once();
+    app()->bind(GoogleCalendarService::class, fn () => $mock);
+
+    $this->actingAs($user)
+        ->postJson('/api/tasks', [
+            'title' => 'Finish assignment',
+            'due_date' => now()->addDay()->format('Y-m-d'),
+            'category' => 'school',
+            'priority' => 'high',
+        ])
+        ->assertCreated();
+});
+
+it('auto syncs a task to google tasks on update', function () {
+    $user = User::factory()->create();
+    $task = Task::factory()->create(['user_id' => $user->id, 'status' => 'pending']);
+    $mock = Mockery::mock(GoogleCalendarService::class);
+    $mock->shouldReceive('syncTask')->once();
+    app()->bind(GoogleCalendarService::class, fn () => $mock);
+
+    $this->actingAs($user)
+        ->putJson("/api/tasks/{$task->id}", ['status' => 'completed'])
+        ->assertOk()
+        ->assertJsonFragment(['status' => 'completed']);
+});
+
+it('deletes the google task when a task is removed', function () {
+    $user = User::factory()->create();
+    $task = Task::factory()->create([
+        'user_id' => $user->id,
+        'google_task_id' => 'xyz789',
+    ]);
+    $mock = Mockery::mock(GoogleCalendarService::class);
+    $mock->shouldReceive('deleteTaskInGoogle')->once();
+    app()->bind(GoogleCalendarService::class, fn () => $mock);
+
+    $this->actingAs($user)
+        ->deleteJson("/api/tasks/{$task->id}")
+        ->assertOk();
+
+    $this->assertDatabaseMissing('tasks', ['id' => $task->id]);
 });

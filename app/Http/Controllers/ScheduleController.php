@@ -38,11 +38,17 @@ class ScheduleController extends Controller
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'color' => 'nullable|string|max:7',
+            'recurrence_frequency' => 'nullable|string|in:daily,weekly,monthly',
+            'recurrence_interval' => 'nullable|integer|min:1|max:52',
+            'recurrence_days' => 'nullable|string|max:50',
+            'recurrence_until' => 'nullable|date|after_or_equal:date',
+            'recurrence_count' => 'nullable|integer|min:1|max:365',
         ]);
 
         $schedule = Schedule::create([
             'user_id' => auth()->id(),
             ...$validated,
+            'recurrence_interval' => $validated['recurrence_interval'] ?? 1,
         ]);
 
         $this->calendarService()->syncSchedule($schedule);
@@ -70,7 +76,16 @@ class ScheduleController extends Controller
             'end_time' => 'sometimes|required|date_format:H:i|after:start_time',
             'status' => 'sometimes|required|in:pending,active,completed',
             'color' => 'nullable|string|max:7',
+            'recurrence_frequency' => 'nullable|string|in:daily,weekly,monthly',
+            'recurrence_interval' => 'nullable|integer|min:1|max:52',
+            'recurrence_days' => 'nullable|string|max:50',
+            'recurrence_until' => 'nullable|date|after_or_equal:date',
+            'recurrence_count' => 'nullable|integer|min:1|max:365',
         ]);
+
+        if (array_key_exists('recurrence_interval', $validated) && $validated['recurrence_interval'] === null) {
+            $validated['recurrence_interval'] = 1;
+        }
 
         $schedule->update($validated);
 

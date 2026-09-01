@@ -27,6 +27,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::post('/google/calendar/sync', [GoogleCalendarController::class, 'syncCalendar'])->name('google.calendar.sync');
     Route::post('/google/calendar/pull', [GoogleCalendarController::class, 'pullCalendar'])->name('google.calendar.pull');
     Route::post('/google/tasks/sync', [GoogleCalendarController::class, 'syncTasks'])->name('google.tasks.sync');
+    Route::post('/google/tasks/pull', [GoogleCalendarController::class, 'pullTasks'])->name('google.tasks.pull');
     Route::get('/google/status', [GoogleCalendarController::class, 'status'])->name('google.status');
 });
 

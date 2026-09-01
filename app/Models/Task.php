@@ -18,6 +18,7 @@ class Task extends Model
         'status',
         'category',
         'priority',
+        'google_task_id',
     ];
 
     protected $casts = [

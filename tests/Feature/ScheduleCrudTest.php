@@ -112,3 +112,46 @@ it('deletes the google calendar event when a schedule is removed', function () {
 
     $this->assertDatabaseMissing('schedules', ['id' => $schedule->id]);
 });
+
+it('can create a recurring schedule', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson('/api/schedules', [
+            'title' => 'Belajar Matematika',
+            'date' => now()->format('Y-m-d'),
+            'start_time' => '08:00',
+            'end_time' => '09:30',
+            'recurrence_frequency' => 'weekly',
+            'recurrence_interval' => 1,
+            'recurrence_days' => 'MO,WE,FR',
+            'recurrence_count' => 12,
+        ])
+        ->assertCreated()
+        ->assertJsonFragment(['recurrence_frequency' => 'weekly']);
+
+    $this->assertDatabaseHas('schedules', [
+        'user_id' => $user->id,
+        'title' => 'Belajar Matematika',
+        'recurrence_frequency' => 'weekly',
+        'recurrence_interval' => 1,
+        'recurrence_days' => 'MO,WE,FR',
+        'recurrence_count' => 12,
+    ]);
+});
+
+it('rejects an invalid recurrence frequency', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson('/api/schedules', [
+            'title' => 'Invalid Recurrence',
+            'date' => now()->format('Y-m-d'),
+            'start_time' => '08:00',
+            'end_time' => '09:00',
+            'recurrence_frequency' => 'yearly',
+        ])
+        ->assertUnprocessable()
+        ->assertJsonValidationErrors(['recurrence_frequency']);
+});
+

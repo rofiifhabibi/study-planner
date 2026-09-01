@@ -17,8 +17,9 @@
         
         <!-- Logo Header -->
         <div class="flex justify-center mb-6">
-            <div class="w-16 h-16 bg-[#4A1B36] rounded-full flex items-center justify-center text-white text-2xl font-bold">
-                S
+            <div class="w-16 h-16 bg-[#4A1B36] rounded-full flex items-center justify-center overflow-hidden">
+                <img src="{{ asset('logo-chatgpt.png') }}" alt="Study Planner"
+                    class="w-12 h-12 object-contain">
             </div>
         </div>
 

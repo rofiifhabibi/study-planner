@@ -37,7 +37,7 @@
                 Akun Google kamu sudah terhubung. Kamu bisa menyinkronkan jadwal ke Google Calendar, mengimpor event dari kalender, dan menyinkronkan tugas ke Google Tasks.
             </p>
 
-            <div class="grid sm:grid-cols-3 gap-3">
+            <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 <form method="POST" action="{{ route('google.calendar.sync') }}">
                     @csrf
                     <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-semibold transition shadow-xs">
@@ -59,6 +59,14 @@
                     <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-50 transition">
                         <i class="fa-solid fa-list-check text-[10px]"></i>
                         Sync to Google Tasks
+                    </button>
+                </form>
+
+                <form method="POST" action="{{ route('google.tasks.pull') }}">
+                    @csrf
+                    <button type="submit" class="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white border border-gray-200 text-gray-700 text-xs font-semibold hover:bg-gray-50 transition">
+                        <i class="fa-solid fa-arrow-down-to-bracket text-[10px]"></i>
+                        Import from Google Tasks
                     </button>
                 </form>
             </div>

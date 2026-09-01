@@ -46,6 +46,7 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI', rtrim((string) env('APP_URL'), '/').'/auth/google/callback'),
         'calendar_timezone' => env('GOOGLE_CALENDAR_TIMEZONE', 'Asia/Jakarta'),
+        'tasks_task_list' => env('GOOGLE_TASKS_TASK_LIST', 'MDYyODYwMTQ5Mzc0OTM1MDUzNzM6MDow'),
     ],
 
     'telegram' => [

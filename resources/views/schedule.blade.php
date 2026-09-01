@@ -153,6 +153,60 @@
                     </div>
                 </div>
 
+                {{-- Recurrence --}}
+                <div class="border-t border-gray-200 pt-4">
+                    <label class="text-xs font-bold text-gray-600">Ulangi (Repetitif)</label>
+                    <select name="recurrence_frequency" id="recurrenceFrequency" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744] transition">
+                        <option value="">Tidak berulang</option>
+                        <option value="daily">Setiap hari</option>
+                        <option value="weekly">Setiap minggu</option>
+                        <option value="monthly">Setiap bulan</option>
+                    </select>
+
+                    <div id="recurrenceOptions" class="hidden mt-3 space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="text-xs font-bold text-gray-600">Ulang setiap</label>
+                                <div class="flex items-center gap-2 mt-1.5">
+                                    <input type="number" name="recurrence_interval" id="recurrenceInterval" min="1" max="52" value="1" class="w-16 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744]">
+                                    <span class="text-xs text-gray-500" id="intervalUnit">hari</span>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-gray-600">Berakhir</label>
+                                <select id="recurrenceEndType" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744] transition">
+                                    <option value="never">Tidak pernah</option>
+                                    <option value="count">Setelah jumlah kali</option>
+                                    <option value="until">Sampai tanggal</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div id="recurrenceCountWrap" class="hidden">
+                            <label class="text-xs font-bold text-gray-600">Jumlah kali</label>
+                            <input type="number" name="recurrence_count" min="1" max="365" placeholder="e.g. 10" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744] transition">
+                        </div>
+
+                        <div id="recurrenceUntilWrap" class="hidden">
+                            <label class="text-xs font-bold text-gray-600">Sampai tanggal</label>
+                            <input type="date" name="recurrence_until" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744] transition">
+                        </div>
+
+                        <div id="recurrenceDaysWrap" class="hidden">
+                            <label class="text-xs font-bold text-gray-600">Hari</label>
+                            <input type="hidden" name="recurrence_days" id="recurrenceDays">
+                            <div class="flex flex-wrap gap-2 mt-1.5">
+                                @foreach (['MO' => 'Sen', 'TU' => 'Sel', 'WE' => 'Rab', 'TH' => 'Kam', 'FR' => 'Jum', 'SA' => 'Sab', 'SU' => 'Min'] as $code => $label)
+                                    <button type="button" data-day="{{ $code }}"
+                                        class="day-pill px-3.5 py-2 rounded-xl border border-gray-200 bg-white text-gray-600 text-xs font-bold hover:border-[#5B1744] transition">
+                                        {{ $label }}
+                                    </button>
+                                @endforeach
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
                 <button type="submit" class="w-full py-3 rounded-xl bg-[#5B1744] text-white text-xs font-bold hover:bg-[#481236] transition shadow-xs mt-2">
                     Add to calendar
                 </button>
@@ -209,6 +263,65 @@
         scheduleModal.classList.remove('flex');
         document.body.classList.remove('overflow-hidden');
     }
+
+    const recurrenceFrequency = document.getElementById('recurrenceFrequency');
+    const recurrenceOptions = document.getElementById('recurrenceOptions');
+    const recurrenceDaysWrap = document.getElementById('recurrenceDaysWrap');
+    const recurrenceCountWrap = document.getElementById('recurrenceCountWrap');
+    const recurrenceUntilWrap = document.getElementById('recurrenceUntilWrap');
+    const recurrenceInterval = document.getElementById('recurrenceInterval');
+    const intervalUnit = document.getElementById('intervalUnit');
+    const recurrenceEndType = document.getElementById('recurrenceEndType');
+    const recurrenceDaysInput = document.getElementById('recurrenceDays');
+    let selectedDays = [];
+
+    function updateRecurrenceUI() {
+        const freq = recurrenceFrequency.value;
+        recurrenceOptions.classList.toggle('hidden', !freq);
+
+        if (!freq) {
+            clearRecurrenceFields();
+            return;
+        }
+
+        recurrenceDaysWrap.classList.toggle('hidden', freq !== 'weekly');
+        intervalUnit.textContent = freq === 'daily' ? 'hari' : (freq === 'weekly' ? 'minggu' : 'bulan');
+
+        updateRecurrenceEndUI();
+    }
+
+    function updateRecurrenceEndUI() {
+        const type = recurrenceEndType.value;
+        recurrenceCountWrap.classList.toggle('hidden', type !== 'count');
+        recurrenceUntilWrap.classList.toggle('hidden', type !== 'until');
+    }
+
+    function clearRecurrenceFields() {
+        recurrenceInterval.value = 1;
+        recurrenceCountWrap.classList.add('hidden');
+        recurrenceUntilWrap.classList.add('hidden');
+        recurrenceDaysWrap.classList.add('hidden');
+        selectedDays = [];
+        document.querySelectorAll('.day-pill').forEach((b) => b.classList.remove('bg-[#5B1744]', 'text-white', 'border-[#5B1744]'));
+    }
+
+    document.querySelectorAll('.day-pill').forEach((btn) => {
+        btn.addEventListener('click', () => {
+            const day = btn.dataset.day;
+            const idx = selectedDays.indexOf(day);
+            if (idx >= 0) {
+                selectedDays.splice(idx, 1);
+                btn.classList.remove('bg-[#5B1744]', 'text-white', 'border-[#5B1744]');
+            } else {
+                selectedDays.push(day);
+                btn.classList.add('bg-[#5B1744]', 'text-white', 'border-[#5B1744]');
+            }
+            recurrenceDaysInput.value = selectedDays.join(',');
+        });
+    });
+
+    recurrenceFrequency.addEventListener('change', updateRecurrenceUI);
+    recurrenceEndType.addEventListener('change', updateRecurrenceEndUI);
 
     document.getElementById('scheduleForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();

@@ -175,6 +175,12 @@ class GoogleCalendarService
             ],
         ]);
 
+        $rule = $this->recurrenceRule($schedule);
+
+        if ($rule !== null) {
+            $event->setRecurrence([$rule]);
+        }
+
         if (! empty($schedule->google_event_id)) {
             $calendar->events->update('primary', $schedule->google_event_id, $event);
 
@@ -183,6 +189,43 @@ class GoogleCalendarService
 
         $createdEvent = $calendar->events->insert('primary', $event);
         $schedule->update(['google_event_id' => $createdEvent->getId()]);
+    }
+
+    private function recurrenceRule(Schedule $schedule): ?string
+    {
+        $frequency = strtolower((string) $schedule->recurrence_frequency);
+
+        if (! in_array($frequency, ['daily', 'weekly', 'monthly'], true)) {
+            return null;
+        }
+
+        $freqMap = [
+            'daily' => 'DAILY',
+            'weekly' => 'WEEKLY',
+            'monthly' => 'MONTHLY',
+        ];
+
+        $interval = max(1, (int) $schedule->recurrence_interval);
+        $rule = 'RRULE:FREQ='.$freqMap[$frequency].';INTERVAL='.$interval;
+
+        if ($frequency === 'weekly' && ! empty($schedule->recurrence_days)) {
+            $days = collect(explode(',', $schedule->recurrence_days))
+                ->map(fn ($day) => strtoupper(trim($day)))
+                ->filter()
+                ->implode(',');
+
+            if ($days !== '') {
+                $rule .= ';BYDAY='.$days;
+            }
+        }
+
+        if (! empty($schedule->recurrence_count)) {
+            $rule .= ';COUNT='.(int) $schedule->recurrence_count;
+        } elseif (! empty($schedule->recurrence_until)) {
+            $rule .= ';UNTIL='.$schedule->recurrence_until->format('Ymd').'T235959Z';
+        }
+
+        return $rule;
     }
 
     private function calendarTimezone(): string
@@ -282,41 +325,158 @@ class GoogleCalendarService
         }
     }
 
-    public function syncTasksToList(string $taskListId = 'default'): array
+    public function pullTasksFromGoogle(?string $taskListId = null): array
+    {
+        if (! $this->isConnected()) {
+            return ['imported' => 0, 'errors' => ['Not connected to Google Tasks']];
+        }
+
+        $taskListId = $taskListId ?? $this->taskListId();
+
+        try {
+            $tasksService = new GoogleTasks($this->client);
+            $googleTasks = $tasksService->tasks->listTasks($taskListId, ['maxResults' => 100]);
+
+            $imported = 0;
+            $errors = [];
+
+            foreach ($googleTasks->getItems() as $googleTask) {
+                $existing = Task::where('user_id', $this->user->id)
+                    ->where('google_task_id', $googleTask->getId())
+                    ->first();
+
+                if ($existing || ! $googleTask->getTitle()) {
+                    continue;
+                }
+
+                $dueDate = null;
+                $due = $googleTask->getDue();
+                if ($due) {
+                    $dueDate = Carbon::parse($due)->setTimezone($this->calendarTimezone())->format('Y-m-d');
+                }
+
+                Task::create([
+                    'user_id' => $this->user->id,
+                    'title' => $googleTask->getTitle(),
+                    'description' => $googleTask->getNotes(),
+                    'due_date' => $dueDate,
+                    'status' => $googleTask->getStatus() === 'completed' ? 'completed' : 'pending',
+                    'category' => 'personal',
+                    'priority' => 'medium',
+                    'google_task_id' => $googleTask->getId(),
+                ]);
+                $imported++;
+            }
+
+            return ['imported' => $imported, 'errors' => $errors];
+        } catch (\Exception $e) {
+            Log::error('Google Tasks pull error', ['error' => $e->getMessage()]);
+
+            return ['imported' => 0, 'errors' => [$e->getMessage()]];
+        }
+    }
+
+    public function syncTasksToList(?string $taskListId = null): array
     {
         if (! $this->isConnected()) {
             return ['synced' => 0, 'errors' => ['Not connected to Google Tasks']];
         }
 
+        $taskListId = $taskListId ?? $this->taskListId();
+
+        $tasks = Task::where('user_id', $this->user->id)
+            ->where('status', 'pending')
+            ->get();
+
+        $synced = 0;
+        $errors = [];
+
+        foreach ($tasks as $task) {
+            try {
+                if ($this->upsertTask($task, $taskListId)) {
+                    $synced++;
+                }
+            } catch (\Exception $e) {
+                $errors[] = "Task '{$task->title}': ".$e->getMessage();
+                Log::error('Google Tasks sync error', [
+                    'task_id' => $task->id,
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return ['synced' => $synced, 'errors' => $errors];
+    }
+
+    private function taskListId(): string
+    {
+        return (string) config('services.google.tasks_task_list', 'default');
+    }
+
+    public function syncTask(Task $task): bool
+    {
+        if (! $this->isConnected()) {
+            return false;
+        }
+
+        try {
+            $this->upsertTask($task);
+
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Google Tasks auto-sync error', [
+                'task_id' => $task->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return false;
+        }
+    }
+
+    public function deleteTaskInGoogle(Task $task): bool
+    {
+        if (! $this->isConnected() || empty($task->google_task_id)) {
+            return false;
+        }
+
         try {
             $tasksService = new GoogleTasks($this->client);
-            $tasks = Task::where('user_id', $this->user->id)
-                ->where('status', 'pending')
-                ->get();
+            $tasksService->tasks->delete($this->taskListId(), $task->google_task_id);
 
-            $synced = 0;
-            $errors = [];
-
-            foreach ($tasks as $task) {
-                try {
-                    $googleTask = new GoogleTasks\Task([
-                        'title' => $task->title,
-                        'notes' => $task->description,
-                        'due' => $task->due_date->endOfDay()->toRfc3339String(),
-                    ]);
-
-                    $tasksService->tasks->insert($taskListId, $googleTask);
-                    $synced++;
-                } catch (\Exception $e) {
-                    $errors[] = "Task '{$task->title}': ".$e->getMessage();
-                }
-            }
-
-            return ['synced' => $synced, 'errors' => $errors];
+            return true;
         } catch (\Exception $e) {
-            Log::error('Google Tasks sync error', ['error' => $e->getMessage()]);
+            Log::error('Google Tasks delete error', [
+                'task_id' => $task->id,
+                'google_task_id' => $task->google_task_id,
+                'error' => $e->getMessage(),
+            ]);
 
-            return ['synced' => 0, 'errors' => [$e->getMessage()]];
+            return false;
         }
+    }
+
+    private function upsertTask(Task $task, ?string $taskListId = null): void
+    {
+        $tasksService = new GoogleTasks($this->client);
+        $taskListId = $taskListId ?? $this->taskListId();
+
+        $googleTask = new GoogleTasks\Task([
+            'title' => $task->title,
+            'notes' => $task->description,
+            'due' => $task->due_date
+                ->setTimezone($this->calendarTimezone())
+                ->endOfDay()
+                ->toRfc3339String(),
+            'status' => $task->status === 'completed' ? 'completed' : 'needsAction',
+        ]);
+
+        if (! empty($task->google_task_id)) {
+            $tasksService->tasks->update($taskListId, $task->google_task_id, $googleTask);
+
+            return;
+        }
+
+        $created = $tasksService->tasks->insert($taskListId, $googleTask);
+        $task->update(['google_task_id' => $created->getId()]);
     }
 }
