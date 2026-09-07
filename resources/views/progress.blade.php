@@ -190,8 +190,8 @@
         document.getElementById('study-timer-icon').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
     }
 
-    async function startStudySession() {
-        const title = prompt('Judul sesi belajar:', 'Belajar hari ini');
+    async function startStudySession(defaultTitle = 'Belajar hari ini') {
+        const title = prompt('Judul sesi belajar:', defaultTitle);
         if (!title) return;
 
         try {
@@ -279,6 +279,15 @@
         } catch (err) {}
     }
 
-    checkActiveStudySession();
+    checkActiveStudySession().then(() => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('start_task')) {
+            const taskTitle = urlParams.get('start_task');
+            if (!activeStudySession) {
+                setTimeout(() => startStudySession(taskTitle), 500);
+            }
+            window.history.replaceState({}, document.title, window.location.pathname);
+        }
+    });
 
 @endpush

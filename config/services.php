@@ -50,7 +50,7 @@ return [
     ],
 
     'telegram' => [
-        'client_id' => null,
+        'client_id' => env('TELEGRAM_CLIENT_ID'),
         'client_secret' => env('TELEGRAM_BOT_TOKEN'),
         'bot' => env('TELEGRAM_BOT_NAME'),
         'redirect' => env('TELEGRAM_REDIRECT_URI', rtrim((string) env('APP_URL'), '/').'/auth/telegram/callback'),

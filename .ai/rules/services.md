@@ -20,3 +20,6 @@ Every Google Calendar event gets reminders useDefault=false with popup 60 & 10 m
 
 ## Tasks due_date nullable + resolve service via container for testability
 tasks.due_date is now nullable because Google Tasks tasks may have no due date. pullTasksFromGoogle imports Google Tasks -> tasks table (deduped by google_task_id, never re-inserts). Also: controllers must resolve GoogleCalendarService via app()/service() helper (container), NOT `new GoogleCalendarService(...)`, so feature-test mocks actually take effect.
+
+## Google Calendar reminders use account defaults
+Events are created with 'reminders' => ['useDefault' => true] (no overrides). Using explicit popup overrides (useDefault false) made notifications appear only inside the Google Calendar web UI and NOT push to the phone. The account's default notification settings (which the user configured to alert on all devices) reached the phone reliably. Do not switch back to popup/email overrides without confirming the user accepts web-only notifications. buildReminders/withEmailReminders/impendingReminders/lessonEveningReminderMinutes are currently unused legacy helper methods; leave until user approves cleanup.

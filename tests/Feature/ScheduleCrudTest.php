@@ -140,6 +140,49 @@ it('can create a recurring schedule', function () {
     ]);
 });
 
+it('can create a lesson schedule with is_lesson flag', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson('/api/schedules', [
+            'title' => 'Fisika',
+            'subject' => 'Physics',
+            'date' => now()->format('Y-m-d'),
+            'start_time' => '07:00',
+            'end_time' => '08:30',
+            'is_lesson' => true,
+            'recurrence_frequency' => 'weekly',
+            'recurrence_days' => 'MO,TU,WE,TH,FR',
+        ])
+        ->assertCreated()
+        ->assertJsonFragment(['is_lesson' => true]);
+
+    $this->assertDatabaseHas('schedules', [
+        'user_id' => $user->id,
+        'title' => 'Fisika',
+        'is_lesson' => true,
+    ]);
+});
+
+it('defaults is_lesson to false when not provided', function () {
+    $user = User::factory()->create();
+
+    $this->actingAs($user)
+        ->postJson('/api/schedules', [
+            'title' => 'Meeting',
+            'date' => now()->format('Y-m-d'),
+            'start_time' => '10:00',
+            'end_time' => '11:00',
+        ])
+        ->assertCreated();
+
+    $this->assertDatabaseHas('schedules', [
+        'user_id' => $user->id,
+        'title' => 'Meeting',
+        'is_lesson' => false,
+    ]);
+});
+
 it('rejects an invalid recurrence frequency', function () {
     $user = User::factory()->create();
 

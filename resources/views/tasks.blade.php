@@ -64,7 +64,7 @@
                     </button>
                     <div class="flex-1 min-w-0">
                         <p class="font-semibold text-xs text-gray-900 {{ $task->status === 'completed' ? 'line-through text-gray-400' : '' }}">{{ $task->title }}</p>
-                        <p class="text-[11px] text-gray-400 mt-0.5">{{ ucfirst($task->category) }} · {{ $task->due_date ? $task->due_date->format('d M Y') : 'No deadline' }}</p>
+                        <p class="text-[11px] text-gray-400 mt-0.5">{{ ucfirst($task->category) }} · {{ $task->due_date ? $task->due_date->format('d M Y') . ($task->due_time ? ' at ' . \Carbon\Carbon::parse($task->due_time)->format('H:i') : '') : 'No deadline' }}</p>
                         @if ($task->description)
                             <p class="text-[11px] text-gray-500 mt-1 leading-relaxed">{{ $task->description }}</p>
                         @endif
@@ -109,9 +109,15 @@
                 </div>
 
                 <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-xs font-bold text-gray-600">Deadline</label>
-                        <input type="date" name="due_date" required value="{{ date('Y-m-d') }}" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744]">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="text-xs font-bold text-gray-600">Due Date</label>
+                            <input type="date" name="due_date" required value="{{ date('Y-m-d') }}" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744]">
+                        </div>
+                        <div>
+                            <label class="text-xs font-bold text-gray-600">Time</label>
+                            <input type="time" name="due_time" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744]">
+                        </div>
                     </div>
                     <div>
                         <label class="text-xs font-bold text-gray-600">Category</label>

@@ -5,28 +5,16 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Attributes\ObservedBy;
-use App\Observers\TaskObserver;
 
-#[ObservedBy(TaskObserver::class)]
-class Task extends Model
+class Note extends Model
 {
+    /** @use HasFactory<\Database\Factories\NoteFactory> */
     use HasFactory;
 
     protected $fillable = [
         'user_id',
         'title',
-        'description',
-        'due_date',
-        'due_time',
-        'status',
-        'category',
-        'priority',
-        'google_task_id',
-    ];
-
-    protected $casts = [
-        'due_date' => 'date',
+        'content',
     ];
 
     public function user(): BelongsTo

@@ -21,10 +21,11 @@ test('new users can register', function () {
     ]);
 
     $this->assertAuthenticated();
-    $response->assertRedirect(route('verification.notice', absolute: false));
+    $response->assertRedirect(route('dashboard', absolute: false));
 
-    Notification::assertSentTo(
-        User::where('email', 'test@example.com')->first(),
-        VerifyEmail::class
-    );
+    $user = User::where('email', 'test@example.com')->first();
+
+    expect($user->fresh()->hasVerifiedEmail())->toBeTrue();
+
+    Notification::assertNothingSent();
 });

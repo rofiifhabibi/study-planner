@@ -21,6 +21,7 @@ class ScheduleFactory extends Factory
             'end_time' => $end->format('H:i'),
             'status' => fake()->randomElement(['pending', 'active', 'completed']),
             'color' => fake()->randomElement(['#5B1744', '#2563EB', '#059669', '#D97706']),
+            'is_lesson' => false,
         ];
     }
 }

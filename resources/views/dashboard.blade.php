@@ -41,9 +41,9 @@
                 @if ($todayTotal > 0)
                     Kamu sudah menyelesaikan <span class="text-[#E9C9DA] font-bold">{{ $todayCompleted }} dari {{ $todayTotal }} tugas</span> hari ini.
                     @if ($todayTotal - $todayCompleted > 0)
-                        Tinggal {{ $todayTotal - $todayCompleted }} lagi — jangan sampai progress bagus ini berhenti di tengah.
+                        Semangat belajar hari ini! Jangan lupa cek daftar tugasmu.
                     @else
-                        Luar biasa! Semua tugas hari ini sudah selesai! 🎉
+                        Luar biasa! Semua tugas selesai dengan baik hari ini.
                     @endif
                 @else
                     Belum ada tugas untuk hari ini. Mulai tambahkan tugas baru untuk hari yang produktif!
@@ -96,7 +96,7 @@
                     <button onclick="window.location.href='{{ route('tasks') }}'" class="w-5 h-5 rounded-full border-2 {{ $task->status === 'completed' ? 'bg-[#5B1744] border-[#5B1744]' : 'border-gray-300' }} flex items-center justify-center shrink-0 transition"></button>
                     <div class="flex-1 min-w-0">
                         <p class="font-semibold text-xs text-gray-900 {{ $task->status === 'completed' ? 'line-through text-gray-400' : '' }}">{{ $task->title }}</p>
-                        <p class="text-[11px] text-gray-400 mt-0.5">{{ ucfirst($task->category) }} · {{ $task->due_date->format('d M') }}</p>
+                        <p class="text-[11px] text-gray-400 mt-0.5">{{ ucfirst($task->category) }} · {{ $task->due_date->format('d M') }}{{ $task->due_time ? ' ' . \Carbon\Carbon::parse($task->due_time)->format('H:i') : '' }}</p>
                     </div>
                     <span class="text-[10px] px-2.5 py-1 rounded-full shrink-0 {{ $task->priority === 'high' ? 'bg-red-50 text-red-600' : ($task->priority === 'medium' ? 'bg-amber-50 text-amber-600' : 'bg-gray-50 text-gray-500') }}">
                         {{ ucfirst($task->priority) }}
@@ -112,7 +112,80 @@
     </section>
 
     {{-- Today's Schedule + Progress --}}
-    <section class="grid md:grid-cols-12 gap-5">
+        <section class="grid md:grid-cols-12 gap-5">
+
+        {{-- JADWAL PELAJARAN SEKOLAH --}}
+        <div class="md:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-6 fade-up">
+            
+            {{-- HARI INI --}}
+            <div class="bg-white rounded-3xl border border-gray-100 p-6 soft-shadow">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-base">Pelajaran Hari Ini</h3>
+                        <p class="text-xs text-gray-500 mt-1">{{ \Carbon\Carbon::today()->translatedFormat('l, d M') }}</p>
+                    </div>
+                    <a href="{{ route('timetable.index') }}" class="text-xs text-[#5B1744] font-semibold hover:underline">Edit Jadwal</a>
+                </div>
+
+                @if(isset($todayTimetables) && count($todayTimetables) > 0)
+                    <div class="flex flex-col gap-3">
+                        @foreach($todayTimetables as $lesson)
+                            <div class="bg-[#FAF6F0]/60 hover:bg-[#FAF6F0] border border-[#E7C8DB]/50 rounded-xl px-4 py-3 flex items-center gap-3 transition">
+                                <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-[#5B1744] shadow-sm">
+                                    <i class="fa-solid fa-book-open text-xs"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-gray-800 text-xs">{{ $lesson->subject }}</p>
+                                    <p class="text-[10px] text-gray-500 font-medium mt-0.5">
+                                        {{ \Carbon\Carbon::parse($lesson->start_time)->format('H:i') }} 
+                                        {{ $lesson->end_time ? '- ' . \Carbon\Carbon::parse($lesson->end_time)->format('H:i') : '' }}
+                                    </p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center py-6 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
+                        <i class="fa-regular fa-face-smile text-gray-300 text-xl mb-2"></i>
+                        <p class="text-xs text-gray-400">Tidak ada jadwal pelajaran hari ini.</p>
+                    </div>
+                @endif
+            </div>
+
+            {{-- BESOK --}}
+            <div class="bg-white rounded-3xl border border-gray-100 p-6 soft-shadow">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <h3 class="font-bold text-gray-900 text-base">Pelajaran Besok</h3>
+                        <p class="text-xs text-gray-500 mt-1">{{ \Carbon\Carbon::tomorrow()->translatedFormat('l, d M') }}</p>
+                    </div>
+                </div>
+
+                @if(isset($tomorrowTimetables) && count($tomorrowTimetables) > 0)
+                    <div class="flex flex-col gap-3">
+                        @foreach($tomorrowTimetables as $lesson)
+                            <div class="bg-gray-50 border border-gray-100 rounded-xl px-4 py-3 flex items-center gap-3">
+                                <div class="w-8 h-8 rounded-full bg-white flex items-center justify-center text-gray-400 shadow-sm border border-gray-100">
+                                    <i class="fa-solid fa-book text-xs"></i>
+                                </div>
+                                <div>
+                                    <p class="font-bold text-gray-600 text-xs">{{ $lesson->subject }}</p>
+                                    <p class="text-[10px] text-gray-400 font-medium mt-0.5">
+                                        {{ \Carbon\Carbon::parse($lesson->start_time)->format('H:i') }} 
+                                        {{ $lesson->end_time ? '- ' . \Carbon\Carbon::parse($lesson->end_time)->format('H:i') : '' }}
+                                    </p>
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <div class="text-center py-6 border-2 border-dashed border-gray-100 rounded-2xl bg-gray-50/50">
+                        <i class="fa-regular fa-calendar text-gray-300 text-xl mb-2"></i>
+                        <p class="text-xs text-gray-400">Tidak ada jadwal pelajaran untuk besok.</p>
+                    </div>
+                @endif
+            </div>
+        </div>
 
         {{-- Schedule Summary --}}
         <div class="md:col-span-7 bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow fade-up">
@@ -158,30 +231,36 @@
             </div>
         </div>
 
-        {{-- Progress Summary --}}
+        {{-- Progress Summary (Study Tasks) --}}
         <div class="md:col-span-5 bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow flex flex-col justify-between fade-up">
             <div>
-                <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">YOUR PROGRESS</p>
-                <h2 class="text-lg font-bold text-gray-900 mt-0.5">This week</h2>
+                <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">STUDY SESSION</p>
+                <h2 class="text-lg font-bold text-gray-900 mt-0.5">Mulai Belajar</h2>
             </div>
 
-            @php
-                $dashOffset = 402 - (402 * $completionPercentage / 100);
-            @endphp
-
-            <div class="relative w-36 h-36 mx-auto my-4">
-                <svg class="w-full h-full progress-ring" viewBox="0 0 160 160">
-                    <circle cx="80" cy="80" r="64" fill="none" stroke="#F4E7EF" stroke-width="12"></circle>
-                    <circle cx="80" cy="80" r="64" fill="none" stroke="#5B1744" stroke-width="12" stroke-linecap="round" stroke-dasharray="402" stroke-dashoffset="{{ $dashOffset }}"></circle>
-                </svg>
-                <div class="absolute inset-0 flex flex-col items-center justify-center">
-                    <span class="text-2xl font-bold text-[#5B1744]">{{ $completionPercentage }}%</span>
-                    <span class="text-[9px] text-gray-400 uppercase font-semibold">completed</span>
-                </div>
+            <div class="space-y-3 mt-4 flex-1">
+                @forelse($todayTasks->take(3) as $task)
+                    <div class="bg-gray-50 border border-gray-100 rounded-xl p-3">
+                        <div class="flex items-start justify-between gap-2">
+                            <div>
+                                <p class="text-xs font-bold text-gray-800">{{ $task->title }}</p>
+                                <p class="text-[10px] text-gray-400 mt-0.5">Bertahap selesaikan tugas</p>
+                            </div>
+                            <a href="{{ route('progress') . '?start_task=' . urlencode($task->title) }}" class="px-3 py-1.5 bg-[#5B1744] text-white text-[10px] font-bold rounded-lg hover:bg-[#481236] transition shadow-sm whitespace-nowrap">
+                                <i class="fa-solid fa-play mr-1"></i> Start
+                            </a>
+                        </div>
+                    </div>
+                @empty
+                    <div class="text-center py-6">
+                        <i class="fa-solid fa-check-circle text-gray-300 text-3xl mb-2"></i>
+                        <p class="text-xs text-gray-400">Tidak ada tugas aktif.</p>
+                    </div>
+                @endforelse
             </div>
 
-            <a href="{{ route('progress') }}" class="w-full py-2.5 rounded-xl bg-[#5B1744] text-white text-xs font-semibold text-center hover:bg-[#481236] transition shadow-xs">
-                Lihat progress lengkap
+            <a href="{{ route('progress') }}" class="w-full mt-4 py-2.5 rounded-xl bg-[#FAF6F0] text-[#5B1744] border border-[#E7C8DB]/50 text-xs font-bold text-center hover:bg-[#F4E7EF] transition shadow-xs">
+                Ke Halaman Track Progress
             </a>
         </div>
 

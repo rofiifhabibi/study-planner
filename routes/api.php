@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\NoteController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\StudySessionController;
 use App\Http\Controllers\TaskController;
@@ -34,4 +35,18 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
     Route::post('/study-sessions/{session}/pause', [StudySessionController::class, 'pause']);
     Route::post('/study-sessions/{session}/resume', [StudySessionController::class, 'resume']);
     Route::delete('/study-sessions/{session}', [StudySessionController::class, 'destroy']);
+
+    Route::get('/notes', [NoteController::class, 'index']);
+    Route::post('/notes', [NoteController::class, 'store']);
+    Route::put('/notes/{note}', [NoteController::class, 'update']);
+    Route::delete('/notes/{note}', [NoteController::class, 'destroy']);
+});
+
+// AI Integrations (Callable from n8n)
+Route::middleware('api')->group(function () {
+    Route::get('/ai/tool/calendar', [\App\Http\Controllers\AiIntegrationController::class, 'getCalendar']);
+    Route::post('/ai/tool/calendar', [\App\Http\Controllers\AiIntegrationController::class, 'createCalendarEvent']);
+    Route::get('/ai/tool/tasks', [\App\Http\Controllers\AiIntegrationController::class, 'getTasks']);
+    Route::get('/ai/tool/timetable', [\App\Http\Controllers\AiIntegrationController::class, 'getTimetable']);
+    Route::post('/ai/tool/tasks', [\App\Http\Controllers\AiIntegrationController::class, 'createTask']);
 });

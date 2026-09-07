@@ -52,7 +52,21 @@ class ChatController extends Controller
         $progress = (new ProgressService($user->id))->getDashboardStats();
 
         $todaySchedules = Schedule::where('user_id', $user->id)
-            ->whereDate('date', today())
+            ->whereDate('date', '>=', today())
+            ->orderBy('date')
+            ->orderBy('start_time')
+            ->limit(5)
+            ->get();
+
+        $todayDayOfWeek = now()->dayOfWeek;
+        $todayTimetables = \App\Models\SchoolTimetable::where('user_id', $user->id)
+            ->where('day_of_week', $todayDayOfWeek)
+            ->orderBy('start_time')
+            ->get();
+
+        $tomorrowDayOfWeek = now()->addDay()->dayOfWeek;
+        $tomorrowTimetables = \App\Models\SchoolTimetable::where('user_id', $user->id)
+            ->where('day_of_week', $tomorrowDayOfWeek)
             ->orderBy('start_time')
             ->get();
 
@@ -62,6 +76,8 @@ class ChatController extends Controller
             'totalSessions' => $sessions->count(),
             'totalMessages' => $totalMessages,
             'todaySchedules' => $todaySchedules,
+            'todayTimetables' => $todayTimetables,
+            'tomorrowTimetables' => $tomorrowTimetables,
             ...$progress,
         ]);
     }

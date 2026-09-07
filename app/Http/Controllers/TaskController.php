@@ -33,6 +33,7 @@ class TaskController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'due_date' => 'required|date',
+            'due_time' => 'nullable|date_format:H:i',
             'category' => 'required|in:school,project,study,personal',
             'priority' => 'required|in:low,medium,high',
         ]);
@@ -63,6 +64,7 @@ class TaskController extends Controller
             'title' => 'sometimes|required|string|max:255',
             'description' => 'nullable|string|max:1000',
             'due_date' => 'sometimes|required|date',
+            'due_time' => 'nullable|date_format:H:i',
             'status' => 'sometimes|required|in:pending,completed',
             'category' => 'sometimes|required|in:school,project,study,personal',
             'priority' => 'sometimes|required|in:low,medium,high',
@@ -86,8 +88,6 @@ class TaskController extends Controller
                 'message' => 'Unauthorized.',
             ], 403);
         }
-
-        $this->calendarService()->deleteTaskInGoogle($task);
 
         $task->delete();
 

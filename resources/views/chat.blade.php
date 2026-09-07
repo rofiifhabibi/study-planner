@@ -546,7 +546,7 @@
             const c = document.getElementById('messages');
             const div = document.createElement('div');
             if (id !== null && id !== undefined) div.id = `message-${id}`;
-            div.className = `msg-fade mb-4 ${role === 'user' ? 'text-right' : 'text-left'}`;
+            div.className = `msg-fade mb-[72px] ${role === 'user' ? 'text-right' : 'text-left'}`;
 
             let messageContent = content;
             let actionsHtml = '';
@@ -580,7 +580,7 @@
             const c = document.getElementById('messages');
             const div = document.createElement('div');
             div.id = 'loading-message';
-            div.className = 'mb-4 text-left';
+            div.className = 'mb-[72px] text-left';
             div.innerHTML = `
                 <div class="inline-block p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
                     <div class="typing-dots flex items-center gap-0">

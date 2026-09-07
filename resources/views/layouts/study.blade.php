@@ -140,9 +140,19 @@
                             My Tasks
                         </a>
 
-                        <a href="{{ url('/schedule') }}" class="sidebar-item {{ ($activeNav ?? '') === 'schedule' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs">
+                                                <a href="{{ url('/schedule') }}" class="sidebar-item {{ ($activeNav ?? '') === 'schedule' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs">
                             <i class="fa-regular fa-calendar-check w-4 text-center"></i>
                             Schedule
+                        </a>
+
+                        <a href="{{ route('timetable.index') }}" class="sidebar-item {{ ($activeNav ?? '') === 'timetable' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs">
+                            <i class="fa-solid fa-graduation-cap w-4 text-center"></i>
+                            Jadwal Pelajaran
+                        </a>
+
+                        <a href="{{ url('/notes') }}" class="sidebar-item {{ ($activeNav ?? '') === 'notes' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs">
+                            <i class="fa-regular fa-note-sticky w-4 text-center"></i>
+                            Notes
                         </a>
 
                         <a href="{{ route('chat') }}" class="sidebar-item {{ ($activeNav ?? '') === 'chat' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs">
@@ -292,6 +302,10 @@
             <a href="{{ url('/schedule') }}" class="flex flex-col items-center gap-1 {{ ($activeNav ?? '') === 'schedule' ? 'text-[#5B1744]' : 'text-gray-400' }}">
                 <i class="fa-regular fa-calendar-check text-sm"></i>
                 <span class="text-[9px] font-medium">Schedule</span>
+            </a>
+            <a href="{{ url('/notes') }}" class="flex flex-col items-center gap-1 {{ ($activeNav ?? '') === 'notes' ? 'text-[#5B1744]' : 'text-gray-400' }}">
+                <i class="fa-regular fa-note-sticky text-sm"></i>
+                <span class="text-[9px] font-medium">Notes</span>
             </a>
             <a href="{{ url('/tasks') }}" class="flex flex-col items-center gap-1 {{ ($activeNav ?? '') === 'tasks' ? 'text-[#5B1744]' : 'text-gray-400' }}">
                 <i class="fa-regular fa-circle-check text-sm"></i>

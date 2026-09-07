@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Note;
 use App\Models\Schedule;
 use App\Models\StudySession;
 use App\Models\Task;
@@ -78,6 +79,19 @@ class PlannerController extends Controller
 
         return view('integrations', [
             'isConnected' => $service->isConnected(),
+        ]);
+    }
+
+    public function notes(): View
+    {
+        $user = auth()->user();
+
+        $notes = Note::where('user_id', $user->id)
+            ->orderBy('updated_at', 'desc')
+            ->get();
+
+        return view('notes', [
+            'notes' => $notes,
         ]);
     }
 }

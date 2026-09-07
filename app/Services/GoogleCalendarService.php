@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Schedule;
 use App\Models\Task;
+use App\Models\SchoolTimetable;
 use App\Models\User;
 use Carbon\Carbon;
 use Google\Client;
@@ -168,10 +169,7 @@ class GoogleCalendarService
             ],
             'reminders' => [
                 'useDefault' => false,
-                'overrides' => [
-                    ['method' => 'popup', 'minutes' => 60],
-                    ['method' => 'popup', 'minutes' => 10],
-                ],
+                'overrides' => $this->buildReminders($schedule),
             ],
         ]);
 
@@ -189,6 +187,73 @@ class GoogleCalendarService
 
         $createdEvent = $calendar->events->insert('primary', $event);
         $schedule->update(['google_event_id' => $createdEvent->getId()]);
+    }
+
+    private function buildReminders(Schedule $schedule): array
+    {
+        $start = $schedule->start_time;
+        $end = $schedule->end_time;
+
+        $eventStart = $schedule->date->copy()->setTimeFromTimeString($start?->format('H:i'));
+        $remainingMinutes = (int) now()->diffInMinutes($eventStart, false);
+
+        if ($remainingMinutes >= 0 && $remainingMinutes < 10) {
+            return $this->impendingReminders($remainingMinutes);
+        }
+
+        $desired = [];
+
+        if ($schedule->is_lesson && $start) {
+            $desired[] = $this->lessonEveningReminderMinutes($schedule, $start);
+        }
+
+        $durationMinutes = 0;
+        if ($start && $end && $end->gt($start)) {
+            $durationMinutes = $start->diffInMinutes($end);
+        }
+
+        $durationDesired = array_filter([60, 10], fn ($minutes) => $minutes <= $durationMinutes);
+
+        if (empty($durationDesired) && $durationMinutes > 0) {
+            $durationDesired = [$durationMinutes];
+        }
+
+        if (empty($durationDesired)) {
+            $durationDesired = [0];
+        }
+
+        $desired = array_merge($desired, array_values($durationDesired));
+
+        $desired = $this->withEmailReminders($desired);
+
+        return $desired;
+    }
+
+    private function impendingReminders(int $remainingMinutes): array
+    {
+        return $this->withEmailReminders([0]);
+    }
+
+    private function withEmailReminders(array $minutes): array
+    {
+        $minutes = array_values(array_unique(array_filter($minutes, fn ($m) => $m >= 0)));
+        sort($minutes);
+
+        $reminders = [];
+
+        foreach ($minutes as $minute) {
+            $reminders[] = ['method' => 'popup', 'minutes' => (int) $minute];
+            $reminders[] = ['method' => 'email', 'minutes' => (int) $minute];
+        }
+
+        return $reminders;
+    }
+
+    private function lessonEveningReminderMinutes(Schedule $schedule, Carbon $startTime): int
+    {
+        $eventStart = $schedule->date->copy()->setTimeFromTimeString($startTime->format('H:i'));
+
+        return (int) $eventStart->copy()->subDay()->setTime(20, 0)->diffInMinutes($eventStart);
     }
 
     private function recurrenceRule(Schedule $schedule): ?string
@@ -460,8 +525,11 @@ class GoogleCalendarService
         $tasksService = new GoogleTasks($this->client);
         $taskListId = $taskListId ?? $this->taskListId();
 
+        $priorityEmoji = ['high' => '🔴', 'medium' => '🟡', 'low' => '🟢'][$task->priority] ?? '';
+        $taskTitle = trim($priorityEmoji . ' ' . $task->title);
+
         $googleTask = new GoogleTasks\Task([
-            'title' => $task->title,
+            'title' => $taskTitle,
             'notes' => $task->description,
             'due' => $task->due_date
                 ->setTimezone($this->calendarTimezone())
@@ -471,6 +539,7 @@ class GoogleCalendarService
         ]);
 
         if (! empty($task->google_task_id)) {
+            $googleTask->setId($task->google_task_id);
             $tasksService->tasks->update($taskListId, $task->google_task_id, $googleTask);
 
             return;
@@ -478,5 +547,99 @@ class GoogleCalendarService
 
         $created = $tasksService->tasks->insert($taskListId, $googleTask);
         $task->update(['google_task_id' => $created->getId()]);
+    }
+
+    // === School Timetable ===
+
+    public function syncSchoolTimetable(SchoolTimetable $timetable): bool
+    {
+        if (! $this->isConnected()) {
+            return false;
+        }
+
+        try {
+            $this->upsertSchoolTimetable($timetable);
+            return true;
+        } catch (\Exception $e) {
+            Log::error('Google Calendar timetable sync error', [
+                'timetable_id' => $timetable->id,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    public function deleteSchoolTimetableEvent(SchoolTimetable $timetable): bool
+    {
+        if (! $this->isConnected() || empty($timetable->google_event_id)) {
+            return false;
+        }
+
+        try {
+            $calendar = new GoogleCalendar($this->client);
+            $calendar->events->delete('primary', $timetable->google_event_id);
+            return true;
+        } catch (\Exception $e) {
+            if ($e->getCode() == 404 || str_contains($e->getMessage(), 'Not Found')) {
+                return true;
+            }
+            Log::error('Google Calendar timetable delete error', [
+                'timetable_id' => $timetable->id,
+                'error' => $e->getMessage(),
+            ]);
+            return false;
+        }
+    }
+
+    private function upsertSchoolTimetable(SchoolTimetable $timetable): void
+    {
+        $calendar = new GoogleCalendar($this->client);
+
+        // Find the next occurrence of the day_of_week
+        // 1=Senin, 0/7=Minggu. Laravel Carbon dayOfWeek: 0 (Sunday) - 6 (Saturday).
+        // Our app: 1=Senin, 2=Selasa, 3=Rabu, 4=Kamis, 5=Jumat.
+        $dayMap = [
+            1 => 'MO',
+            2 => 'TU',
+            3 => 'WE',
+            4 => 'TH',
+            5 => 'FR',
+            6 => 'SA',
+            0 => 'SU'
+        ];
+        
+        $carbonDay = $timetable->day_of_week == 0 ? 0 : $timetable->day_of_week;
+        $dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+        $nextDate = now()->next($dayNames[$carbonDay]);
+        
+        $startTime = Carbon::parse($timetable->start_time);
+        $endTime = $timetable->end_time ? Carbon::parse($timetable->end_time) : $startTime->copy()->addHour();
+        
+        // Graphite / Grey color in Google Calendar
+        $colorId = '8';
+
+        $event = new Event([
+            'summary' => '[Pelajaran] ' . $timetable->subject,
+            'colorId' => $colorId,
+            'start' => [
+                'dateTime' => $nextDate->format('Y-m-d') . 'T' . $startTime->format('H:i') . ':00',
+                'timeZone' => $this->calendarTimezone(),
+            ],
+            'end' => [
+                'dateTime' => $nextDate->format('Y-m-d') . 'T' . $endTime->format('H:i') . ':00',
+                'timeZone' => $this->calendarTimezone(),
+            ],
+            'recurrence' => [
+                'RRULE:FREQ=WEEKLY;BYDAY=' . $dayMap[$timetable->day_of_week]
+            ],
+        ]);
+
+        if (! empty($timetable->google_event_id)) {
+            $calendar->events->update('primary', $timetable->google_event_id, $event);
+            return;
+        }
+
+        $createdEvent = $calendar->events->insert('primary', $event);
+        $timetable->update(['google_event_id' => $createdEvent->getId()]);
     }
 }

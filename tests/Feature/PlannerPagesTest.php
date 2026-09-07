@@ -1,5 +1,6 @@
 <?php
 
+use App\Models\Note;
 use App\Models\Schedule;
 use App\Models\StudySession;
 use App\Models\Task;
@@ -64,6 +65,17 @@ it('renders the integrations page', function () {
         ->get(route('integrations'))
         ->assertOk()
         ->assertSee('Integrations');
+});
+
+it('renders the notes page with user notes', function () {
+    $user = User::factory()->create();
+    Note::factory()->create(['user_id' => $user->id, 'title' => 'Ringkasan kimia']);
+
+    $this->actingAs($user)
+        ->get(route('notes'))
+        ->assertOk()
+        ->assertSee('Notes')
+        ->assertSee('Ringkasan kimia');
 });
 
 it('renders the logout and profile forms on the shared layout', function () {

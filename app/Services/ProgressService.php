@@ -17,15 +17,19 @@ class ProgressService
 
     public function getDashboardStats(): array
     {
-        $todayTasks = Task::where('user_id', $this->userId)
-            ->whereDate('due_date', today())
+        // Get active tasks (pending or in_progress) ordered by due date
+        $dashboardTasks = Task::where('user_id', $this->userId)
+            ->whereIn('status', ['pending', 'in_progress'])
+            ->orderBy('due_date', 'asc')
+            ->limit(5)
             ->get();
 
         $totalTasks = Task::where('user_id', $this->userId)->count();
         $totalCompleted = Task::where('user_id', $this->userId)->where('status', 'completed')->count();
 
-        $todayCompleted = $todayTasks->where('status', 'completed')->count();
-        $todayTotal = $todayTasks->count();
+        // Calculate today's stats explicitly
+        $todayTotal = Task::where('user_id', $this->userId)->whereDate('due_date', today())->count();
+        $todayCompleted = Task::where('user_id', $this->userId)->whereDate('due_date', today())->where('status', 'completed')->count();
 
         $totalStudySeconds = StudySession::where('user_id', $this->userId)
             ->where('status', 'completed')
@@ -39,7 +43,7 @@ class ProgressService
         $streak = $this->calculateStreak();
 
         return [
-            'todayTasks' => $todayTasks->sortBy('priority')->values(),
+            'todayTasks' => $dashboardTasks,
             'todayCompleted' => $todayCompleted,
             'todayTotal' => $todayTotal,
             'totalTasks' => $totalTasks,
@@ -53,39 +57,46 @@ class ProgressService
 
     private function calculateStreak(): int
     {
-        $dates = StudySession::where('user_id', $this->userId)
+        // Get dates from study sessions
+        $studyDates = StudySession::where('user_id', $this->userId)
             ->where('status', 'completed')
             ->whereNotNull('ended_at')
-            ->selectRaw('DATE(ended_at) as study_date')
-            ->groupBy('study_date')
-            ->orderBy('study_date', 'desc')
-            ->pluck('study_date')
-            ->map(fn ($d) => Carbon::parse($d));
+            ->pluck('ended_at')
+            ->map(fn ($d) => Carbon::parse($d)->startOfDay()->format('Y-m-d'));
 
-        if ($dates->isEmpty()) {
-            $dates = Task::where('user_id', $this->userId)
-                ->where('status', 'completed')
-                ->selectRaw('DATE(updated_at) as completed_date')
-                ->groupBy('completed_date')
-                ->orderBy('completed_date', 'desc')
-                ->pluck('completed_date')
-                ->map(fn ($d) => Carbon::parse($d));
-        }
+        // Get dates from completed tasks
+        $taskDates = Task::where('user_id', $this->userId)
+            ->where('status', 'completed')
+            ->pluck('updated_at')
+            ->map(fn ($d) => Carbon::parse($d)->startOfDay()->format('Y-m-d'));
+
+        $dates = $studyDates->merge($taskDates)->unique()->sortDesc()->values();
 
         if ($dates->isEmpty()) {
             return 0;
         }
 
         $streak = 0;
-        $current = Carbon::today();
+        $currentDate = Carbon::today();
+        
+        $firstDate = Carbon::parse($dates->first());
+        
+        // If the first activity is from yesterday, the streak is still active
+        if ($firstDate->isSameDay(Carbon::yesterday())) {
+            $currentDate = Carbon::yesterday();
+        } elseif ($firstDate->isBefore(Carbon::yesterday())) {
+            // No activity today or yesterday -> streak broken
+            return 0;
+        }
 
-        foreach ($dates as $date) {
-            if ($date->isSameDay($current)) {
+        foreach ($dates as $dateString) {
+            $date = Carbon::parse($dateString);
+            if ($date->isSameDay($currentDate)) {
                 $streak++;
-                $current->subDay();
-            } elseif ($date->isSameDay($current)) {
-                $streak++;
-                $current->subDay();
+                $currentDate->subDay();
+            } elseif ($date->isAfter($currentDate)) {
+                // skip future dates if any
+                continue;
             } else {
                 break;
             }

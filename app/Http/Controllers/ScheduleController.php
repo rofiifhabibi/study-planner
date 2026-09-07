@@ -16,12 +16,40 @@ class ScheduleController extends Controller
 
     public function index(Request $request): JsonResponse
     {
-        $date = $request->query('date', now()->format('Y-m-d'));
+        $start = $request->query('start');
+        $end = $request->query('end');
+        $date = $request->query('date');
 
-        $schedules = Schedule::where('user_id', auth()->id())
-            ->whereDate('date', $date)
-            ->orderBy('start_time')
-            ->get();
+        $query = Schedule::where('user_id', auth()->id());
+
+        if ($start && $end) {
+            $query->whereBetween('date', [
+                \Carbon\Carbon::parse($start)->format('Y-m-d'),
+                \Carbon\Carbon::parse($end)->format('Y-m-d')
+            ]);
+        } elseif ($date) {
+            $query->whereDate('date', $date);
+        } else {
+            $query->whereDate('date', now()->format('Y-m-d'));
+        }
+
+        $schedules = $query->orderBy('start_time')->get();
+
+        if ($start && $end) {
+            $events = $schedules->map(function ($schedule) {
+                return [
+                    'id' => $schedule->id,
+                    'title' => $schedule->title,
+                    'start' => $schedule->date->format('Y-m-d') . 'T' . $schedule->start_time->format('H:i:s'),
+                    'end' => $schedule->date->format('Y-m-d') . 'T' . $schedule->end_time->format('H:i:s'),
+                    'extendedProps' => [
+                        'status' => $schedule->status,
+                        'subject' => $schedule->subject,
+                    ]
+                ];
+            });
+            return response()->json($events);
+        }
 
         return response()->json([
             'status' => 'success',
@@ -38,6 +66,7 @@ class ScheduleController extends Controller
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
             'color' => 'nullable|string|max:7',
+            'is_lesson' => 'nullable|boolean',
             'recurrence_frequency' => 'nullable|string|in:daily,weekly,monthly',
             'recurrence_interval' => 'nullable|integer|min:1|max:52',
             'recurrence_days' => 'nullable|string|max:50',
@@ -76,6 +105,7 @@ class ScheduleController extends Controller
             'end_time' => 'sometimes|required|date_format:H:i|after:start_time',
             'status' => 'sometimes|required|in:pending,active,completed',
             'color' => 'nullable|string|max:7',
+            'is_lesson' => 'nullable|boolean',
             'recurrence_frequency' => 'nullable|string|in:daily,weekly,monthly',
             'recurrence_interval' => 'nullable|integer|min:1|max:52',
             'recurrence_days' => 'nullable|string|max:50',
