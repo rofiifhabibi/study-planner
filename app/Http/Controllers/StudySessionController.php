@@ -118,11 +118,23 @@ class StudySessionController extends Controller
 
     public function resume(StudySession $session): JsonResponse
     {
-        if ($session->user_id !== auth()->id() || $session->status !== 'paused') {
+        if ($session->user_id !== auth()->id() || ($session->status !== 'paused' && $session->status !== 'completed')) {
             return response()->json([
                 'status' => 'error',
-                'message' => 'Unauthorized atau sesi tidak di-pause.',
+                'message' => 'Unauthorized atau sesi tidak bisa dilanjutkan.',
             ], 403);
+        }
+
+        // Make sure no other running session exists
+        $active = StudySession::where('user_id', auth()->id())
+            ->where('status', 'running')
+            ->first();
+
+        if ($active) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Masih ada sesi lain yang berjalan. Hentikan dulu sesi yang sedang aktif.',
+            ], 409);
         }
 
         $session->update([
