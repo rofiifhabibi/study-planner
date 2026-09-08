@@ -266,6 +266,7 @@
             </div>
         `;
         document.getElementById('study-timer-status').textContent = 'Studying: ' + session.title;
+        document.getElementById('study-timer-status').setAttribute('data-title', session.title);
         document.getElementById('study-timer-icon').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
         renderActiveChecklist();
     }
@@ -429,6 +430,41 @@
                 </label>
             `;
         });
+        
+        if (currentTaskId) {
+            list.innerHTML += `
+                <div class="flex items-center gap-2 mt-2">
+                    <input type="text" id="new-active-step-input" placeholder="Tambah langkah baru..." class="flex-1 text-xs px-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-1 focus:ring-[#5B1744] focus:border-[#5B1744]" onkeypress="if(event.key === 'Enter') addActiveStep()">
+                    <button type="button" onclick="addActiveStep()" class="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition">
+                        <i class="fa-solid fa-plus text-xs"></i>
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    async function addActiveStep() {
+        if (!currentTaskId) return;
+        const input = document.getElementById('new-active-step-input');
+        const title = input.value.trim();
+        if (!title) return;
+        
+        try {
+            const res = await apiFetch(`${API_BASE}/tasks/${currentTaskId}/steps`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ title })
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                currentSteps.push(data.step);
+                renderActiveChecklist();
+                const newInput = document.getElementById('new-active-step-input');
+                if (newInput) newInput.focus();
+            }
+        } catch(e) {
+            alert('Gagal menambah langkah.');
+        }
     }
 
     async function startSessionSubmit() {
@@ -462,7 +498,8 @@
             const data = await res.json();
             if (data.status === 'success') {
                 activeStudySession = data.session;
-                document.getElementById('study-timer-status').textContent = 'Paused';
+                const sessionTitle = document.getElementById('study-timer-status').getAttribute('data-title') || 'Belajar';
+                document.getElementById('study-timer-status').textContent = 'Paused: ' + sessionTitle;
                 document.getElementById('study-timer-icon').innerHTML = '<i class="fa-solid fa-pause"></i>';
                 document.getElementById('study-session-controls').innerHTML = `
                     <div class="flex items-center gap-2">
@@ -518,6 +555,7 @@
             const data = await res.json();
             if (data.session) {
                 if (data.session.task_id) {
+                    currentTaskId = data.session.task_id;
                     const stepRes = await apiFetch(`${API_BASE}/tasks/${data.session.task_id}/steps`);
                     const stepData = await stepRes.json();
                     currentSteps = stepData.steps || [];
