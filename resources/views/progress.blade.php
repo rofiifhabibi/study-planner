@@ -123,9 +123,10 @@
             @forelse ($recentSessions as $s)
                 @php
                     $dur = $s->duration_seconds ?? 0;
-                    $hours = floor($dur / 3600);
-                    $mins = floor(($dur % 3600) / 60);
-                    $durLabel = $hours > 0 ? "{$hours}j {$mins}m" : "{$mins}m";
+                    $hours = str_pad(floor($dur / 3600), 2, '0', STR_PAD_LEFT);
+                    $mins = str_pad(floor(($dur % 3600) / 60), 2, '0', STR_PAD_LEFT);
+                    $secs = str_pad($dur % 60, 2, '0', STR_PAD_LEFT);
+                    $durLabel = "{$hours}:{$mins}:{$secs}";
                     $statusLabel = ucfirst($s->status);
                     $statusClass = $s->status === 'completed' ? 'bg-green-50 text-green-600' : ($s->status === 'running' ? 'bg-amber-50 text-amber-600 font-bold' : 'bg-gray-50 text-gray-500');
                 @endphp
@@ -140,7 +141,7 @@
                     <span class="text-[10px] px-2.5 py-1 rounded-full shrink-0 {{ $statusClass }}">
                         {{ $statusLabel }}
                     </span>
-                    <span class="text-xs font-bold text-gray-700 shrink-0 w-14 text-right">{{ $durLabel }}</span>
+                    <span class="text-xs font-bold text-gray-700 shrink-0 w-20 text-right">{{ $durLabel }}</span>
                 </div>
             @empty
                 <div class="text-center py-10 text-gray-400">
