@@ -10,3 +10,4 @@ Artisan::command('inspire', function () {
 
 Schedule::command('agenda:send-daily', ['--target=tomorrow'])->dailyAt('20:00');
 Schedule::command('agenda:send-daily', ['--target=today'])->dailyAt('05:00');
+Schedule::command('agenda:send-deadline')->dailyAt('16:00');
