@@ -14,12 +14,16 @@ class DailyTimetableAgenda extends Mailable
     use Queueable, SerializesModels;
 
     public Collection $timetables;
+    public Collection $tasks;
+    public Collection $schedules;
     public string $dayName;
     public string $targetType;
 
-    public function __construct(Collection $timetables, string $dayName, string $targetType = 'tomorrow')
+    public function __construct(Collection $timetables, Collection $tasks, Collection $schedules, string $dayName, string $targetType = 'tomorrow')
     {
         $this->timetables = $timetables;
+        $this->tasks = $tasks;
+        $this->schedules = $schedules;
         $this->dayName = $dayName;
         $this->targetType = $targetType;
     }
