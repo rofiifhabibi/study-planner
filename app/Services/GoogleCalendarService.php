@@ -475,7 +475,7 @@ class GoogleCalendarService
 
     private function taskListId(): string
     {
-        return (string) config('services.google.tasks_task_list', 'default');
+        return (string) config('services.google.tasks_task_list', '@default');
     }
 
     public function syncTask(Task $task): bool
