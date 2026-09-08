@@ -28,14 +28,9 @@ class SendDailyAgendaEmail extends Command
                 ->orderBy('start_time')
                 ->get();
 
-            // We only send the email if they have classes tomorrow
-            // But if they want a daily summary, we can send it either way.
-            // Let's only send if there are classes, or send anyway?
-            // "kalau jam 8 itu pakai email aja" -> Let's send anyway so they know it's empty.
-            if ($timetables->count() > 0) {
-                Mail::to($user->email)->send(new DailyTimetableAgenda($timetables, $dayName, $this->option('target')));
-                $this->info("Sent agenda to {$user->email}");
-            }
+            // Send to everyone so they receive a daily recap (empty or not)
+            Mail::to($user->email)->send(new DailyTimetableAgenda($timetables, $dayName, $this->option('target')));
+            $this->info("Sent agenda to {$user->email}");
         }
         
         $this->info('Daily agenda emails dispatched!');
