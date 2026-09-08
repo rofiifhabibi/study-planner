@@ -53,7 +53,7 @@
                     </div>
                     <div>
                         <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">STUDY SESSION</p>
-                        <div id="study-timer-display" class="text-3xl font-bold text-[#5B1744] font-mono tabular-nums mt-1">00:00:00</div>
+                        <div id="study-timer-display" class="text-3xl font-bold text-[#5B1744] font-mono tabular-nums mt-1">--:--:--</div>
                         <p id="study-timer-status" class="text-xs text-gray-400 mt-0.5">Ready to study</p>
                     </div>
                 </div>
@@ -252,6 +252,7 @@
         }
 
         tick();
+        if (studyTimerInterval) clearInterval(studyTimerInterval);
         studyTimerInterval = setInterval(tick, 1000);
 
         document.getElementById('study-session-controls').innerHTML = `
@@ -568,7 +569,7 @@
             const data = await res.json();
             if (data.status === 'success') {
                 closeStartModal();
-                setTimeout(() => startStudyTimer(data.session), 300);
+                window.location.reload();
             } else {
                 alert(data.message || 'Gagal memulai sesi.');
             }
