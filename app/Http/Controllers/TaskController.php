@@ -89,6 +89,10 @@ class TaskController extends Controller
             ], 403);
         }
 
+        if (!empty($task->google_task_id)) {
+            $this->calendarService()->deleteTaskInGoogle($task);
+        }
+
         $task->delete();
 
         return response()->json([
