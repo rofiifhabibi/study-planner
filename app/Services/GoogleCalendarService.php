@@ -345,8 +345,16 @@ class GoogleCalendarService
                     // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
                     $dayOfWeek = $startDate->dayOfWeek; 
                     
+                    // Check by google_event_id OR by subject, day, and time to prevent duplicates from recurring instances
                     $existingTimetable = \App\Models\SchoolTimetable::where('user_id', $this->user->id)
-                        ->where('google_event_id', $event->getId())
+                        ->where(function($q) use ($event, $subject, $dayOfWeek, $startDate) {
+                            $q->where('google_event_id', $event->getId())
+                              ->orWhere(function($subQ) use ($subject, $dayOfWeek, $startDate) {
+                                  $subQ->where('subject', $subject)
+                                        ->where('day_of_week', $dayOfWeek)
+                                        ->where('start_time', $startDate->format('H:i').':00');
+                              });
+                        })
                         ->first();
                         
                     if (!$existingTimetable) {
@@ -356,7 +364,7 @@ class GoogleCalendarService
                             'day_of_week' => $dayOfWeek,
                             'start_time' => $startDate->format('H:i'),
                             'end_time' => $endDate->format('H:i'),
-                            'google_event_id' => $event->getId(),
+                            'google_event_id' => $event->getId(), // Store the first instance ID
                         ]);
                         $imported++;
                     }
@@ -656,6 +664,13 @@ class GoogleCalendarService
             ],
             'recurrence' => [
                 'RRULE:FREQ=WEEKLY;BYDAY=' . $dayMap[$timetable->day_of_week]
+            ],
+            'reminders' => [
+                'useDefault' => false,
+                'overrides' => [
+                    ['method' => 'popup', 'minutes' => 30],
+                    ['method' => 'popup', 'minutes' => 10],
+                ],
             ],
         ]);
 
