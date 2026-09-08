@@ -15,7 +15,7 @@
 <body>
     <div class="container">
         <div class="header">
-            ⚠️ Pengingat Deadline Tugas ⚠️
+            Pengingat Deadline Tugas
         </div>
         
         <p style="text-align: center; margin-bottom: 25px;">
@@ -29,7 +29,7 @@
                 <div class="desc">{{ \Illuminate\Support\Str::limit($task->description, 100) }}</div>
                 @endif
                 <div class="time">
-                    ⏳ Tenggat: {{ \Carbon\Carbon::parse($task->due_date)->translatedFormat('l, d F Y') }} 
+                    Tenggat: {{ \Carbon\Carbon::parse($task->due_date)->translatedFormat('l, d F Y') }} 
                     {{ $task->due_time ? \Carbon\Carbon::parse($task->due_time)->format('H:i') : '' }}
                 </div>
             </div>

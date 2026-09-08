@@ -17,7 +17,7 @@
             Halo! Berikut adalah jadwal pelajaran untuk @if($targetType === "today") hari ini @else besok hari @endif {{ $dayName }}.
         </div>
 
-        <h3 style="color: #5B1744; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">🎓 Jadwal Pelajaran</h3>
+        <h3 style="color: #5B1744; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Jadwal Pelajaran</h3>
         @if($timetables->count() > 0)
             @foreach($timetables as $lesson)
                 <div class="card">
@@ -32,7 +32,7 @@
             <div class="empty">Tidak ada jadwal pelajaran.</div>
         @endif
 
-        <h3 style="color: #5B1744; margin-top: 25px; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">📅 Kegiatan & Acara</h3>
+        <h3 style="color: #5B1744; margin-top: 25px; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Kegiatan & Acara</h3>
         @if($schedules->count() > 0)
             @foreach($schedules as $schedule)
                 <div class="card" style="background: #fdfdfd; border-color: #ddd;">
@@ -47,7 +47,7 @@
             <div class="empty">Tidak ada agenda kegiatan.</div>
         @endif
 
-        <h3 style="color: #5B1744; margin-top: 25px; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">☑️ Tugas Harus Selesai</h3>
+        <h3 style="color: #5B1744; margin-top: 25px; margin-bottom: 10px; font-size: 16px; border-bottom: 1px solid #eee; padding-bottom: 5px;">Tugas Harus Selesai</h3>
         @if($tasks->count() > 0)
             @foreach($tasks as $task)
                 <div class="card" style="background: #fffafa; border-color: #ffcccc;">
