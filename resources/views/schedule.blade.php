@@ -78,7 +78,7 @@
                     <input type="text" name="subject" placeholder="e.g. Database Systems" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744] transition">
                 </div>
 
-                <div class="grid grid-cols-3 gap-3">
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
                     <div>
                         <label class="text-xs font-bold text-gray-600">Date</label>
                         <input type="date" name="date" id="scheduleDate" required value="{{ date('Y-m-d') }}" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744]">
@@ -141,13 +141,15 @@
 
     document.addEventListener('DOMContentLoaded', function() {
         var calendarEl = document.getElementById('calendar');
+        const isMobile = window.innerWidth < 768;
         calendar = new FullCalendar.Calendar(calendarEl, {
-            initialView: 'dayGridMonth',
+            initialView: isMobile ? 'timeGridDay' : 'dayGridMonth',
             headerToolbar: {
-                left: 'prev,next today',
+                left: 'prev,next',
                 center: 'title',
-                right: 'dayGridMonth,timeGridWeek,timeGridDay'
+                right: isMobile ? 'timeGridDay,dayGridMonth' : 'dayGridMonth,timeGridWeek,timeGridDay'
             },
+            titleFormat: isMobile ? { month: 'short', day: 'numeric' } : { month: 'long', year: 'numeric' },
             events: `${API_BASE}/schedules`,
             dateClick: function(info) {
                 document.getElementById('scheduleDate').value = info.dateStr;
