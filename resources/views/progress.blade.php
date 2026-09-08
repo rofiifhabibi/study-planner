@@ -396,6 +396,10 @@
                 const step = currentSteps.find(s => s.id === stepId);
                 if (step) step.is_completed = isCompleted;
                 renderActiveChecklist();
+                
+                if (data.task_status === 'completed' && isCompleted) {
+                    showToast('Semua langkah selesai! Tugas otomatis ditandai Selesai & disinkronkan ke Google Tasks.', 'success');
+                }
             }
         } catch(e) {
             alert('Gagal mengupdate checklist.');
