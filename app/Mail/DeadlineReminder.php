@@ -14,20 +14,20 @@ class DeadlineReminder extends Mailable
 {
     use Queueable, SerializesModels;
 
-    public Collection \$tasks;
-    public User \$user;
+    public Collection $tasks;
+    public User $user;
 
-    public function __construct(Collection \$tasks, User \$user)
+    public function __construct(Collection $tasks, User $user)
     {
-        \$this->tasks = \$tasks;
-        \$this->user = \$user;
+        $this->tasks = $tasks;
+        $this->user = $user;
     }
 
     public function envelope(): Envelope
     {
-        \$count = \$this->tasks->count();
+        $count = $this->tasks->count();
         return new Envelope(
-            subject: "Peringatan: Ada \$count Tugas Hampir Deadline!",
+            subject: "Rekap Tugas: Ada $count Tugas yang Menunggumu!",
         );
     }
 
