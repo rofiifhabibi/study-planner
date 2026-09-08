@@ -14,7 +14,7 @@
 <body>
     <div class="container">
         <div class="header">
-            Halo! Jangan lupa persiapkan buku untuk besok hari {{ $dayName }}.
+            Halo! Berikut adalah jadwal pelajaran untuk @if($targetType === "today") hari ini @else besok hari @endif {{ $dayName }}.
         </div>
 
         @if($timetables->count() > 0)
@@ -29,7 +29,7 @@
             @endforeach
         @else
             <div class="empty">
-                Tidak ada jadwal pelajaran untuk besok. Selamat beristirahat!
+                Tidak ada jadwal pelajaran untuk @if($targetType === "today") hari ini @else besok @endif. Selamat beristirahat!
             </div>
         @endif
         

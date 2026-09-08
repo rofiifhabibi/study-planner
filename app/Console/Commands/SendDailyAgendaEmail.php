@@ -11,20 +11,20 @@ use Carbon\Carbon;
 
 class SendDailyAgendaEmail extends Command
 {
-    protected $signature = 'agenda:send-daily';
-    protected $description = 'Send daily agenda email for tomorrow\'s school timetable to all users';
+    protected $signature = 'agenda:send-daily {--target=tomorrow : The target day to send agenda for (today or tomorrow)}';
+    protected $description = 'Send daily agenda email for today or tomorrow\'s school timetable to all users';
 
     public function handle()
     {
-        $tomorrow = Carbon::tomorrow();
-        $tomorrowDayOfWeek = $tomorrow->dayOfWeek; // 0=Sunday, 1=Monday...
-        $dayName = $tomorrow->translatedFormat('l');
+        $target = $this->option('target') === 'today' ? Carbon::today() : Carbon::tomorrow();
+        $targetDayOfWeek = $target->dayOfWeek;
+        $dayName = $target->translatedFormat('l');
 
         $users = User::all();
 
         foreach ($users as $user) {
             $timetables = SchoolTimetable::where('user_id', $user->id)
-                ->where('day_of_week', $tomorrowDayOfWeek)
+                ->where('day_of_week', $targetDayOfWeek)
                 ->orderBy('start_time')
                 ->get();
 
@@ -33,7 +33,7 @@ class SendDailyAgendaEmail extends Command
             // Let's only send if there are classes, or send anyway?
             // "kalau jam 8 itu pakai email aja" -> Let's send anyway so they know it's empty.
             if ($timetables->count() > 0) {
-                Mail::to($user->email)->send(new DailyTimetableAgenda($timetables, $dayName));
+                Mail::to($user->email)->send(new DailyTimetableAgenda($timetables, $dayName, $this->option('target')));
                 $this->info("Sent agenda to {$user->email}");
             }
         }

@@ -15,17 +15,20 @@ class DailyTimetableAgenda extends Mailable
 
     public Collection $timetables;
     public string $dayName;
+    public string $targetType;
 
-    public function __construct(Collection $timetables, string $dayName)
+    public function __construct(Collection $timetables, string $dayName, string $targetType = 'tomorrow')
     {
         $this->timetables = $timetables;
         $this->dayName = $dayName;
+        $this->targetType = $targetType;
     }
 
     public function envelope(): Envelope
     {
+        $targetWord = $this->targetType === 'today' ? 'Hari Ini' : 'Besok';
         return new Envelope(
-            subject: 'Daily Agenda: Jadwal Pelajaran Besok (' . $this->dayName . ')',
+            subject: 'Daily Agenda: Jadwal Pelajaran ' . $targetWord . ' (' . $this->dayName . ')',
         );
     }
 
