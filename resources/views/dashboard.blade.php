@@ -246,7 +246,7 @@
                                 <p class="text-xs font-bold text-gray-800">{{ $task->title }}</p>
                                 <p class="text-[10px] text-gray-400 mt-0.5">Bertahap selesaikan tugas</p>
                             </div>
-                            <a href="{{ route('progress') . '?start_task=' . urlencode($task->title) }}" class="px-3 py-1.5 bg-[#5B1744] text-white text-[10px] font-bold rounded-lg hover:bg-[#481236] transition shadow-sm whitespace-nowrap">
+                            <a href="{{ route('progress') . '?start_task_id=' . $task->id }}" class="px-3 py-1.5 bg-[#5B1744] text-white text-[10px] font-bold rounded-lg hover:bg-[#481236] transition shadow-sm whitespace-nowrap">
                                 <i class="fa-solid fa-play mr-1"></i> Start
                             </a>
                         </div>

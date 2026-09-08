@@ -28,6 +28,11 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
     Route::put('/schedules/{schedule}', [ScheduleController::class, 'update']);
     Route::delete('/schedules/{schedule}', [ScheduleController::class, 'destroy']);
 
+    Route::get('/tasks/{task}/steps', [AppHttpControllersTaskStepController::class, 'index']);
+    Route::post('/tasks/{task}/steps', [AppHttpControllersTaskStepController::class, 'store']);
+    Route::put('/tasks/{task}/steps/{step}', [AppHttpControllersTaskStepController::class, 'update']);
+    Route::delete('/tasks/{task}/steps/{step}', [AppHttpControllersTaskStepController::class, 'destroy']);
+
     Route::get('/study-sessions', [StudySessionController::class, 'index']);
     Route::get('/study-sessions/active', [StudySessionController::class, 'active']);
     Route::post('/study-sessions', [StudySessionController::class, 'store']);

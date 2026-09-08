@@ -69,6 +69,7 @@ class PlannerController extends Controller
 
         return view('progress', [
             ...$progress,
+            'activeTasks' => \App\Models\Task::where('user_id', $user->id)->whereIn('status', ['pending', 'in_progress'])->orderBy('due_date')->get(),
             'recentSessions' => $recentSessions,
         ]);
     }
