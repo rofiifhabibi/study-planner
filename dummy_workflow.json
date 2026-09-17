@@ -1,0 +1,24 @@
+{
+  "nodes": [
+    {
+      "parameters": {
+        "url": "http://example.com",
+        "placeholderDefinitions": {
+          "values": [
+            {
+              "name": "test_param",
+              "description": "A test parameter",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "abc",
+      "name": "Test Node",
+      "type": "@n8n/n8n-nodes-langchain.toolHttpRequest",
+      "typeVersion": 1.1,
+      "position": [0,0]
+    }
+  ],
+  "connections": {}
+}

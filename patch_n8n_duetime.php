@@ -1,0 +1,11 @@
+<?php
+$ops = [
+    [
+        'type' => 'updateNode',
+        'nodeName' => 'Create User Task',
+        'updates' => [
+            'parameters.jsonBody' => "{\n  \"title\": \"{{ \$fromAI('title') }}\",\n  \"description\": \"{{ \$fromAI('description') }}\",\n  \"due_date\": \"{{ \$fromAI('due_date', 'YYYY-MM-DD format') }}\",\n  \"due_time\": \"{{ \$fromAI('due_time', 'HH:MM format, optional') }}\",\n  \"category\": \"{{ \$fromAI('category', 'must be one of: school, project, study, personal') }}\",\n  \"priority\": \"{{ \$fromAI('priority', 'must be one of: low, medium, high') }}\"\n}"
+        ]
+    ]
+];
+echo json_encode(['id' => 'ifMZ21KCdFbY2IjH', 'operations' => $ops], JSON_PRETTY_PRINT);

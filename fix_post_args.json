@@ -1,0 +1,55 @@
+{
+    "id": "ifMZ21KCdFbY2IjH",
+    "operations": [
+        {
+            "type": "updateNode",
+            "nodeName": "Create User Event",
+            "parameters": {
+                "method": "POST",
+                "url": "https:\/\/studyplanner.web.id\/api\/ai\/tool\/calendar",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "X-API-KEY",
+                            "value": "Laravel_n8n_SecretKey_998877"
+                        },
+                        {
+                            "name": "X-SESSION-ID",
+                            "value": "={{ $('Webhook').item.json.body.session_id }}"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "{\n  \"title\": \"{{ $fromAI('title') }}\",\n  \"subject\": \"{{ $fromAI('subject', 'optional subject name') }}\",\n  \"date\": \"{{ $fromAI('date', 'YYYY-MM-DD format') }}\",\n  \"start_time\": \"{{ $fromAI('start_time', 'HH:MM format') }}\",\n  \"end_time\": \"{{ $fromAI('end_time', 'HH:MM format') }}\"\n}",
+                "toolDescription": "Create a new schedule or event for the user."
+            }
+        },
+        {
+            "type": "updateNode",
+            "nodeName": "Create User Task",
+            "parameters": {
+                "method": "POST",
+                "url": "https:\/\/studyplanner.web.id\/api\/ai\/tool\/tasks",
+                "sendHeaders": true,
+                "headerParameters": {
+                    "parameters": [
+                        {
+                            "name": "X-API-KEY",
+                            "value": "Laravel_n8n_SecretKey_998877"
+                        },
+                        {
+                            "name": "X-SESSION-ID",
+                            "value": "={{ $('Webhook').item.json.body.session_id }}"
+                        }
+                    ]
+                },
+                "sendBody": true,
+                "specifyBody": "json",
+                "jsonBody": "{\n  \"title\": \"{{ $fromAI('title') }}\",\n  \"description\": \"{{ $fromAI('description') }}\",\n  \"due_date\": \"{{ $fromAI('due_date', 'YYYY-MM-DD format') }}\",\n  \"category\": \"{{ $fromAI('category', 'must be one of: school, project, study, personal') }}\",\n  \"priority\": \"{{ $fromAI('priority', 'must be one of: low, medium, high') }}\"\n}",
+                "toolDescription": "Create a new task for the user."
+            }
+        }
+    ]
+}
