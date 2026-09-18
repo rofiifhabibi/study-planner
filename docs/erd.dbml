@@ -1,0 +1,231 @@
+// =============================================================
+// ERD Study Planner - dbdiagram.io (DBML)
+// SEMUA TABEL dari semua migration (18 tabel)
+// =============================================================
+
+// ---------- Domain ----------
+
+Table users {
+  id                   bigint [pk, increment]
+  name                 varchar
+  email                varchar [unique]
+  google_id            varchar [unique, null]
+  google_access_token  text [null]
+  google_refresh_token text [null]
+  telegram_id          varchar [unique, null]
+  role                 varchar [default: 'user']
+  email_verified_at    timestamp [null]
+  password             varchar
+  remember_token       varchar(100) [null]
+  created_at           timestamp [null]
+  updated_at           timestamp [null]
+}
+
+Table chat_sessions {
+  id          uuid [pk]
+  user_id     bigint [ref: > users.id, note: 'ON DELETE CASCADE']
+  title       varchar [default: 'Percakapan Baru']
+  is_project  boolean [default: false]
+  parent_id   uuid [ref: > chat_sessions.id, null, note: 'self-ref, ON DELETE SET NULL']
+  session_key varchar(64) [unique]
+  created_at  timestamp [null]
+  updated_at  timestamp [null]
+}
+
+Table chat_messages {
+  id              bigint [pk, increment]
+  chat_session_id uuid [ref: > chat_sessions.id, note: 'ON DELETE CASCADE']
+  role            enum('user', 'assistant')
+  content         text
+  is_canceled     boolean [default: false]
+  file_url        varchar [null]
+  created_at      timestamp [null]
+  updated_at      timestamp [null]
+}
+
+Table tasks {
+  id             bigint [pk, increment]
+  user_id        bigint [ref: > users.id, note: 'ON DELETE CASCADE']
+  title          varchar
+  description    text [null]
+  category       enum('school', 'project', 'study', 'personal') [default: 'school']
+  priority       enum('low', 'medium', 'high') [default: 'medium']
+  due_date       date [null]
+  due_time       time [null]
+  status         enum('pending', 'completed') [default: 'pending']
+  google_task_id varchar [null]
+  created_at     timestamp [null]
+  updated_at     timestamp [null]
+}
+
+Table task_steps {
+  id           bigint [pk, increment]
+  task_id      bigint [ref: > tasks.id, note: 'ON DELETE CASCADE']
+  title        varchar
+  is_completed boolean [default: false]
+  created_at   timestamp [null]
+  updated_at   timestamp [null]
+}
+
+Table schedules {
+  id                   bigint [pk, increment]
+  user_id              bigint [ref: > users.id, note: 'ON DELETE CASCADE']
+  title                varchar
+  subject              varchar [null]
+  date                 date
+  start_time           time
+  end_time             time
+  status               enum('pending', 'active', 'completed') [default: 'pending']
+  color                varchar [default: '#5B1744']
+  is_lesson            boolean [default: false]
+  google_event_id      varchar [null]
+  recurrence_frequency varchar [null]
+  recurrence_interval  smallint [default: 1, note: 'unsigned']
+  recurrence_days      varchar [null]
+  recurrence_until     date [null]
+  recurrence_count     int [null, note: 'unsigned']
+  created_at           timestamp [null]
+  updated_at           timestamp [null]
+}
+
+Table study_sessions {
+  id               bigint [pk, increment]
+  user_id          bigint [ref: > users.id, note: 'ON DELETE CASCADE']
+  task_id          bigint [ref: > tasks.id, null, note: 'ON DELETE SET NULL']
+  title            varchar
+  duration_seconds int [default: 0, note: 'unsigned']
+  started_at       timestamp
+  ended_at         timestamp [null]
+  status           enum('running', 'completed', 'paused') [default: 'running']
+  created_at       timestamp [null]
+  updated_at       timestamp [null]
+}
+
+Table notes {
+  id         bigint [pk, increment]
+  user_id    bigint [ref: > users.id, note: 'ON DELETE CASCADE']
+  title      varchar [null]
+  content    text
+  created_at timestamp [null]
+  updated_at timestamp [null]
+}
+
+Table school_timetables {
+  id              bigint [pk, increment]
+  user_id         bigint [ref: > users.id, note: 'ON DELETE CASCADE']
+  day_of_week     smallint [note: '0=Sunday .. 6=Saturday']
+  subject         varchar
+  start_time      time
+  end_time        time [null]
+  google_event_id varchar [null]
+  created_at      timestamp [null]
+  updated_at      timestamp [null]
+}
+
+// ---------- Framework: Auth / Sanctum ----------
+
+Table personal_access_tokens {
+  id             bigint [pk, increment]
+  tokenable_type varchar [note: 'polymorphic (morphs), biasanya App\Models\User']
+  tokenable_id   bigint [note: 'morphs, tanpa foreign key']
+  name           text
+  token          varchar(64) [unique]
+  abilities      text [null]
+  last_used_at   timestamp [null]
+  expires_at     timestamp [null]
+  created_at     timestamp [null]
+  updated_at     timestamp [null]
+}
+
+Table sessions {
+  id           varchar [pk]
+  user_id      bigint [null, note: 'hanya di-index, bukan foreign key']
+  ip_address   varchar(45) [null]
+  user_agent   text [null]
+  payload      longtext
+  last_activity int
+}
+
+Table password_reset_tokens {
+  email      varchar [pk, note: 'teks biasa, bukan FK ke users']
+  token      varchar
+  created_at timestamp [null]
+}
+
+// ---------- Framework: Cache ----------
+
+Table cache {
+  key        varchar [pk]
+  value      mediumtext
+  expiration bigint
+
+  indexes {
+    (expiration) [name: 'idx_cache_expiration']
+  }
+}
+
+Table cache_locks {
+  key        varchar [pk]
+  owner      varchar
+  expiration bigint
+
+  indexes {
+    (expiration) [name: 'idx_cache_locks_expiration']
+  }
+}
+
+// ---------- Framework: Queue / Job ----------
+
+Table jobs {
+  id           bigint [pk, increment]
+  queue        varchar
+  payload      longtext
+  attempts     smallint [note: 'unsigned']
+  reserved_at  int [null, note: 'unsigned']
+  available_at int [note: 'unsigned']
+  created_at   int [note: 'unsigned']
+
+  indexes {
+    (queue) [name: 'idx_jobs_queue']
+  }
+}
+
+Table job_batches {
+  id             varchar [pk]
+  name           varchar
+  total_jobs     int
+  pending_jobs   int
+  failed_jobs    int
+  failed_job_ids longtext
+  options        mediumtext [null]
+  cancelled_at   int [null]
+  created_at     int
+  finished_at    int [null]
+}
+
+Table failed_jobs {
+  id         bigint [pk, increment]
+  uuid       varchar [unique]
+  connection varchar
+  queue      varchar
+  payload    longtext
+  exception  longtext
+  failed_at  timestamp [default: 'CURRENT_TIMESTAMP']
+}
+
+// ---------- Framework: Migrations tracking ----------
+
+Table migrations {
+  id        int [pk, increment]
+  migration varchar
+  batch     int
+}
+
+// ---------- Ringkasan relasi ----------
+// users            1--N chat_sessions, tasks, schedules, study_sessions, notes, school_timetables
+// chat_sessions    1--N chat_messages, chat_sessions (parent_id self-ref)
+// tasks            1--N task_steps, study_sessions
+// sessions.user_id -> users.id        (logis, tanpa constraint FK)
+// personal_access_tokens (morphs)     -> users (logis)
+// password_reset_tokens.email         -> users.email (logis)
+// cache/cache_locks/jobs/job_batches/failed_jobs/migrations = tabel framework, tanpa relasi domain

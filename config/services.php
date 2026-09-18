@@ -41,4 +41,19 @@ return [
         'timeout' => env('N8N_TIMEOUT', 90),
     ],
 
+    'google' => [
+        'client_id' => env('GOOGLE_CLIENT_ID'),
+        'client_secret' => env('GOOGLE_CLIENT_SECRET'),
+        'redirect' => env('GOOGLE_REDIRECT_URI', rtrim((string) env('APP_URL'), '/').'/auth/google/callback'),
+        'calendar_timezone' => env('GOOGLE_CALENDAR_TIMEZONE', 'Asia/Jakarta'),
+        'tasks_task_list' => env('GOOGLE_TASKS_TASK_LIST', "@default"),
+    ],
+
+    'telegram' => [
+        'client_id' => env('TELEGRAM_CLIENT_ID'),
+        'client_secret' => env('TELEGRAM_BOT_TOKEN'),
+        'bot' => env('TELEGRAM_BOT_NAME'),
+        'redirect' => env('TELEGRAM_REDIRECT_URI', rtrim((string) env('APP_URL'), '/').'/auth/telegram/callback'),
+    ],
+
 ];

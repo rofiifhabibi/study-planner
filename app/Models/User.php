@@ -5,11 +5,12 @@ namespace App\Models;
 use Database\Factories\UserFactory;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-class User extends Authenticatable implements FilamentUser
+class User extends Authenticatable implements FilamentUser, MustVerifyEmail
 {
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
@@ -18,6 +19,10 @@ class User extends Authenticatable implements FilamentUser
         'name',
         'email',
         'password',
+        'google_id',
+        'google_access_token',
+        'google_refresh_token',
+        'telegram_id',
     ];
 
     protected $hidden = [
@@ -41,5 +46,25 @@ class User extends Authenticatable implements FilamentUser
     public function chatSessions()
     {
         return $this->hasMany(ChatSession::class);
+    }
+
+    public function tasks()
+    {
+        return $this->hasMany(Task::class);
+    }
+
+    public function schedules()
+    {
+        return $this->hasMany(Schedule::class);
+    }
+
+    public function studySessions()
+    {
+        return $this->hasMany(StudySession::class);
+    }
+
+    public function notes()
+    {
+        return $this->hasMany(Note::class);
     }
 }

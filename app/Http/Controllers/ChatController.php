@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\ChatMessage;
 use App\Models\ChatSession;
+use App\Models\Schedule;
+use App\Services\ProgressService;
 use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
@@ -12,6 +14,27 @@ use Illuminate\Support\Str;
 
 class ChatController extends Controller
 {
+    public function index(Request $request)
+    {
+        $sessionId = $request->query('session');
+        if ($sessionId) {
+            $session = ChatSession::where('id', $sessionId)
+                ->where('user_id', auth()->id())
+                ->first();
+
+            if (! $session) {
+                return redirect()->route('chat');
+            }
+        }
+
+        $user = auth()->user();
+
+        return view('chat', [
+            'userName' => $user->name,
+            'userInitial' => strtoupper(substr($user->name, 0, 1)),
+        ]);
+    }
+
     public function dashboard()
     {
         $user = auth()->user();
@@ -26,24 +49,41 @@ class ChatController extends Controller
             ? ChatMessage::whereIn('chat_session_id', $sessionIds)->count()
             : 0;
 
+        $progress = (new ProgressService($user->id))->getDashboardStats();
+
+        $todaySchedules = Schedule::where('user_id', $user->id)
+            ->whereDate('date', '>=', today())
+            ->orderBy('date')
+            ->orderBy('start_time')
+            ->limit(5)
+            ->get();
+
+        $todayDayOfWeek = now()->dayOfWeek;
+        $todayTimetables = \App\Models\SchoolTimetable::where('user_id', $user->id)
+            ->where('day_of_week', $todayDayOfWeek)
+            ->orderBy('start_time')
+            ->get();
+
+        $tomorrowDayOfWeek = now()->addDay()->dayOfWeek;
+        $tomorrowTimetables = \App\Models\SchoolTimetable::where('user_id', $user->id)
+            ->where('day_of_week', $tomorrowDayOfWeek)
+            ->orderBy('start_time')
+            ->get();
+
         return view('dashboard', [
             'user' => $user,
             'sessions' => $sessions,
             'totalSessions' => $sessions->count(),
             'totalMessages' => $totalMessages,
+            'todaySchedules' => $todaySchedules,
+            'todayTimetables' => $todayTimetables,
+            'tomorrowTimetables' => $tomorrowTimetables,
+            ...$progress,
         ]);
     }
 
     public function getSessions(Request $request)
     {
-        if (! auth()->check()) {
-            return response()->json([
-                'status' => 'success',
-                'sessions' => [],
-                'is_guest' => true,
-            ]);
-        }
-
         $sessions = ChatSession::where('user_id', auth()->id())
             ->withCount('messages')
             ->latest()
@@ -52,17 +92,14 @@ class ChatController extends Controller
         return response()->json([
             'status' => 'success',
             'sessions' => $sessions,
-            'is_guest' => false,
         ]);
     }
 
     public function getMessages(Request $request, string $sessionId)
     {
-        $session = ChatSession::findOrFail($sessionId);
-
-        if (auth()->check() && $session->user_id !== auth()->id()) {
-            abort(403);
-        }
+        $session = ChatSession::where('id', $sessionId)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
 
         $messages = ChatMessage::where('chat_session_id', $sessionId)
             ->orderBy('created_at', 'asc')
@@ -75,12 +112,32 @@ class ChatController extends Controller
         ]);
     }
 
+    public function renameSession(Request $request, string $sessionId)
+    {
+        $request->validate([
+            'title' => 'required|string|max:255',
+        ]);
+
+        $session = ChatSession::where('id', $sessionId)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
+
+        $session->update(['title' => $request->input('title')]);
+
+        return response()->json([
+            'status' => 'success',
+            'session' => $session->fresh(),
+        ]);
+    }
+
     public function deleteSession(Request $request, string $sessionId)
     {
-        $session = ChatSession::findOrFail($sessionId);
+        $session = ChatSession::where('id', $sessionId)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
 
-        if (auth()->check() && $session->user_id !== auth()->id()) {
-            abort(403);
+        if ($session->is_project) {
+            ChatSession::where('parent_id', $session->id)->delete();
         }
 
         $session->delete();
@@ -93,18 +150,37 @@ class ChatController extends Controller
 
     public function createSession(Request $request)
     {
-        if (! auth()->check()) {
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Silakan login untuk menyimpan percakapan.',
-            ], 401);
+        $request->validate([
+            'parent_id' => 'nullable|string|exists:chat_sessions,id',
+        ]);
+
+        $parentId = null;
+
+        if ($request->filled('parent_id')) {
+            $project = ChatSession::where('id', $request->input('parent_id'))
+                ->where('user_id', auth()->id())
+                ->where('is_project', true)
+                ->first();
+
+            if (! $project) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Proyek tidak ditemukan.',
+                ], 404);
+            }
+
+            $parentId = $project->id;
         }
+
+        $title = $request->input('title', 'Chat '.now()->format('d M Y H:i'));
 
         $session = ChatSession::create([
             'id' => (string) Str::uuid(),
             'user_id' => auth()->id(),
-            'title' => 'Chat '.now()->format('d M Y H:i'),
+            'title' => $title,
             'session_key' => Str::random(32),
+            'is_project' => $request->boolean('is_project'),
+            'parent_id' => $parentId,
         ]);
 
         return response()->json([
@@ -116,12 +192,11 @@ class ChatController extends Controller
     public function sendMessage(Request $request)
     {
         $request->validate([
-            'chat_session_id' => 'nullable|string',
+            'chat_session_id' => 'required|string',
             'message' => 'required|string',
             'file_url' => 'nullable|url',
         ]);
 
-        $isGuest = ! auth()->check();
         $sessionId = $request->chat_session_id;
         $userMessage = $request->message;
         $fileUrl = $request->file_url;
@@ -139,36 +214,54 @@ class ChatController extends Controller
             ], 500);
         }
 
-        $sessionKey = null;
+        $session = ChatSession::where('id', $sessionId)
+            ->where('user_id', auth()->id())
+            ->firstOrFail();
 
-        if (! $isGuest && $sessionId) {
-            $session = ChatSession::find($sessionId);
-            if ($session && $session->user_id === auth()->id()) {
-                $sessionKey = $session->session_key;
+        $savedUserMessage = ChatMessage::create([
+            'chat_session_id' => $sessionId,
+            'role' => 'user',
+            'content' => $userMessage,
+            'file_url' => $fileUrl,
+        ]);
 
-                ChatMessage::create([
-                    'chat_session_id' => $sessionId,
-                    'role' => 'user',
-                    'content' => $userMessage,
-                    'file_url' => $fileUrl,
-                ]);
+        $memoryKey = 'user_'.auth()->id().'_session_'.$session->session_key;
+
+        $payload = [
+            'user_id' => auth()->id(),
+            'session_id' => $memoryKey,
+            'message' => $userMessage,
+            'file_url' => $fileUrl,
+        ];
+
+        if ($session->parent_id) {
+            $siblingIds = ChatSession::where('parent_id', $session->parent_id)
+                ->where('user_id', auth()->id())
+                ->whereKeyNot($session->id)
+                ->pluck('id');
+
+            $history = ChatMessage::whereIn('chat_session_id', $siblingIds)
+                ->orderByDesc('created_at')
+                ->limit(20)
+                ->get()
+                ->reverse()
+                ->map(fn (ChatMessage $m) => [
+                    'role' => $m->role,
+                    'content' => $m->content,
+                    'is_canceled' => $m->is_canceled,
+                ])
+                ->values()
+                ->all();
+
+            if ($history !== []) {
+                $payload['history'] = $history;
             }
         }
-
-        $userId = $isGuest ? 'guest_'.Str::random(8) : auth()->id();
-        $memoryKey = $sessionKey
-            ? "user_{$userId}_session_{$sessionKey}"
-            : "user_{$userId}_session_".Str::random(16);
 
         try {
             $response = Http::withHeaders([
                 'X-API-KEY' => $secretKey,
-            ])->timeout($timeout)->post($webhookUrl, [
-                'user_id' => $userId,
-                'session_id' => $memoryKey,
-                'message' => $userMessage,
-                'file_url' => $fileUrl,
-            ]);
+            ])->timeout($timeout)->post($webhookUrl, $payload);
         } catch (ConnectionException $e) {
             Log::error('n8n webhook timeout', [
                 'url' => $webhookUrl,
@@ -202,12 +295,7 @@ class ChatController extends Controller
                 $aiReply = trim($aiReply);
             }
 
-            $isEmpty = empty($aiReply)
-                || $aiReply === '{}'
-                || $aiReply === '[]'
-                || $aiReply === 'null';
-
-            if ($isEmpty) {
+            if (empty($aiReply)) {
                 Log::warning('n8n respons kosong', [
                     'url' => $webhookUrl,
                     'raw_response' => $response->body(),
@@ -219,18 +307,16 @@ class ChatController extends Controller
                 ], 502);
             }
 
-            if (! $isGuest && $sessionId && isset($session) && $session) {
-                ChatMessage::create([
-                    'chat_session_id' => $sessionId,
-                    'role' => 'assistant',
-                    'content' => $aiReply,
-                ]);
-            }
+            ChatMessage::create([
+                'chat_session_id' => $sessionId,
+                'role' => 'assistant',
+                'content' => $aiReply,
+            ]);
 
             return response()->json([
                 'status' => 'success',
                 'reply' => $aiReply,
-                'is_guest' => $isGuest,
+                'message_id' => $savedUserMessage->id,
             ]);
         }
 
@@ -240,28 +326,120 @@ class ChatController extends Controller
             'body' => $response->body(),
         ]);
 
-        $errorMessage = 'Gagal mendapatkan respon dari n8n AI';
-        $n8nBody = $response->json();
-        if (is_array($n8nBody) && isset($n8nBody['message'])) {
-            $errorMessage .= ': '.$n8nBody['message'];
+        return response()->json([
+            'status' => 'error',
+            'message' => 'Gagal mendapatkan respon dari n8n AI',
+        ], 502);
+    }
+
+    public function updateMessage(Request $request, ChatMessage $message)
+    {
+        $request->validate([
+            'message' => 'required|string',
+        ]);
+
+        $session = $message->session;
+
+        if ($session->user_id !== auth()->id()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized.',
+            ], 403);
         }
+
+        $message->update([
+            'content' => $request->message,
+            'is_canceled' => false,
+        ]);
+
+        $webhookUrl = config('services.n8n.webhook_url');
+        $secretKey = config('services.n8n.secret_key');
+        $timeout = config('services.n8n.timeout', 90);
+
+        if (empty($webhookUrl)) {
+            Log::error('n8n webhook URL tidak dikonfigurasi');
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Konfigurasi n8n webhook belum diatur.',
+            ], 500);
+        }
+
+        try {
+            $response = Http::withHeaders([
+                'X-API-KEY' => $secretKey,
+            ])->timeout($timeout)->post($webhookUrl, [
+                'user_id' => auth()->id(),
+                'session_id' => 'user_'.auth()->id().'_session_'.$session->session_key,
+                'message' => $request->message,
+            ]);
+        } catch (\Exception $e) {
+            Log::error('n8n webhook error saat edit pesan', [
+                'url' => $webhookUrl,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Terjadi kesalahan saat menghubungi n8n AI.',
+            ], 502);
+        }
+
+        if ($response->successful()) {
+            $aiReply = trim((string) ($response->json('output')
+                ?? $response->json('reply')
+                ?? $response->json('message')
+                ?? $response->json('text')
+                ?? ''));
+
+            if ($aiReply !== '') {
+                $replyMessage = ChatMessage::create([
+                    'chat_session_id' => $session->id,
+                    'role' => 'assistant',
+                    'content' => $aiReply,
+                ]);
+
+                return response()->json([
+                    'status' => 'success',
+                    'reply' => $aiReply,
+                    'message' => $message->fresh(),
+                    'reply_message' => $replyMessage,
+                ]);
+            }
+        }
+
+        Log::warning('n8n webhook error saat edit pesan', [
+            'url' => $webhookUrl,
+            'status' => $response->status(),
+            'body' => $response->body(),
+        ]);
 
         return response()->json([
             'status' => 'error',
-            'message' => $errorMessage,
+            'message' => 'Gagal mendapatkan respon dari n8n AI',
         ], 502);
+    }
+
+    public function cancelMessage(ChatMessage $message)
+    {
+        if ($message->session->user_id !== auth()->id()) {
+            return response()->json([
+                'status' => 'error',
+                'message' => 'Unauthorized.',
+            ], 403);
+        }
+
+        $message->update(['is_canceled' => true]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => $message->fresh(),
+        ]);
     }
 
     public function user()
     {
-        if (! auth()->check()) {
-            return response()->json([
-                'is_guest' => true,
-            ]);
-        }
-
         return response()->json([
-            'is_guest' => false,
             'user' => [
                 'id' => auth()->id(),
                 'name' => auth()->user()->name,

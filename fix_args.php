@@ -1,0 +1,52 @@
+<?php
+$updates = [
+    "parameters.name" => "read_school_timetable",
+    "parameters.description" => "Call this tool to get the user's weekly school timetable (Jadwal Pelajaran sekolah). It will return the subjects and times for each day. Only use this when the user asks about their school lessons or timetable.",
+    "parameters.method" => "GET",
+    "parameters.url" => "https://studyplanner.web.id/api/ai/tool/timetable",
+    "parameters.sendHeaders" => true,
+    "parameters.parametersHeaders" => [
+        "values" => [
+            [
+                "name" => "X-API-KEY",
+                "value" => "Laravel_n8n_SecretKey_998877"
+            ],
+            [
+                "name" => "X-SESSION-ID",
+                "value" => "={{ $('Webhook').item.json.body.session_id }}"
+            ]
+        ]
+    ],
+    "parameters.sendQuery" => true,
+    "parameters.parametersQuery" => [
+        "values" => [
+            [
+                "name" => "query",
+                "value" => "={{ \$fromAI('query', 'Optional filter context') }}"
+            ]
+        ]
+    ]
+];
+
+$payload = [
+    'id' => 'ifMZ21KCdFbY2IjH',
+    'operations' => [
+        [
+            'type' => 'updateNode',
+            'nodeId' => 't1_read_timetable',
+            'updates' => $updates
+        ],
+        [
+            'type' => 'updateNode',
+            'nodeId' => 't2_read_timetable',
+            'updates' => $updates
+        ],
+        [
+            'type' => 'updateNode',
+            'nodeId' => 't3_read_timetable',
+            'updates' => $updates
+        ]
+    ]
+];
+
+file_put_contents('fix_payload.json', json_encode($payload));

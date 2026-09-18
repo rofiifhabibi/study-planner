@@ -1,27 +1,39 @@
 <?php
 
 use App\Http\Controllers\ChatController;
+use App\Http\Controllers\GoogleCalendarController;
+use App\Http\Controllers\PlannerController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware('auth');
-
-Route::get('/chat', function () {
-    $user = auth()->user();
-    return view('chat', [
-        'isGuest' => !auth()->check(),
-        'userName' => $user?->name ?? '',
-        'userInitial' => $user ? strtoupper(substr($user->name, 0, 1)) : '',
-    ]);
-})->name('chat');
-
-Route::middleware(['auth'])->group(function () {
+Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/dashboard', [ChatController::class, 'dashboard'])->name('dashboard');
+    Route::get('/chat', [ChatController::class, 'index'])->name('chat');
+
+    Route::get('/tasks', [PlannerController::class, 'tasks'])->name('tasks');
+    Route::get('/schedule', [PlannerController::class, 'schedule'])->name('schedule');
+    Route::get('/progress', [PlannerController::class, 'progress'])->name('progress');
+    Route::get('/integrations', [PlannerController::class, 'integrations'])->name('integrations');
+    Route::get('/notes', [PlannerController::class, 'notes'])->name('notes');
+    
+    Route::get('/timetable', [\App\Http\Controllers\SchoolTimetableController::class, 'index'])->name('timetable.index');
+    Route::post('/timetable', [\App\Http\Controllers\SchoolTimetableController::class, 'store'])->name('timetable.store');
+    Route::delete('/timetable/{timetable}', [\App\Http\Controllers\SchoolTimetableController::class, 'destroy'])->name('timetable.destroy');
+
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    Route::get('/google/calendar/redirect', [GoogleCalendarController::class, 'redirect'])->name('google.calendar.redirect');
+    Route::get('/google/calendar/callback', [GoogleCalendarController::class, 'callback'])->name('google.calendar.callback');
+    Route::post('/google/calendar/sync', [GoogleCalendarController::class, 'syncCalendar'])->name('google.calendar.sync');
+    Route::post('/google/calendar/pull', [GoogleCalendarController::class, 'pullCalendar'])->name('google.calendar.pull');
+    Route::post('/google/tasks/sync', [GoogleCalendarController::class, 'syncTasks'])->name('google.tasks.sync');
+    Route::post('/google/tasks/pull', [GoogleCalendarController::class, 'pullTasks'])->name('google.tasks.pull');
+    Route::get('/google/status', [GoogleCalendarController::class, 'status'])->name('google.status');
 });
 
 require __DIR__.'/auth.php';

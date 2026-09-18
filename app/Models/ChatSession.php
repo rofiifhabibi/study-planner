@@ -18,11 +18,27 @@ class ChatSession extends Model
         'user_id',
         'title',
         'session_key',
+        'is_project',
+        'parent_id',
+    ];
+
+    protected $casts = [
+        'is_project' => 'boolean',
     ];
 
     public function messages()
     {
         return $this->hasMany(ChatMessage::class, 'chat_session_id');
+    }
+
+    public function parent()
+    {
+        return $this->belongsTo(ChatSession::class, 'parent_id');
+    }
+
+    public function children()
+    {
+        return $this->hasMany(ChatSession::class, 'parent_id');
     }
 
     public function user()

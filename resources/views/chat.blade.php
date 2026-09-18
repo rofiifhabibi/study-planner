@@ -1,292 +1,796 @@
 <!DOCTYPE html>
-<html class="light" lang="en">
+<html lang="id">
+
 <head>
-    <meta charset="utf-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title>Study Planner</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI Study — Study Planner</title>
+
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
-    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Playfair+Display:ital,wght@0,600;1,600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
     <style>
-        body { font-family: 'Plus Jakarta Sans', sans-serif; background-color: #fbf9fa; color: #1b1c1d; }
-        .material-symbols-outlined { font-variation-settings: 'FILL' 1; }
+        * { scroll-behavior: smooth; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; }
+        .noise { background-image: radial-gradient(rgba(91, 23, 68, 0.05) 1px, transparent 1px); background-size: 20px 20px; }
+        .sidebar-item { transition: all 0.2s ease; }
+        .sidebar-item:hover { background-color: rgba(255, 255, 255, 0.1); color: #ffffff; }
+        .sidebar-item.active { background-color: rgba(255, 255, 255, 0.18); color: #ffffff; font-weight: 600; }
         #messages-wrap::-webkit-scrollbar { width: 6px; }
-        #messages-wrap::-webkit-scrollbar-thumb { background: #e4e2e3; border-radius: 4px; }
+        #messages-wrap::-webkit-scrollbar-thumb { background: #d3c2ca; border-radius: 4px; }
+        .typing-dots span { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #9ca3af; margin: 0 2px; animation: bounce 1.4s infinite ease-in-out both; }
+        .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
+        .typing-dots span:nth-child(2) { animation-delay: -0.16s; }
+        .typing-dots span:nth-child(3) { animation-delay: 0s; }
+        @keyframes bounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
 
-        /* ===== SIDEBAR ===== */
-        .sidebar{position:fixed;top:0;left:0;bottom:0;width:260px;background:#efedee;display:flex;flex-direction:column;z-index:40;transition:width .2s,transform .2s;border-right:1px solid #d3c2ca}
-        .sidebar.collapsed{width:0;overflow:hidden;border:none}
-        .sb-header{display:flex;align-items:center;padding:8px 12px;height:48px;gap:4px;flex-shrink:0}
-        .sb-header .hamburger{background:none;border:none;color:#645c61;cursor:pointer;padding:8px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background .12s}
-        .sb-header .hamburger:hover{background:#e4e2e3}
-        .sb-header .brand{flex:1;display:flex;align-items:center;gap:8px;font-size:14px;font-weight:600;color:#1b1c1d;cursor:pointer;padding:6px 8px;border-radius:8px;transition:background .12s;white-space:nowrap}
-        .sb-header .brand:hover{background:#e4e2e3}
-        .sb-header .brand .material-symbols-outlined{color:#47173c;font-size:18px}
-        .sb-header .search-btn{background:none;border:none;color:#645c61;cursor:pointer;padding:8px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background .12s}
-        .sb-header .search-btn:hover{background:#e4e2e3}
-        .sb-body{flex:1;overflow-y:auto;padding:4px 8px}
-        .new-chat-btn{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border:1px solid #d3c2ca;border-radius:1rem;background:transparent;color:#47173c;font-size:14px;font-weight:600;cursor:pointer;transition:all .12s;margin-bottom:8px}
-        .new-chat-btn:hover{background:#e4e2e3}
-        .sb-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:1rem;cursor:pointer;font-size:13px;color:#645c61;transition:all .1s;position:relative}
-        .sb-item:hover{background:#e4e2e3;color:#1b1c1d}
-        .sb-item.active{background:#e4e2e3;color:#1b1c1d}
+        #mobile-float-burger {
+            position: fixed;
+            top: 12px;
+            left: 12px;
+            z-index: 50;
+            display: none;
+        }
+        @media (max-width: 767px) {
+            #mobile-float-burger {
+                display: flex;
+            }
+        }
 
-        /* ===== MAIN ===== */
-        .main{position:fixed;top:0;left:260px;right:0;bottom:0;display:flex;flex-direction:column;background:#fbf9fa;transition:left .2s}
-        .main.full-left{left:0}
-        .main-header{padding:12px 16px;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+        .msg-fade {
+            animation: msgFade .5s cubic-bezier(0.22, 1, 0.36, 1) both;
+        }
+        @keyframes msgFade {
+            from { opacity: 0; transform: translateY(5px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
 
-        /* ===== MESSAGES ===== */
-        .messages-wrap{flex:1;overflow-y:auto;display:flex;flex-direction:column}
-        .messages{max-width:768px;width:100%;margin:0 auto;padding:16px 24px 24px;flex:1;display:flex;flex-direction:column;justify-content:center}
-        .messages.has-chat{justify-content:flex-start}
-        .welcome-center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
-
-        /* ===== INPUT ===== */
-        .input-bar{padding:0 16px 20px;flex-shrink:0;position:absolute;top:50%;left:0;right:0;z-index:5;transition:all .2s;transform:translateY(-50%)}
-        .input-bar.at-bottom{position:relative;top:auto;transform:none}
-        .input-wrap{max-width:768px;margin:0 auto;display:flex;align-items:center;gap:0;border:1px solid #d3c2ca;border-radius:1rem;background:#ffffff;padding:6px 6px 6px 18px}
-        .input-wrap:focus-within{border-color:#47173c}
-        .input-plus{background:none;border:none;color:#645c61;cursor:pointer;padding:8px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:background .12s;flex-shrink:0}
-        .input-plus:hover{background:#e4e2e3}
-        .input-actions{display:flex;align-items:center;gap:2px;flex-shrink:0}
-        .act-btn{background:none;border:none;color:#81737b;cursor:pointer;padding:8px;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:all .12s}
-        .act-btn:hover{background:#e4e2e3;color:#47173c}
-        .mic-btn{background:none;border:none;cursor:pointer;border-radius:8px;display:flex;align-items:center;justify-content:center;transition:all .12s}
-        .mic-btn:hover{background:#e4e2e3}
-        .mic-btn:disabled{opacity:40%;cursor:not-allowed}
-        .mic-btn:disabled:hover{background:none}
-
-        /* ===== OVERLAY ===== */
-        .overlay{position:fixed;inset:0;background:rgba(0,0,0,.3);z-index:35;display:none}
-        .sidebar:not(.collapsed) ~ .overlay{display:block}
+        .ai-content p { margin: 0 0 0.85rem 0; line-height: 1.75; }
+        .ai-content p:last-child { margin-bottom: 0; }
+        .ai-content ul, .ai-content ol { margin: 0.5rem 0; padding-left: 1.25rem; }
+        .ai-content ul { list-style-type: disc; }
+        .ai-content ol { list-style-type: decimal; }
+        .ai-content li { margin: 0.25rem 0; line-height: 1.5; }
+        .ai-content li > p { margin: 0; }
+        .ai-content strong { font-weight: 700; }
+        .ai-content em { font-style: italic; }
+        .ai-content code { background: #f4e7ef; color: #5B1744; padding: 0.15rem 0.4rem; border-radius: 0.375rem; font-size: 0.8em; }
+        .ai-content pre { background: #1e1e2e; color: #cdd6f4; padding: 1rem; border-radius: 0.75rem; overflow-x: auto; margin: 0.5rem 0; font-size: 0.8rem; line-height: 1.5; }
+        .ai-content pre code { background: none; color: inherit; padding: 0; font-size: 0.8rem; }
+        .ai-content h1, .ai-content h2, .ai-content h3 { font-weight: 700; margin: 0.75rem 0 0.5rem 0; }
+        .ai-content h1 { font-size: 1.1em; }
+        .ai-content h2 { font-size: 1.05em; }
+        .ai-content h3 { font-size: 1em; }
+        .ai-content blockquote { border-left: 3px solid #d3c2ca; padding-left: 0.75rem; margin: 0.5rem 0; color: #6b7280; font-style: italic; }
+        .ai-content table { border-collapse: collapse; width: 100%; margin: 0.5rem 0; font-size: 0.85em; }
+        .ai-content th, .ai-content td { border: 1px solid #e5e7eb; padding: 0.4rem 0.6rem; text-align: left; }
+        .ai-content th { background: #f9fafb; font-weight: 600; }
+        .ai-content hr { border: none; border-top: 1px solid #e5e7eb; margin: 0.75rem 0; }
     </style>
 </head>
-<body class="bg-background text-on-background min-h-screen flex font-sans antialiased">
 
-<!-- SIDEBAR -->
-<aside class="sidebar" id="sidebar">
-    <div class="sb-header">
-        <button class="hamburger" onclick="toggleSidebar()" title="Toggle sidebar">
-            <span class="material-symbols-outlined">menu</span>
-        </button>
-        <div class="brand" onclick="resetView()">
-            <span class="material-symbols-outlined">school</span>
-            Study Planner
+<body class="bg-[#FAF6F0] text-[#241C21] antialiased">
+    <div class="h-screen flex flex-row overflow-hidden">
+        <!-- SIDEBAR -->
+        <aside id="sidebar" class="fixed md:sticky top-0 left-0 z-50 h-screen w-[260px] bg-[#5B1744] text-white flex flex-col -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0">
+            <div class="p-6 pb-8">
+                <a href="/" class="flex items-center gap-3">
+                    <div class="w-10 h-10 overflow-hidden">
+                        <img src="{{ asset('logo-chatgpt.png') }}" alt="Study Planner" class="w-full h-full object-contain">
+                    </div>
+                    <div>
+                        <div class="font-bold text-base tracking-tight">Study Planner</div>
+                        <div class="text-[9px] text-white/50 tracking-[.2em] font-semibold">PLAN · STUDY · GROW</div>
+                    </div>
+                </a>
+            </div>
+
+            <div class="px-4 flex-1 overflow-y-auto space-y-6">
+                <div>
+                    <button type="button" onclick="startNewDraft()" class="flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 transition text-white">
+                        <i class="fa-solid fa-plus w-4 text-center"></i> New chat
+                    </button>
+                    <button type="button" onclick="showProjectCreateModal()" class="mt-2 flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 transition text-white">
+                        <i class="fa-solid fa-folder-plus w-4 text-center"></i> New Project
+                    </button>
+                    <p class="px-3 mt-6 mb-2 text-[10px] uppercase tracking-[.2em] text-white/40 font-bold">Recent Sessions</p>
+                    <nav id="session-list"></nav>
+                </div>
+                <a href="/dashboard" class="flex items-center gap-3 px-3.5 py-2.5 mt-auto text-white/70 hover:bg-white/10 rounded-xl text-xs">
+                    <i class="fa-solid fa-house w-4 text-center"></i> Back to Dashboard
+                </a>
+            </div>
+
+        <div class="p-4 border-t border-white/10">
+            <div class="flex items-center justify-between gap-3">
+                <div class="flex items-center gap-3 min-w-0">
+                    <div class="w-9 h-9 rounded-full bg-[#E7C8DB] text-[#5B1744] flex items-center justify-center font-bold text-xs shrink-0">
+                        {{ strtoupper(substr(auth()->user()->name ?? 'K', 0, 1)) }}
+                    </div>
+                    <p class="font-semibold text-xs text-white truncate">{{ auth()->user()->name }}</p>
+                </div>
+                <form method="POST" action="{{ route('logout') }}" class="m-0">
+                    @csrf
+                    <button type="submit" title="Log out"
+                        class="text-white/50 hover:text-white transition p-1.5 rounded-lg hover:bg-white/10">
+                        <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
+                    </button>
+                </form>
+            </div>
         </div>
-        <button class="search-btn" title="Search">
-            <span class="material-symbols-outlined">search</span>
-        </button>
-    </div>
+    </aside>
 
-    <div class="sb-body">
-        <button class="new-chat-btn" onclick="createSession()" id="btn-new-chat">
-            <span class="material-symbols-outlined">add</span> New chat
-        </button>
+    <!-- Overlay for Mobile Drawer -->
+    <div id="overlay" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 hidden md:hidden"></div>
 
-        <div id="session-list"></div>
-    </div>
-</aside>
+    <!-- Floating Burger Button (Mobile) -->
+    <button type="button" id="mobile-float-burger" onclick="document.getElementById('sidebar').classList.remove('-translate-x-full'); document.getElementById('overlay').classList.remove('hidden');" class="md:hidden w-11 h-11 rounded-full bg-[#5B1744] text-white items-center justify-center shadow-lg shadow-[#5B1744]/30 active:scale-95 transition">
+        <i class="fa-solid fa-bars text-sm"></i>
+    </button>
 
-<div class="overlay" id="overlay" onclick="toggleSidebar()"></div>
-
-<!-- MAIN -->
-<main class="main" id="main">
-    <div class="main-header">
-        <div class="text-lg font-bold" id="chat-title"></div>
-    </div>
-
-    <div class="messages-wrap" id="messages-wrap">
-        <div class="messages" id="messages">
-            <div class="welcome-center" id="welcome-state">
-                <h2 id="welcome-heading" class="text-3xl font-bold mb-3">What's on the agenda today?</h2>
-                <p id="welcome-sub" class="text-outline">Study Planner AI siap membantu Anda.</p>
+    <!-- Confirmation Modal -->
+    <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
+        <div class="relative w-full max-w-sm bg-[#FAF6F0] rounded-3xl p-6 shadow-2xl">
+            <h3 id="confirmModalTitle" class="text-lg font-bold text-gray-900 mb-2">Hapus Sesi?</h3>
+            <p id="confirmModalBody" class="text-sm text-gray-600 mb-6">Apakah Anda yakin ingin menghapus sesi percakapan ini? Tindakan ini tidak dapat dibatalkan.</p>
+            <div class="flex gap-3">
+                <button type="button" onclick="hideConfirmModal()" class="flex-1 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-bold transition">Batal</button>
+                <button type="button" id="confirmActionBtn" class="flex-1 py-2 rounded-xl bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-bold transition">Hapus</button>
             </div>
         </div>
     </div>
 
-    <div class="input-bar">
-        <form id="chat-form" onsubmit="sendMessage(event)">
-            <div class="input-wrap">
-                <button type="button" class="input-plus" title="Upload file">
-                    <span class="material-symbols-outlined">add</span>
-                </button>
-                <textarea id="chat-input" rows="1" placeholder="Ask anything" oninput="autoResize(this);toggleSend()" class="flex-1 bg-transparent border-none focus:ring-0 p-2 resize-none outline-none"></textarea>
-                <div class="input-actions">
-                    <button type="button" class="act-btn" title="Think mode">
-                        <span class="material-symbols-outlined">psychology</span>
-                    </button>
-                    <button type="button" class="act-btn" title="Voice input">
-                        <span class="material-symbols-outlined">mic</span>
-                    </button>
-                    <button type="submit" class="mic-btn p-2 text-primary" id="btn-send" disabled title="Send">
-                        <span class="material-symbols-outlined">send</span>
-                    </button>
-                </div>
+
+        <!-- Project Name Modal -->
+    <div id="projectModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
+        <form id="project-form" class="relative w-full max-w-sm bg-[#FAF6F0] rounded-3xl p-6 shadow-2xl">
+            <h3 id="projectModalTitle" class="text-lg font-bold text-gray-900 mb-1">Buat Proyek Baru</h3>
+            <p class="text-sm text-gray-600 mb-4">Beri nama proyek untuk mengelompokkan sesi percakapan yang berbagi konteks.</p>
+            <input type="text" id="project-name-input" placeholder="Contoh: Belajar n8n" maxlength="100" autocomplete="off" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm outline-none focus:border-[#5B1744] focus:ring-2 focus:ring-[#5B1744]/20 mb-5">
+            <div class="flex gap-3">
+                <button type="button" onclick="hideProjectModal()" class="flex-1 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-bold transition">Batal</button>
+                <button type="submit" id="projectSaveBtn" class="flex-1 py-2 rounded-xl bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-bold transition">Simpan</button>
             </div>
         </form>
-        <div class="input-note text-center text-xs text-outline mt-3">Study Planner AI dapat membuat kesalahan.</div>
     </div>
-</main>
 
-<script>
-    const API_BASE='{{ url("/api") }}';
-    const SERVER_IS_GUEST=@json($isGuest);
-    const SERVER_USER_NAME='{{ addslashes($userName) }}';
-    const SERVER_USER_INITIAL='{{ addslashes($userInitial) }}';
-    let currentSessionId=null,sessions=[],isGuest=SERVER_IS_GUEST,currentUser=SERVER_IS_GUEST?null:{name:SERVER_USER_NAME};
+    <!-- MAIN -->
+        <main class="flex-1 flex flex-col h-screen overflow-hidden">
+            <header class="h-16 bg-[#FAF6F0]/80 backdrop-blur-md border-b border-[#5B1744]/5 sticky top-0 z-30 px-6 flex items-center justify-between shrink-0">
+                <div class="flex items-center gap-3">
+                    <button type="button" id="menuButton" class="md:hidden w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-700 shadow-xs">
+                        <i class="fa-solid fa-bars text-sm"></i>
+                    </button>
+                    <span class="font-bold text-base text-[#5B1744]">AI Study</span>
+                </div>
 
-    function getCsrfToken(){
-        const m=document.cookie.match(/XSRF-TOKEN=([^;]+)/);
-        return m?decodeURIComponent(m[1]):'';
-    }
-    function apiFetch(url,opts={}){
-        const h=opts.headers||{};
-        h['X-XSRF-TOKEN']=getCsrfToken();
-        h['Accept']=h['Accept']||'application/json';
-        opts.headers=h;opts.credentials=opts.credentials||'same-origin';
-        return fetch(url,opts);
-    }
+                <div class="flex items-center gap-3">
+                    <form method="POST" action="{{ route('logout') }}" class="m-0">
+                        @csrf
+                        <button type="submit" title="Log out"
+                            class="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:text-[#B91C1C] hover:border-[#B91C1C]/30 transition shadow-xs">
+                            <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
+                        </button>
+                    </form>
+                </div>
+            </header>
 
-    function toggleSend(){
-        const input=document.getElementById('chat-input');
-        const btn=document.getElementById('btn-send');
-        btn.disabled=!input.value.trim();
-    }
+            <div class="flex-1 flex flex-col relative min-h-0" id="main">
+                <div class="messages-wrap flex-1 overflow-y-auto min-h-0" id="messages-wrap">
+                    <div class="messages max-w-3xl mx-auto p-6 pb-36" id="messages">
+                        <div class="text-center mt-20" id="welcome-state">
+                            <h2 class="text-3xl font-bold mb-3 text-gray-900">Mau belajar apa hari ini?</h2>
+                            <p class="text-gray-500">Ceritakan saja, kita kerjakan bareng-bareng sampai paham.</p>
+                        </div>
+                    </div>
+                </div>
 
-    function initAuth(){
-        if(SERVER_IS_GUEST){
-            document.getElementById('btn-new-chat').style.display='none';
-            document.getElementById('welcome-heading').textContent="What's on the agenda today?";
-            document.getElementById('welcome-sub').textContent='Login untuk menyimpan riwayat percakapan.';
-        }else{
-            document.getElementById('welcome-heading').textContent=`What's on the agenda today, ${SERVER_USER_NAME}?`;
-            document.getElementById('welcome-sub').textContent='Study Planner AI siap membantu Anda.';
-        }
-        loadSessions();
-        resetView();
-    }
-
-    async function loadSessions(){
-        if(isGuest) return;
-        try{
-            const res=await apiFetch(`${API_BASE}/chat/sessions`);
-            const data=await res.json();
-            sessions=data.sessions||[];
-            renderSessions();
-        }catch(e){}
-    }
-
-    function renderSessions(){
-        const list=document.getElementById('session-list');
-        if(!list) return;
-        list.innerHTML=sessions.map(s=>`
-            <div class="sb-item ${s.id===currentSessionId?'active':''}" onclick="selectSession('${s.id}')">
-                <span class="material-symbols-outlined" style="font-size:16px">chat</span>
-                <span class="label">${esc(s.title)}</span>
-            </div>
-        `).join('');
-    }
-
-    async function selectSession(id){
-        currentSessionId=id;
-        const ws=document.getElementById('welcome-state');
-        if(ws) ws.remove();
-
-        const c=document.getElementById('messages');
-        c.innerHTML='<div class="p-8 text-center text-outline">Loading...</div>';
-        c.classList.add('has-chat');
-
-        try{
-            const res=await apiFetch(`${API_BASE}/chat/sessions/${id}/messages`);
-            const data=await res.json();
-            renderMsgs(data.messages||[]);
-            renderSessions();
-            setInputMode('bottom');
-        }catch(e){
-            c.innerHTML='<div class="p-8 text-center text-red-500">Gagal memuat pesan</div>';
-        }
-    }
-
-    function renderMsgs(msgs){
-        const c=document.getElementById('messages');
-        if(!msgs.length){c.innerHTML='<div class="p-8 text-center text-outline text-sm">Belum ada pesan.</div>';return;}
-        c.innerHTML=msgs.map(m=>`
-            <div class="p-4 ${m.role==='user'?'text-right':'text-left'}">
-                <div class="inline-block p-3 rounded-2xl ${m.role==='user'?'bg-primary text-on-primary':'bg-surface-container text-on-background'}">
-                    ${m.content}
+                <div class="absolute bottom-10 inset-x-0 z-20 px-6 pointer-events-none">
+                    <form id="chat-form" onsubmit="handleChatInput(event)" class="max-w-3xl mx-auto pointer-events-auto">
+                        <div id="editing-indicator" class="hidden mb-2 flex items-center justify-between bg-white text-[#5B1744] text-xs font-semibold px-4 py-2 rounded-xl shadow-md">
+                            <span><i class="fa-solid fa-pen mr-2"></i>Mengedit pesan</span>
+                            <button type="button" onclick="stopEditing()" class="hover:underline">Batal edit</button>
+                        </div>
+                        <div id="input-shell" class="flex items-center gap-2 bg-white p-2 pl-4 rounded-full border border-[#5B1744]/10 shadow-xl shadow-[#5B1744]/15 focus-within:border-[#5B1744]/40 focus-within:shadow-2xl transition-shadow">
+                            <textarea id="chat-input" rows="1" placeholder="Ask anything..." oninput="autoResize(this);toggleSend()" class="flex-1 bg-transparent border-none focus:ring-0 p-1 resize-none outline-none text-sm max-h-40 [overflow-wrap:anywhere]"></textarea>
+                            <button type="submit" class="w-10 h-10 rounded-full bg-[#5B1744] text-white flex items-center justify-center disabled:opacity-50 shrink-0" id="btn-send" disabled>
+                                <span class="material-symbols-outlined text-sm">send</span>
+                            </button>
+                        </div>
+                    </form>
                 </div>
             </div>
-        `).join('');
-        const wrap=document.getElementById('messages-wrap');
-        if(wrap) wrap.scrollTop=wrap.scrollHeight;
-    }
+        </main>
+    </div>
 
-    async function createSession(){
-        if(isGuest){window.location.href='{{ route("login") }}';return;}
-        try{
-            const res=await apiFetch(`${API_BASE}/chat/session`,{method:'POST',headers:{'Content-Type':'application/json'}});
-            const data=await res.json();
-            if(data.status==='success'){
-                sessions.unshift(data.session);
-                renderSessions();
-                selectSession(data.session.id);
-            }
-        }catch(e){}
-    }
+    <script>
+        const API_BASE = '{{ url("/api") }}';
 
-    function setInputMode(mode){
-        const bar=document.querySelector('.input-bar');
-        if(mode==='center'){bar.classList.remove('at-bottom');}
-        else{bar.classList.add('at-bottom');}
-    }
+        // Mobile drawer
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('overlay');
 
-    async function sendMessage(e){
-        e.preventDefault();
-        const input=document.getElementById('chat-input');
-        const msg=input.value.trim();
-        if(!msg) return;
+        document.getElementById('menuButton')?.addEventListener('click', () => {
+            sidebar.classList.remove('-translate-x-full');
+            overlay.classList.remove('hidden');
+        });
 
-        if(!currentSessionId){
-            await createSession();
+        function closeSidebar() {
+            sidebar.classList.add('-translate-x-full');
+            overlay.classList.add('hidden');
         }
 
-        const sendBtn=document.getElementById('btn-send');
-        input.disabled=true;
-        sendBtn.disabled=true;
+        overlay?.addEventListener('click', closeSidebar);
 
-        try{
-            const body={message:msg};
-            if(currentSessionId) body.chat_session_id=currentSessionId;
+        sidebar?.addEventListener('click', (event) => {
+            if (window.innerWidth < 768 && event.target.closest('a, button')) {
+                closeSidebar();
+            }
+        });
 
-            const res=await apiFetch(`${API_BASE}/chat/send`,{
-                method:'POST',
-                headers:{'Content-Type':'application/json'},
-                body:JSON.stringify(body)
-            });
-            const data=await res.json();
+        document.addEventListener('keydown', (event) => {
+            if (event.key === 'Escape' && window.innerWidth < 768) {
+                closeSidebar();
+            }
+        });
+        let currentSessionId = new URLSearchParams(window.location.search).get('session');
+        let editingMessageId = null;
+        let sessionToDelete = null;
+        let actionType = null;
+        let pendingController = null;
+        let draftParentId = null;
+        const messageContents = {};
+        const expandedProjects = {};
 
-            if(data.status==='success'){
-                await selectSession(currentSessionId);
+        function showWelcomeState(hintText = null) {
+            const c = document.getElementById('messages');
+            c.innerHTML = `
+                <div class="text-center mt-20" id="welcome-state">
+                    <h2 class="text-3xl font-bold mb-3 text-gray-900">Mau belajar apa hari ini?</h2>
+                    ${hintText ? `<p class="text-sm text-[#5B1744]/70 font-semibold mb-2"><i class="fa-solid fa-folder mr-1"></i>${hintText}</p>` : ''}
+                    <p class="text-gray-500">Ceritakan saja, kita kerjakan bareng-bareng sampai paham.</p>
+                </div>
+            `;
+        }
+
+        function scrollToBottom() {
+            const wrap = document.getElementById('messages-wrap');
+            const jump = () => wrap.scrollTo({ top: wrap.scrollHeight, behavior: 'instant' });
+            jump();
+            requestAnimationFrame(jump);
+            setTimeout(jump, 100);
+            setTimeout(jump, 300);
+            setTimeout(jump, 500);
+        }
+
+        function showConfirmModal(id, type) {
+            sessionToDelete = id;
+            actionType = type;
+            const title = document.getElementById('confirmModalTitle');
+            const body = document.getElementById('confirmModalBody');
+            const actionBtn = document.getElementById('confirmActionBtn');
+
+            if (type === 'deleteSession') {
+                title.innerText = 'Hapus Sesi?';
+                body.innerText = 'Apakah Anda yakin ingin menghapus sesi percakapan ini? Tindakan ini tidak dapat dibatalkan.';
+                actionBtn.innerText = 'Hapus';
             }
 
-            input.value='';
-            input.style.height='auto';
-        }catch(e){
-            console.error(e);
-        }finally{
-            input.disabled=false;
+            document.getElementById('confirmModal').classList.remove('hidden');
+            document.getElementById('confirmModal').classList.add('flex');
+        }
+        function hideConfirmModal() {
+            sessionToDelete = null;
+            actionType = null;
+            document.getElementById('confirmModal').classList.add('hidden');
+            document.getElementById('confirmModal').classList.remove('flex');
+        }
+        document.getElementById('confirmActionBtn').addEventListener('click', async () => {
+            if (actionType === 'deleteSession') await deleteSessionConfirmed();
+        });
+        async function deleteSessionConfirmed() {
+            if (!sessionToDelete) return;
+            const actionBtn = document.getElementById('confirmActionBtn');
+            if (actionBtn.disabled) return;
+            actionBtn.disabled = true;
+            try {
+                const res = await apiFetch(`${API_BASE}/chat/sessions/${sessionToDelete}`, { method: 'DELETE' });
+                if (!res.ok) throw new Error('Gagal menghapus sesi.');
+                const deletedId = sessionToDelete;
+                if (currentSessionId === deletedId) {
+                    currentSessionId = null;
+                    draftParentId = null;
+                    window.history.pushState(null, '', '{{ route('chat') }}');
+                    showWelcomeState();
+                }
+                loadSessions();
+            } catch (e) {
+                alert('Terjadi kesalahan saat menghapus sesi.');
+            } finally {
+                actionBtn.disabled = false;
+                hideConfirmModal();
+            }
+        }
+        let projectToRename = null;
+        const currentSessions = {};
+
+        function openProjectModal() {
+            const m = document.getElementById('projectModal');
+            m.classList.remove('hidden');
+            m.classList.add('flex');
+            setTimeout(() => document.getElementById('project-name-input').focus(), 50);
+        }
+
+        function hideProjectModal() {
+            projectToRename = null;
+            const m = document.getElementById('projectModal');
+            m.classList.add('hidden');
+            m.classList.remove('flex');
+        }
+
+        function showProjectCreateModal() {
+            projectToRename = null;
+            document.getElementById('projectModalTitle').innerText = 'Buat Proyek Baru';
+            document.getElementById('project-name-input').value = '';
+            document.getElementById('projectSaveBtn').innerText = 'Buat Proyek';
+            openProjectModal();
+        }
+
+        function showProjectRenameModal(id, event) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            const session = currentSessions[id];
+            if (!session) return;
+            projectToRename = id;
+            document.getElementById('projectModalTitle').innerText = 'Ganti Nama Proyek';
+            document.getElementById('project-name-input').value = session.title;
+            document.getElementById('projectSaveBtn').innerText = 'Simpan';
+            openProjectModal();
+        }
+
+        async function submitProjectModal() {
+            const input = document.getElementById('project-name-input');
+            const name = input.value.trim();
+            if (!name) {
+                input.focus();
+                return;
+            }
+            const btn = document.getElementById('projectSaveBtn');
+            if (btn.disabled) return;
+            btn.disabled = true;
+            try {
+                if (projectToRename) {
+                    const res = await apiFetch(`${API_BASE}/chat/sessions/${projectToRename}`, {
+                        method: 'PUT',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ title: name }),
+                    });
+                    if (!res.ok) throw new Error('Gagal mengganti nama proyek.');
+                    hideProjectModal();
+                    loadSessions();
+                } else {
+                    const newId = await createSession(name, true);
+                    if (!newId) {
+                        alert('Gagal membuat sesi proyek baru.');
+                    } else {
+                        hideProjectModal();
+                    }
+                }
+            } catch (e) {
+                alert(projectToRename
+                    ? 'Terjadi kesalahan saat mengganti nama proyek.'
+                    : 'Terjadi kesalahan saat membuat sesi proyek baru.');
+            } finally {
+                btn.disabled = false;
+            }
+        }
+
+        function getCsrfToken() {
+            const m = document.cookie.match(/XSRF-TOKEN=([^;]+)/);
+            return m ? decodeURIComponent(m[1]) : '';
+        }
+        function apiFetch(url, opts = {}) {
+            const h = opts.headers || {};
+            h['X-XSRF-TOKEN'] = getCsrfToken();
+            h['Accept'] = h['Accept'] || 'application/json';
+            opts.headers = h; opts.credentials = opts.credentials || 'same-origin';
+            return fetch(url, opts);
+        }
+
+        function toggleSend() {
+            const input = document.getElementById('chat-input');
+            const btn = document.getElementById('btn-send');
+            btn.disabled = !input.value.trim();
+        }
+
+        function sessionRowHtml(s) {
+            const isActive = s.id === currentSessionId;
+            return `
+                <div class="group flex items-center justify-between px-3.5 py-2.5 mb-2 rounded-xl text-xs cursor-pointer ${isActive ? 'active' : 'text-white/70 hover:bg-white/10'}" onclick="selectSession('${s.id}')">
+                    <span class="flex items-center gap-3 overflow-hidden">
+                        <i class="fa-solid fa-message w-4 text-center shrink-0"></i>
+                        <span class="truncate">${s.title}</span>
+                    </span>
+                    <button type="button" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/20 rounded shrink-0" onclick="deleteSession('${s.id}', event)">
+                        <i class="fa-solid fa-trash text-[10px]"></i>
+                    </button>
+                </div>
+            `;
+        }
+
+        async function loadSessions() {
+            try {
+                const res = await apiFetch(`${API_BASE}/chat/sessions`);
+                const data = await res.json();
+                const sessions = data.sessions || [];
+                const list = document.getElementById('session-list');
+                sessions.forEach(s => { currentSessions[s.id] = s; });
+                const roots = sessions.filter(s => !s.parent_id);
+                const byParent = {};
+                sessions.forEach(s => {
+                    if (s.parent_id) (byParent[s.parent_id] = byParent[s.parent_id] || []).push(s);
+                });
+
+                list.innerHTML = roots.map(s => {
+                    if (!s.is_project) return sessionRowHtml(s);
+
+                    const kids = byParent[s.id] || [];
+                    const expanded = Boolean(expandedProjects[s.id]);
+                    return `
+                        <div class="mb-2">
+                            <div class="group flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs cursor-pointer ${s.id === currentSessionId ? 'active' : 'text-white/70 hover:bg-white/10'}" onclick="openProject('${s.id}')">
+                                <span class="flex items-center gap-2 overflow-hidden">
+                                    <i class="fa-solid fa-chevron-right w-2 text-[8px] transition-transform duration-150 ${expanded ? 'rotate-90' : ''}"></i>
+                                    <i class="fa-solid fa-folder w-4 text-center shrink-0"></i>
+                                    <span class="truncate font-semibold">${s.title}</span>
+                                </span>
+                                <span class="flex items-center gap-1 shrink-0">
+                                    <button type="button" title="Ganti nama proyek" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/20 rounded" onclick="showProjectRenameModal('${s.id}', event)">
+                                        <i class="fa-solid fa-pen text-[10px]"></i>
+                                    </button>
+                                    <button type="button" title="Sesi baru dalam proyek ini" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/20 rounded" onclick="startNewDraft('${s.id}', event)">
+                                        <i class="fa-solid fa-plus text-[10px]"></i>
+                                    </button>
+                                    <button type="button" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/20 rounded" onclick="deleteSession('${s.id}', event)">
+                                        <i class="fa-solid fa-trash text-[10px]"></i>
+                                    </button>
+                                </span>
+                            </div>
+                            <div class="${expanded ? '' : 'hidden'} ml-4 border-l border-white/15 pl-1 my-1 space-y-0.5">
+                                ${kids.length ? kids.map(k => sessionRowHtml(k)).join('') : '<div class="px-3 py-1.5 text-[11px] text-white/40 italic">Belum ada sesi.</div>'}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } catch (e) {}
+        }
+
+        async function openProject(id) {
+            expandedProjects[id] = true;
+            try {
+                const res = await apiFetch(`${API_BASE}/chat/sessions`);
+                const data = await res.json();
+                const kids = (data.sessions || [])
+                    .filter(s => s.parent_id === id)
+                    .sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                await loadSessions();
+                if (kids.length) {
+                    await selectSession(kids[0].id);
+                } else {
+                    startNewDraft(id);
+                }
+            } catch (e) {}
+        }
+
+        function startNewDraft(projectId = null, event = null) {
+            if (event) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            if (pendingController) pendingController.abort();
+            stopEditing();
+            currentSessionId = null;
+            draftParentId = projectId;
+            if (projectId) expandedProjects[projectId] = true;
+            window.history.pushState(null, '', '{{ route('chat') }}');
+            const hint = projectId && currentSessions[projectId]
+                ? `Sesi baru dalam proyek "${currentSessions[projectId].title}"`
+                : null;
+            showWelcomeState(hint);
+            loadSessions();
+        }
+
+        async function selectSession(id) {
+            if (pendingController) pendingController.abort();
+            stopEditing();
+            draftParentId = null;
+            currentSessionId = id;
+            window.history.pushState(null, '', `{{ route('chat') }}?session=${id}`);
+            const ws = document.getElementById('welcome-state');
+            if (ws) ws.remove();
+            const c = document.getElementById('messages');
+            c.innerHTML = '<div class="p-8 text-center text-gray-400">Loading...</div>';
+
+            try {
+                const res = await apiFetch(`${API_BASE}/chat/sessions/${id}/messages`);
+                const data = await res.json();
+                if (data.session && data.session.parent_id) {
+                    expandedProjects[data.session.parent_id] = true;
+                }
+                renderMsgs(data.messages || []);
+                loadSessions();
+            } catch (e) {
+                c.innerHTML = '<div class="p-8"><div class="bg-red-50 text-red-700 p-4 rounded-xl border border-red-200 text-sm text-center">Gagal memuat percakapan. Silakan coba lagi.</div></div>';
+            }
+        }
+
+        function renderMsgs(msgs) {
+            const c = document.getElementById('messages');
+            if (!msgs.length) { c.innerHTML = '<div class="p-8 text-center text-gray-400 text-sm">Belum ada pesan.</div>'; return; }
+            c.innerHTML = '';
+            msgs.forEach(m => appendMessage(m.id, m.content, m.role, m.role === 'user' && !m.is_canceled, m.is_canceled));
+            scrollToBottom();
+        }
+
+        function appendMessage(id, content, role, canEdit = false, isCanceled = false, isPending = false, animate = false) {
+            const c = document.getElementById('messages');
+            const div = document.createElement('div');
+            if (id !== null && id !== undefined) div.id = `message-${id}`;
+            div.className = `msg-fade mb-[72px] ${role === 'user' ? 'text-right' : 'text-left'}`;
+
+            let messageContent = content;
+            let actionsHtml = '';
+
+            if (isCanceled) {
+                messageContent = 'Anda membatalkan pesan.';
+            } else if (role === 'user' && isPending) {
+                actionsHtml = `
+                    <div class="message-actions mt-1">
+                        <button type="button" onclick="cancelPendingMessage('${id}')" class="text-xs text-red-500 hover:underline">Batalkan</button>
+                    </div>
+                `;
+            } else if (role === 'user' && canEdit) {
+                if (id !== null && id !== undefined) messageContents[String(id)] = content;
+                actionsHtml = `
+                    <div class="message-actions mt-1">
+                        <button type="button" onclick="editMessage('${id}')" class="text-xs text-blue-500 hover:underline">Edit</button>
+                    </div>
+                `;
+            }
+
+            const rendered = role === 'assistant'
+                ? `<div class="ai-content leading-relaxed inline-block p-5 rounded-2xl bg-white border border-gray-100 shadow-sm text-[15px] text-left max-w-full break-words [overflow-wrap:anywhere]">${marked.parse(messageContent)}</div>`
+                : `<div class="inline-block p-4 rounded-2xl bg-[#5B1744] text-white text-sm text-left max-w-full break-words [overflow-wrap:anywhere]">${messageContent}</div>`;
+            div.innerHTML = rendered + actionsHtml;
+            c.appendChild(div);
+            scrollToBottom();
+        }
+
+        function appendLoadingMessage() {
+            const c = document.getElementById('messages');
+            const div = document.createElement('div');
+            div.id = 'loading-message';
+            div.className = 'mb-[72px] text-left';
+            div.innerHTML = `
+                <div class="inline-block p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
+                    <div class="typing-dots flex items-center gap-0">
+                        <span></span><span></span><span></span>
+                    </div>
+                </div>
+            `;
+            c.appendChild(div);
+            scrollToBottom();
+        }
+
+        function removeLoadingMessage() {
+            const loading = document.getElementById('loading-message');
+            if (loading) loading.remove();
+        }
+
+        async function createSession(title = null, isProject = false, parentId = null, openAfter = true) {
+            try {
+                const body = {};
+                if (title) body.title = title;
+                body.is_project = isProject;
+                if (parentId) body.parent_id = parentId;
+                const res = await apiFetch(`${API_BASE}/chat/session`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body)
+                });
+                const data = await res.json();
+                if (data.status === 'success') {
+                    currentSessionId = data.session.id;
+                    if (openAfter) {
+                        await selectSession(data.session.id);
+                    }
+                    return data.session.id;
+                }
+            } catch (e) {}
+            return null;
+        }
+
+        async         function deleteSession(id, event) {
+            event.preventDefault();
+            event.stopPropagation();
+            showConfirmModal(id, 'deleteSession');
+        }
+
+        document.getElementById('project-form').addEventListener('submit', (e) => {
+            e.preventDefault();
+            submitProjectModal();
+        });
+
+        document.getElementById('project-name-input').addEventListener('keydown', (event) => {
+            if (event.key === 'Escape') {
+                hideProjectModal();
+                document.getElementById('chat-input').focus();
+            }
+        });
+
+        function editMessage(messageId) {
+            const content = messageContents[String(messageId)];
+            if (typeof content !== 'string') return;
+            editingMessageId = messageId;
+            const input = document.getElementById('chat-input');
+            input.value = content;
+            autoResize(input);
             toggleSend();
+            document.getElementById('editing-indicator').classList.remove('hidden');
             input.focus();
         }
-    }
 
-    function autoResize(t){t.style.height='auto';t.style.height=Math.min(t.scrollHeight,160)+'px';}
-    function toggleSidebar(){document.getElementById('sidebar').classList.toggle('collapsed');document.getElementById('main').classList.toggle('full-left');}
-    function resetView(){currentSessionId=null;document.getElementById('messages').innerHTML='<div class="welcome-center" id="welcome-state"><h2 id="welcome-heading" class="text-3xl font-bold mb-3"></h2><p id="welcome-sub" class="text-outline"></p></div>';document.getElementById('messages').classList.remove('has-chat');setInputMode('center');initAuth();}
-    function esc(t){const d=document.createElement('div');d.textContent=t;return d.innerHTML;}
+        function stopEditing() {
+            editingMessageId = null;
+            const input = document.getElementById('chat-input');
+            input.value = '';
+            autoResize(input);
+            toggleSend();
+            document.getElementById('editing-indicator').classList.add('hidden');
+        }
 
-    initAuth();
-</script>
+        async function cancelPendingMessage(tempId) {
+            if (!pendingController) return;
+            pendingController.abort();
+        }
+
+        function handleChatInput(e) {
+            e.preventDefault();
+            sendMessage();
+        }
+
+        document.getElementById('chat-input').addEventListener('keydown', function (event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                handleChatInput(event);
+            }
+            if (event.key === 'Escape' && editingMessageId) {
+                stopEditing();
+            }
+        });
+
+        async function sendMessage() {
+            const input = document.getElementById('chat-input');
+            const msg = input.value.trim();
+            if (!msg) return;
+
+            const userMsg = msg;
+            const wasEditing = Boolean(editingMessageId);
+            const userMessageId = editingMessageId || `temp-${Date.now()}`;
+
+            if (!wasEditing) {
+                appendMessage(userMessageId, userMsg, 'user', false, false, true);
+            }
+
+            input.value = '';
+            autoResize(input);
+            input.disabled = true;
+            toggleSend();
+
+            if (wasEditing) {
+                document.getElementById('editing-indicator').classList.add('hidden');
+                editingMessageId = null;
+            }
+
+            appendLoadingMessage();
+            pendingController = new AbortController();
+
+            try {
+                if (!currentSessionId) {
+                    const title = userMsg.length > 50 ? userMsg.substring(0, 50) + '...' : userMsg;
+                    const newId = await createSession(title, false, draftParentId, false);
+                    if (!newId) {
+                        removeLoadingMessage();
+                        removeMessageElement(userMessageId);
+                        appendMessage(null, 'Gagal membuat sesi baru.', 'assistant');
+                        return;
+                    }
+                    draftParentId = null;
+                    window.history.pushState(null, '', `{{ route('chat') }}?session=${newId}`);
+                    document.getElementById('welcome-state')?.remove();
+                    loadSessions();
+                }
+
+                let url = `${API_BASE}/chat/send`;
+                let method = 'POST';
+
+                if (wasEditing) {
+                    url = `${API_BASE}/chat/messages/${userMessageId}`;
+                    method = 'PUT';
+                }
+
+                const res = await apiFetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ message: userMsg, chat_session_id: currentSessionId }),
+                    signal: pendingController.signal
+                });
+                const data = await res.json();
+                removeLoadingMessage();
+
+                if (data.status === 'success') {
+                    removeMessageElement(userMessageId);
+                    appendMessage(data.message_id || userMessageId, userMsg, 'user', true);
+                    appendMessage(`reply-${Date.now()}`, data.reply, 'assistant', false, false, false, true);
+                } else if (wasEditing) {
+                    appendMessage(userMessageId, messageContents[String(userMessageId)] || userMsg, 'user', true);
+                    appendMessage(null, data.message || 'Maaf, terjadi kesalahan saat memproses pesan.', 'assistant');
+                } else {
+                    removeMessageElement(userMessageId);
+                    appendMessage(null, data.message || 'Maaf, terjadi kesalahan saat memproses pesan.', 'assistant');
+                }
+            } catch (e) {
+                removeLoadingMessage();
+                if (e.name === 'AbortError') {
+                    removeMessageElement(userMessageId);
+                    appendMessage(null, null, 'user', false, true);
+                } else if (wasEditing) {
+                    appendMessage(userMessageId, messageContents[String(userMessageId)] || userMsg, 'user', true);
+                } else {
+                    removeMessageElement(userMessageId);
+                    appendMessage(null, 'Gagal terhubung ke AI.', 'assistant');
+                }
+            } finally {
+                pendingController = null;
+                input.disabled = false;
+                input.focus();
+            }
+        }
+
+        function removeMessageElement(id) {
+            const el = document.getElementById(`message-${id}`);
+            if (el) el.remove();
+        }
+
+        function autoResize(t) {
+            t.style.height = 'auto';
+            const h = Math.min(t.scrollHeight, 160);
+            t.style.height = h + 'px';
+            const shell = document.getElementById('input-shell');
+            const isTall = h > 44;
+            shell.classList.toggle('rounded-full', !isTall);
+            shell.classList.toggle('rounded-3xl', isTall);
+            shell.classList.toggle('items-center', !isTall);
+            shell.classList.toggle('items-end', isTall);
+        }
+
+        marked.setOptions({ breaks: true, gfm: true });
+
+        loadSessions();
+
+        if (currentSessionId) {
+            selectSession(currentSessionId);
+        }
+    </script>
 </body>
 </html>

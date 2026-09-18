@@ -1,0 +1,916 @@
+{
+  "success": true,
+  "data": {
+    "id": "ifMZ21KCdFbY2IjH",
+    "name": "main workflow",
+    "description": null,
+    "active": true,
+    "activeVersionId": "148c4bb2-b3d2-424c-b606-695a52720b67",
+    "createdAt": "2026-08-31T13:08:25.941Z",
+    "updatedAt": "2026-09-07T18:50:08.429Z",
+    "isArchived": false,
+    "versionId": "148c4bb2-b3d2-424c-b606-695a52720b67",
+    "versionCounter": 309,
+    "sourceWorkflowId": null,
+    "triggerCount": 1,
+    "nodes": [
+      {
+        "parameters": {
+          "httpMethod": "POST",
+          "path": "laravel-chat",
+          "authentication": "headerAuth",
+          "responseMode": "responseNode",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.webhook",
+        "typeVersion": 2.1,
+        "position": [
+          -2432,
+          528
+        ],
+        "id": "9adff0e7-4ffb-4b53-a91f-229c83f7ffb4",
+        "name": "Webhook",
+        "webhookId": "d028777f-5cd5-4228-8f5e-e5ebcafdfca9",
+        "credentials": {
+          "httpHeaderAuth": {
+            "id": "tvIkieZP8jx8tc6S",
+            "name": "Header Auth account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "rules": {
+            "values": [
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 3
+                  },
+                  "conditions": [
+                    {
+                      "id": "9fbfa4f8-8cd5-4fbf-ac77-3e66860d14e8",
+                      "leftValue": "={{ $json.assigned_route }}",
+                      "rightValue": "0",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals",
+                        "name": "filter.operator.equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 3
+                  },
+                  "conditions": [
+                    {
+                      "id": "26f20332-6f17-43d7-b630-2c0900fc4876",
+                      "leftValue": "={{ $json.assigned_route }}",
+                      "rightValue": "1",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals",
+                        "name": "filter.operator.equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              },
+              {
+                "conditions": {
+                  "options": {
+                    "caseSensitive": true,
+                    "leftValue": "",
+                    "typeValidation": "loose",
+                    "version": 3
+                  },
+                  "conditions": [
+                    {
+                      "id": "bc4230c4-0648-4999-b36c-dc60e5955230",
+                      "leftValue": "={{ $json.assigned_route }}",
+                      "rightValue": "2",
+                      "operator": {
+                        "type": "string",
+                        "operation": "equals",
+                        "name": "filter.operator.equals"
+                      }
+                    }
+                  ],
+                  "combinator": "and"
+                }
+              }
+            ]
+          },
+          "looseTypeValidation": true,
+          "options": {
+            "fallbackOutput": "extra"
+          }
+        },
+        "type": "n8n-nodes-base.switch",
+        "typeVersion": 3.4,
+        "position": [
+          -1984,
+          496
+        ],
+        "id": "4d3049e9-ee98-42fb-ba34-8f07bdf4db9a",
+        "name": "Switch (Random Load Balancer)"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json.message }}",
+          "options": {
+            "systemMessage": "[PERAN & PERSONALITAS]\nKamu adalah Teman Belajar (Study Partner) yang ramah, hangat, dan mudah dipahami. Gaya bahasamu santai, komunikatif, dan suportif seperti teman sekelas yang pandai menjelaskan sesuatu tanpa terkesan menggurui.\n\n[PRINSIP UTAMA]\n1. PENJELASAN SEDERHANA & ADAPTIF:\n   - Jelaskan setiap topik menggunakan bahasa awam yang ringkas dan mudah dicerna.\n   - JANGAN memberikan contoh kodingan, sintaks, atau istilah teknis yang rumit kecuali jika pengguna secara eksplisit meminta kode/contoh teknis tersebut.\n   - Jika pengguna meminta hal konkret (seperti \"roadmap\", \"langkah belajar\", \"daftar topik\"), LANGSUNG berikan poin-poin langkah ringkas tanpa bertele-tele.\n\n2. INTERAKSI DUA ARAH:\n   - Berikan informasi secukupnya agar teman belajarmu tidak merasa pusing/overwhelmed.\n   - Selalu tutup jawabanmu dengan 1 pertanyaan ringan atau penawaran santai untuk memandu langkah belajar selanjutnya.\n\n3. FORMAT PENULISAN:\n   - Gunakan BOLD untuk kata kunci penting dan Bullet/Numbered List agar nyaman dibaca di layar HP/chat.\n   - Hindari penggunaan Heading (#, ##), tabel, atau format dokumen formal lainnya.\n\n[SISTEM WAKTU & TANGGAL]\nHari ini adalah tanggal: {{ $today.toFormat('yyyy-MM-dd') }}\n\n1. SELALU gunakan acuan tanggal hari ini ({{ $today.toFormat('yyyy-MM-dd') }}) untuk setiap perhitungan waktu.\n2. Jika pengguna menyebut \"besok\", \"lusa\", atau nama hari, hitung tanggal pastinya berbasis tanggal hari ini dengan format YYYY-MM-DD.\n\n[ATURAN EKSEKUSI TOOL & KEABSAHAN DATA]\n1. JIKA PENGGUNA MENANYAKAN JADWAL / KALENDER:\n   - Panggil tool `get_user_calendar`.\n   - Tool akan mengembalikan data berupa daftar/array jadwal.\n   - WAJIB TAMPILKAN SELURUH JADWAL yang ada di dalam array tersebut tanpa ada yang terlewat! DILARANG hanya menampilkan 1 jadwal jika ada beberapa jadwal pada hari itu.\n   - Laporkan detail lengkap setiap jadwal seperti: **Nama Acara**, **Subjek/Mata Pelajaran**, **Jam Mulai** (start_time), dan **Jam Selesai** (end_time).\n   - Jika setelah dicek ternyata tidak ada jadwal pada tanggal tersebut, beri tahu secara jujur bahwa agenda masih kosong.\n\n2. JIKA PENGGUNA MEMINTA MEMBUAT JADWAL BARU:\n   - DILARANG MENJAWAB \"jadwal berhasil dibuat\" atau \"sudah dicatat\" SEBELUM kamu berhasil memanggil tool `create_user_event` dan mendapatkan respons sukses dari backend!\n   - Hitung tanggal pastinya (YYYY-MM-DD).\n   - Tentukan jam mulai (start_time) dalam format HH:MM. Jika pengguna tidak menyebutkan jam selesai (end_time), otomatis tentukan 1 jam setelah jam mulai.\n   - Eksekusi tool `create_user_event` dengan parameter tersebut.\n   - Setelah tool memberikan respons sukses, baru berikan konfirmasi ramah ke pengguna.\n\n3. JIKA PENGGUNA MENANYAKAN ATAU MEMBUAT TUGAS / TO-DO LIST:\n   - Panggil tool `get_user_tasks` untuk melihat daftar tugas.\n   - Panggil tool `create_user_task` untuk mencatat tugas baru."
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 3.1,
+        "position": [
+          -1232,
+          400
+        ],
+        "id": "916cd916-8859-4839-81eb-ac920d224958",
+        "name": "AI Agent Groq"
+      },
+      {
+        "parameters": {
+          "model": "openai/gpt-oss-120b",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+        "typeVersion": 1,
+        "position": [
+          -1480,
+          632
+        ],
+        "id": "d0370d17-8aae-4dff-a055-6f95a2248e4b",
+        "name": "Groq Chat Model",
+        "credentials": {
+          "groqApi": {
+            "id": "15pOgV1EC4QDbO83",
+            "name": "Groq account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [
+          -416,
+          512
+        ],
+        "id": "679fd792-6800-4237-88c1-9a16531d1f57",
+        "name": "Respond to Webhook Groq"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ \"[SYSTEM CONTEXT: Hari ini adalah tanggal \" + $now.toFormat('yyyy-MM-dd') + \"]\\n\\nPertanyaan: \" + $json.message }}",
+          "options": {
+            "systemMessage": "[PERAN & PERSONALITAS]\nKamu adalah Teman Belajar (Study Partner) yang ramah, hangat, dan mudah dipahami. Gaya bahasamu santai, komunikatif, dan suportif seperti teman sekelas yang pandai menjelaskan sesuatu tanpa terkesan menggurui.\n\n[PRINSIP UTAMA]\n1. PENJELASAN SEDERHANA & ADAPTIF:\n   - Jelaskan setiap topik menggunakan bahasa awam yang ringkas dan mudah dicerna.\n   - JANGAN memberikan contoh kodingan, sintaks, atau istilah teknis yang rumit kecuali jika pengguna secara eksplisit meminta kode/contoh teknis tersebut.\n   - Jika pengguna meminta hal konkret (seperti \"roadmap\", \"langkah belajar\", \"daftar topik\"), LANGSUNG berikan poin-poin langkah ringkas tanpa bertele-tele.\n\n2. INTERAKSI DUA ARAH:\n   - Berikan informasi secukupnya agar teman belajarmu tidak merasa pusing/overwhelmed.\n   - Selalu tutup jawabanmu dengan 1 pertanyaan ringan atau penawaran santai untuk memandu langkah belajar selanjutnya.\n\n3. FORMAT PENULISAN:\n   - Gunakan BOLD untuk kata kunci penting dan Bullet/Numbered List agar nyaman dibaca di layar HP/chat.\n   - Hindari penggunaan Heading (#, ##), tabel, atau format dokumen formal lainnya.\n\n[SISTEM WAKTU & TANGGAL]\nHari ini adalah tanggal: {{ $now.year }}-{{ String($now.month).padStart(2, '0') }}-{{ String($now.day).padStart(2, '0') }}\n\n1. SELALU gunakan acuan tanggal hari ini ({{ $now.year }}-{{ String($now.month).padStart(2, '0') }}-{{ String($now.day).padStart(2, '0') }}) untuk setiap perhitungan waktu.\n2. Jika pengguna menyebut \"besok\", \"lusa\", atau nama hari, hitung tanggal pastinya berbasis tanggal hari ini dengan format YYYY-MM-DD.\n\n[ATURAN EKSEKUSI TOOL & KEABSAHAN DATA]\n1. JIKA PENGGUNA MENANYAKAN JADWAL / KALENDER:\n   - Panggil tool `get_user_calendar`.\n   - Analisa data JSON yang dikembalikan oleh tool.\n   - Filter dan cocokkan tanggal acara dengan pertanyaan pengguna.\n   - Laporkan detail lengkap seperti: **Nama Acara**, **Subjek/Mata Pelajaran**, **Jam Mulai** (start_time), dan **Jam Selesai** (end_time).\n   - Jika setelah dicek ternyata tidak ada jadwal pada tanggal tersebut, beri tahu secara jujur bahwa agenda masih kosong.\n\n2. JIKA PENGGUNA MEMINTA MEMBUAT JADWAL BARU:\n   - DILARANG MENJAWAB \"jadwal berhasil dibuat\" atau \"sudah dicatat\" SEBELUM kamu berhasil memanggil tool `create_user_event` dan mendapatkan respons sukses dari backend!\n   - Hitung tanggal pastinya (YYYY-MM-DD).\n   - Tentukan jam mulai (start_time) dalam format HH:MM. Jika pengguna tidak menyebutkan jam selesai (end_time), otomatis tentukan 1 jam setelah jam mulai.\n   - Eksekusi tool `create_user_event` dengan parameter tersebut.\n   - Setelah tool memberikan respons sukses, baru berikan konfirmasi ramah ke pengguna.\n\n3. JIKA PENGGUNA MENANYAKAN ATAU MEMBUAT TUGAS / TO-DO LIST:\n   - Panggil tool `get_user_tasks` untuk melihat daftar tugas.\n   - Panggil tool `create_user_task` untuk mencatat tugas baru."
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 3.1,
+        "position": [
+          -1232,
+          0
+        ],
+        "id": "230cb54f-b061-41d8-8499-6f6a30b8bb38",
+        "name": "AI Agent1"
+      },
+      {
+        "parameters": {
+          "modelName": "models/gemini-3.1-flash-lite",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+        "typeVersion": 1.1,
+        "position": [
+          -1480,
+          232
+        ],
+        "id": "b7c75d34-fa8d-4b71-9499-cb97c1b67a40",
+        "name": "Google Gemini Chat Model",
+        "credentials": {
+          "googlePalmApi": {
+            "id": "K6pVB9P25fpQkLwu",
+            "name": "Google Gemini(PaLM) Api account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "respondWith": "json",
+          "responseBody": "={{ JSON.stringify({ output: $json.output }) }}",
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [
+          -640,
+          112
+        ],
+        "id": "cc411972-971a-45d1-9b69-c159df93b426",
+        "name": "Respond to Webhook"
+      },
+      {
+        "parameters": {
+          "jsCode": "// Ambil output teks dari AI Agent\nlet outputText = $input.first().json.output || \"\";\n\n// 1. Hapus jika formatnya memakai tag <think>...</think>\noutputText = outputText.replace(/<think>[\\s\\S]*?<\\/think>/gi, '');\n\n// 2. Hapus jika AI menulis \"Here's a thinking process: ...\" hingga batas jawaban asli\nif (outputText.includes(\"Here's a thinking process:\")) {\n  // Potong teks dan ambil bagian paling akhir setelah pemikiran selesai\n  let lines = outputText.split(\"\\n\\n\");\n  // Mengambil paragraf/bagian respon bersih di baris akhir\n  outputText = lines.slice(-1)[0]; \n}\n\n// 3. Bersihkan sisa spasi atau enter liar\nlet cleanedText = outputText.trim();\n\n// Kembalikan objek JSON yang bersih\nreturn [{\n  json: {\n    status: \"success\",\n    message: cleanedText\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -640,
+          512
+        ],
+        "id": "0db839cb-ff0c-4327-addd-672b3bf2e229",
+        "name": "Code in JavaScript"
+      },
+      {
+        "parameters": {
+          "jsCode": "const inputData = $input.first().json;\nconst body = inputData.body || inputData;\n\nconst sessionId = body.session_id || \"default_session\";\nconst userMessage = body.message || \"\";\nconst chatHistory = body.history || []; // Kosong jika sesi biasa (tanpa project)\n\n// 1. Filter pesan canceled & format history dari sesi saudara\nlet formattedHistory = \"\";\nif (Array.isArray(chatHistory) && chatHistory.length > 0) {\n  formattedHistory = chatHistory\n    .filter(h => !h.is_canceled) // Mengabaikan pesan yang dibatalkan user\n    .map(h => `${h.role === 'user' ? 'User' : 'AI'}: ${h.content}`)\n    .join('\\n');\n}\n\n// 2. Susun prompt gabungan\nlet combinedPrompt = userMessage;\nif (formattedHistory) {\n  combinedPrompt = `Konteks dari sesi lain di proyek ini:\\n${formattedHistory}\\n\\nPertanyaan User saat ini:\\n${userMessage}`;\n}\n\n// 3. Hash rute untuk 3 cabang AI Agent (0, 1, 2)\nfunction hashCode(str) {\n  let hash = 0;\n  for (let i = 0; i < str.length; i++) {\n    hash = (hash << 5) - hash + str.charCodeAt(i);\n    hash |= 0;\n  }\n  return Math.abs(hash);\n}\n\nconst assignedRoute = hashCode(String(sessionId)) % 3;\n\nreturn [{\n  json: {\n    ...inputData,\n    message: combinedPrompt, // Dikirim ke AI Agent\n    assigned_route: assignedRoute\n  }\n}];\n\n// Ambil tanggal hari ini (YYYY-MM-DD)\nconst todayDate = new Date().toISOString().split('T')[0];\n\nconst userPrompt = $input.first().json.chatInput || $input.first().json.message || '';\n\n// Format pesan agar AI langsung tahu tanggal hari ini secara eksplisit\nconst formattedPrompt = `[WAKTU SERVER: Hari ini tanggal ${todayDate}]\\n\\nPertanyaan User:\\n${userPrompt}`;\n\nreturn {\n  json: {\n    ...$input.first().json,\n    chatInput: formattedPrompt\n  }\n};"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -2208,
+          528
+        ],
+        "id": "f1b0f4d2-1b95-43ef-a615-dc4a60af2a5f",
+        "name": "Code in JavaScript1"
+      },
+      {
+        "parameters": {
+          "sessionIdType": "customKey",
+          "sessionKey": "={{ $json.body.session_id }}"
+        },
+        "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+        "typeVersion": 1.6,
+        "position": [
+          -1352,
+          232
+        ],
+        "id": "47ccc7b4-5ffa-4835-bd8e-18855b787cc5",
+        "name": "Redis Chat Memory1",
+        "credentials": {
+          "redis": {
+            "id": "xAiHuHp6lwZQeLqS",
+            "name": "Redis account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "sessionIdType": "customKey",
+          "sessionKey": "={{ $json.body.session_id }}"
+        },
+        "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+        "typeVersion": 1.6,
+        "position": [
+          -1352,
+          632
+        ],
+        "id": "c41de047-6541-4e4e-abf4-2d409d595d4a",
+        "name": "Redis Chat Memory",
+        "credentials": {
+          "redis": {
+            "id": "xAiHuHp6lwZQeLqS",
+            "name": "Redis account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "model": "=openrouter/free",
+          "options": {}
+        },
+        "type": "@n8n/n8n-nodes-langchain.lmChatOpenRouter",
+        "typeVersion": 1,
+        "position": [
+          -1480,
+          1128
+        ],
+        "id": "6de1727c-2547-40d5-a59e-bc848597fbce",
+        "name": "OpenRouter Chat Model",
+        "credentials": {
+          "openRouterApi": {
+            "id": "xEMcikETErlhoyMK",
+            "name": "OpenRouter account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "sessionIdType": "customKey",
+          "sessionKey": "={{ $json.body.session_id }}"
+        },
+        "type": "@n8n/n8n-nodes-langchain.memoryRedisChat",
+        "typeVersion": 1.6,
+        "position": [
+          -1352,
+          1128
+        ],
+        "id": "17511776-77a6-437b-b7f2-381b3cee485b",
+        "name": "Redis Chat Memory2",
+        "credentials": {
+          "redis": {
+            "id": "xAiHuHp6lwZQeLqS",
+            "name": "Redis account"
+          }
+        }
+      },
+      {
+        "parameters": {
+          "jsCode": "// Ambil output teks dari AI Agent\nlet outputText = $input.first().json.output || \"\";\n\n// 1. Hapus jika formatnya memakai tag <think>...</think>\noutputText = outputText.replace(/<think>[\\s\\S]*?<\\/think>/gi, '');\n\n// 2. Hapus jika AI menulis \"Here's a thinking process: ...\" hingga batas jawaban asli\nif (outputText.includes(\"Here's a thinking process:\")) {\n  // Potong teks dan ambil bagian paling akhir setelah pemikiran selesai\n  let lines = outputText.split(\"\\n\\n\");\n  // Mengambil paragraf/bagian respon bersih di baris akhir\n  outputText = lines.slice(-1)[0]; \n}\n\n// 3. Bersihkan sisa spasi atau enter liar\nlet cleanedText = outputText.trim();\n\n// Kembalikan objek JSON yang bersih\nreturn [{\n  json: {\n    status: \"success\",\n    message: cleanedText\n  }\n}];"
+        },
+        "type": "n8n-nodes-base.code",
+        "typeVersion": 2,
+        "position": [
+          -640,
+          912
+        ],
+        "id": "ff2b7cf5-f2a0-45a0-a3cd-f539af815a32",
+        "name": "Code in JavaScript2"
+      },
+      {
+        "parameters": {
+          "promptType": "define",
+          "text": "={{ $json.message }}",
+          "options": {
+            "systemMessage": "[PERAN & PERSONALITAS]\nKamu adalah Teman Belajar (Study Partner) yang ramah, hangat, dan mudah dipahami. Gaya bahasamu santai, komunikatif, dan suportif seperti teman sekelas yang pandai menjelaskan sesuatu tanpa terkesan menggurui.\n\n[PRINSIP UTAMA]\n1. PENJELASAN SEDERHANA & ADAPTIF:\n   - Jelaskan setiap topik menggunakan bahasa awam yang ringkas dan mudah dicerna.\n   - JANGAN memberikan contoh kodingan, sintaks, atau istilah teknis yang rumit kecuali jika pengguna secara eksplisit meminta kode/contoh teknis tersebut.\n   - Jika pengguna meminta hal konkret (seperti \"roadmap\", \"langkah belajar\", \"daftar topik\"), LANGSUNG berikan poin-poin langkah ringkas tanpa bertele-tele.\n\n2. INTERAKSI DUA ARAH:\n   - Berikan informasi secukupnya agar teman belajarmu tidak merasa pusing/overwhelmed.\n   - Selalu tutup jawabanmu dengan 1 pertanyaan ringan atau penawaran santai untuk memandu langkah belajar selanjutnya.\n\n3. FORMAT PENULISAN:\n   - Gunakan BOLD untuk kata kunci penting dan Bullet/Numbered List agar nyaman dibaca di layar HP/chat.\n   - Hindari penggunaan Heading (#, ##), tabel, atau format dokumen formal lainnya.\n\n[SISTEM WAKTU & TANGGAL]\nHari ini adalah tanggal: {{ $now.format('YYYY-MM-DD') }}\n\n1. SELALU gunakan acuan tanggal hari ini ({{ $now.format('YYYY-MM-DD') }}) dan tahun {{ $now.format('YYYY') }} untuk setiap perhitungan waktu.\n2. Jika pengguna menyebut kata relatif seperti \"hari ini\", \"besok\", \"lusa\", atau nama hari (misal: \"hari Senin\"):\n   - Hitung tanggal pastinya secara presisi berbasis {{ $now.format('YYYY-MM-DD') }}.\n   - Format tanggal yang wajib kamu gunakan saat memanggil tool adalah YYYY-MM-DD.\n\n[ATURAN UTAMA EKSEKUSI TOOL]\n1. DILARANG KERAS membuat jawaban pura-pura seperti \"Sudah dibuatkan\", \"Jadwal berhasil ditambahkan\", atau sejenisnya TANPA memanggil tool `create_user_event2` terlebih dahulu!\n2. Jika pengguna meminta membuat/menambah/menjadwalkan agenda baru:\n   - Hitung tanggalnya dengan pasti (format: YYYY-MM-DD).\n   - Tentukan jam mulai dan jam selesai (format: HH:mm).\n   - WAJIB PANGGIL tool `create_user_event2` dengan parameter yang sesuai.\n   - Tunggu respons dari tool, baru berikan jawaban ke pengguna.\nDan jangan masukkan proses berpikir untuk dikirim ke user"
+          }
+        },
+        "type": "@n8n/n8n-nodes-langchain.agent",
+        "typeVersion": 3.1,
+        "position": [
+          -1232,
+          912
+        ],
+        "id": "6293c46f-9a27-4711-9b1d-6db5093e24f6",
+        "name": "AI Agent Backup",
+        "onError": "continueRegularOutput"
+      },
+      {
+        "parameters": {
+          "options": {}
+        },
+        "type": "n8n-nodes-base.respondToWebhook",
+        "typeVersion": 1.5,
+        "position": [
+          -416,
+          912
+        ],
+        "id": "471c0d81-7e5d-46e8-875e-79eac55eb70a",
+        "name": "Respond to Webhook Backup"
+      },
+      {
+        "parameters": {
+          "name": "get_user_calendar",
+          "description": "Fetch ALL schedules and calendar events for a specific date. Always parse and output every single item returned in the list array without skipping any event.",
+          "jsCode": "const sessionId = $('Webhook').item.json.body.session_id;\n\nconst options = {\n  method: 'GET',\n  url: 'https://studyplanner.web.id/api/ai/tool/calendar',\n  headers: {\n    'X-API-KEY': 'Laravel_n8n_SecretKey_998877',\n    'X-SESSION-ID': sessionId\n  },\n  json: true\n};\n\nconst response = await this.helpers.httpRequest(options);\nreturn JSON.stringify(response);"
+        },
+        "id": "388ab666-3967-4cda-8af7-fd4519f58b7a",
+        "name": "get_user_calendar",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          -1224,
+          232
+        ]
+      },
+      {
+        "parameters": {
+          "name": "create_user_event",
+          "description": "MUST BE CALLED to save or create a new schedule/calendar event in the database.",
+          "jsCode": "const input = $input.first().json;\nconst sessionId = $('Webhook').item.json.body.session_id;\n\n// 1. Format tanggal aman (default ke hari ini jika AI tidak kirim)\nconst eventDate = input.date || new Date().toISOString().split('T')[0];\n\n// 2. Format jam mulai (pastikan format HH:mm)\nlet startTime = input.start_time || '08:00';\nif (startTime.length > 5) startTime = startTime.substring(0, 5);\n\n// 3. Autogenerate jam selesai jika AI tidak mengirimkan end_time\nlet endTime = input.end_time;\nif (!endTime) {\n  const [hours, minutes] = startTime.split(':');\n  const endHour = String((parseInt(hours, 10) + 1) % 24).padStart(2, '0');\n  endTime = `${endHour}:${minutes || '00'}`;\n} else if (endTime.length > 5) {\n  endTime = endTime.substring(0, 5);\n}\n\n// 4. Susun payload sesuai harapan API Laravel\nconst payload = {\n  title: input.title,\n  subject: input.subject || 'Umum',\n  date: eventDate,\n  start_time: startTime, // Hasil: \"13:00\"\n  end_time: endTime     // Hasil: \"15:00\"\n};\n\nconst options = {\n  method: 'POST',\n  url: 'https://studyplanner.web.id/api/ai/tool/calendar',\n  headers: {\n    'Content-Type': 'application/json',\n    'Accept': 'application/json',\n    'X-API-KEY': 'Laravel_n8n_SecretKey_998877',\n    'X-SESSION-ID': sessionId\n  },\n  body: payload,\n  json: true\n};\n\ntry {\n  const response = await this.helpers.httpRequest(options);\n  return JSON.stringify(response);\n} catch (error) {\n  // Mengembalikan detail validasi Laravel jika tetap 422\n  return JSON.stringify({\n    status: 'error',\n    message: error.response?.data || error.message\n  });\n}",
+          "specifyInputSchema": true,
+          "schemaType": "manual",
+          "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\",\n      \"description\": \"Judul acara atau kegiatan\"\n    },\n    \"subject\": {\n      \"type\": \"string\",\n      \"description\": \"Mata pelajaran atau kategori (opsional)\"\n    },\n    \"date\": {\n      \"type\": \"string\",\n      \"description\": \"Tanggal acara format YYYY-MM-DD\"\n    },\n    \"start_time\": {\n      \"type\": \"string\",\n      \"description\": \"Jam mulai format HH:MM\"\n    },\n    \"end_time\": {\n      \"type\": \"string\",\n      \"description\": \"Jam selesai format HH:MM\"\n    }\n  },\n  \"required\": [\"title\", \"date\", \"start_time\"]\n}"
+        },
+        "id": "e2980b9e-9c8b-4b3b-abcb-2dba13d14978",
+        "name": "create_user_event",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          -1096,
+          232
+        ]
+      },
+      {
+        "parameters": {
+          "name": "get_user_tasks",
+          "description": "Fetch ALL tasks or to-do list items. Returns an array of tasks. You MUST iterate through the entire array and display EVERY SINGLE task returned.",
+          "jsCode": "const sessionId = $('Webhook').item.json.body.session_id;\n\nconst options = {\n  method: 'GET',\n  url: 'https://studyplanner.web.id/api/ai/tool/tasks',\n  headers: {\n    'X-API-KEY': 'Laravel_n8n_SecretKey_998877',\n    'X-SESSION-ID': sessionId\n  },\n  json: true\n};\n\ntry {\n  const response = await this.helpers.httpRequest(options);\n  const taskList = Array.isArray(response) ? response : (response.data || []);\n\n  return JSON.stringify({\n    total_tasks_found: taskList.length,\n    tasks_list: taskList,\n    instruction: \"DILARANG MERANGKUM ATAU MEMOTONG DAFTAR. Tampilkan seluruh item task yang ada di dalam array tasks_list dari awal sampai akhir tanpa terkecuali.\"\n  });\n} catch (error) {\n  return JSON.stringify({\n    status: 'error',\n    message: error.message\n  });\n}"
+        },
+        "id": "3b3e4b15-d17c-4e4d-9c7f-c7677edc117e",
+        "name": "get_user_tasks",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          -968,
+          232
+        ]
+      },
+      {
+        "parameters": {
+          "name": "create_user_task",
+          "description": "Create a new task or to-do item for the user. Requires task title and due date.",
+          "jsCode": "// 1. Ambil payload asli dari AI (menangani berbagai format pembungkus dari n8n/LangChain)\nconst rawInput = $input.first().json;\nconst data = rawInput.args || rawInput.query || rawInput;\n\n// 2. Ambil session_id secara presisi dari Webhook\nlet sessionId = \"default_session\";\ntry {\n  sessionId = $('Webhook').first().json.body?.session_id || \n              $('Webhook').first().json.session_id || \n              data.session_id || \"default_session\";\n} catch (e) {\n  sessionId = data.session_id || \"default_session\";\n}\n\n// 3. Pastikan nilai tidak kosong atau undefined\nconst payload = {\n  title: data.title || data.task_name || data.input || 'Tugas Baru',\n  subject: data.subject || 'Umum',\n  due_date: data.due_date || data.date || '2026-09-21',\n  status: 'pending'\n};\n\n// 4. Request ke Laravel dengan penanganan error 422 agar detailnya kelihatan\ntry {\n  const response = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://studyplanner.web.id/api/ai/tool/tasks',\n    headers: {\n      'Content-Type': 'application/json',\n      'Accept': 'application/json',\n      'X-API-KEY': 'Laravel_n8n_SecretKey_998877',\n      'X-SESSION-ID': String(sessionId)\n    },\n    body: payload,\n    json: true\n  });\n\n  return JSON.stringify({\n    status: 'success',\n    data: response\n  });\n} catch (error) {\n  // Menampilkan pesan error spesifik dari validator Laravel (misal: \"field title required\")\n  const laravelError = error.cause?.response?.data || error.response?.data || error.message;\n  return JSON.stringify({\n    status: 'error_from_laravel',\n    detail: laravelError,\n    payload_sent: payload\n  });\n}",
+          "specifyInputSchema": true,
+          "schemaType": "manual",
+          "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"title\": { \"type\": \"string\" },\n    \"subject\": { \"type\": \"string\" },\n    \"due_date\": { \"type\": \"string\" }\n  },\n  \"required\": [\"title\", \"due_date\"]\n}"
+        },
+        "id": "1de26309-fad3-44e5-97ee-109ed30e0d9e",
+        "name": "create_user_task",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          -840,
+          232
+        ]
+      },
+      {
+        "parameters": {
+          "name": "get_user_calendar",
+          "description": "Fetch ALL schedules and calendar events for a specific date. Always parse and output every single item returned in the list array without skipping any event.",
+          "jsCode": "const sessionId = $('Webhook').item.json.body.session_id;\n\nconst options = {\n  method: 'GET',\n  url: 'https://studyplanner.web.id/api/ai/tool/calendar',\n  headers: {\n    'X-API-KEY': 'Laravel_n8n_SecretKey_998877',\n    'X-SESSION-ID': sessionId\n  },\n  json: true\n};\n\nconst response = await this.helpers.httpRequest(options);\nreturn JSON.stringify(response);"
+        },
+        "id": "6a6e52dd-8104-420a-8860-de97099fef51",
+        "name": "get_user_calendar1",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          -1224,
+          632
+        ]
+      },
+      {
+        "parameters": {
+          "name": "create_user_event",
+          "description": "MUST BE CALLED to save or create a new schedule/calendar event in the database.",
+          "jsCode": "const input = $input.first().json;\nconst sessionId = $('Webhook').item.json.body.session_id;\n\n// 1. Format tanggal aman (default ke hari ini jika AI tidak kirim)\nconst eventDate = input.date || new Date().toISOString().split('T')[0];\n\n// 2. Format jam mulai (pastikan format HH:mm)\nlet startTime = input.start_time || '08:00';\nif (startTime.length > 5) startTime = startTime.substring(0, 5);\n\n// 3. Autogenerate jam selesai jika AI tidak mengirimkan end_time\nlet endTime = input.end_time;\nif (!endTime) {\n  const [hours, minutes] = startTime.split(':');\n  const endHour = String((parseInt(hours, 10) + 1) % 24).padStart(2, '0');\n  endTime = `${endHour}:${minutes || '00'}`;\n} else if (endTime.length > 5) {\n  endTime = endTime.substring(0, 5);\n}\n\n// 4. Susun payload sesuai harapan API Laravel\nconst payload = {\n  title: input.title,\n  subject: input.subject || 'Umum',\n  date: eventDate,\n  start_time: startTime, // Hasil: \"13:00\"\n  end_time: endTime     // Hasil: \"15:00\"\n};\n\nconst options = {\n  method: 'POST',\n  url: 'https://studyplanner.web.id/api/ai/tool/calendar',\n  headers: {\n    'Content-Type': 'application/json',\n    'Accept': 'application/json',\n    'X-API-KEY': 'Laravel_n8n_SecretKey_998877',\n    'X-SESSION-ID': sessionId\n  },\n  body: payload,\n  json: true\n};\n\ntry {\n  const response = await this.helpers.httpRequest(options);\n  return JSON.stringify(response);\n} catch (error) {\n  // Mengembalikan detail validasi Laravel jika tetap 422\n  return JSON.stringify({\n    status: 'error',\n    message: error.response?.data || error.message\n  });\n}",
+          "specifyInputSchema": true,
+          "schemaType": "manual",
+          "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\",\n      \"description\": \"Judul acara atau kegiatan\"\n    },\n    \"subject\": {\n      \"type\": \"string\",\n      \"description\": \"Mata pelajaran atau kategori (opsional)\"\n    },\n    \"date\": {\n      \"type\": \"string\",\n      \"description\": \"Tanggal acara format YYYY-MM-DD\"\n    },\n    \"start_time\": {\n      \"type\": \"string\",\n      \"description\": \"Jam mulai format HH:MM\"\n    },\n    \"end_time\": {\n      \"type\": \"string\",\n      \"description\": \"Jam selesai format HH:MM\"\n    }\n  },\n  \"required\": [\"title\", \"date\", \"start_time\"]\n}"
+        },
+        "id": "79f6085f-826e-4da8-ab05-2d134672f028",
+        "name": "create_user_event1",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          -1096,
+          632
+        ]
+      },
+      {
+        "parameters": {
+          "name": "get_user_calendar",
+          "description": "Fetch ALL schedules and calendar events for a specific date. Always parse and output every single item returned in the list array without skipping any event.",
+          "jsCode": "const sessionId = $('Webhook').item.json.body.session_id;\n\nconst options = {\n  method: 'GET',\n  url: 'https://studyplanner.web.id/api/ai/tool/calendar',\n  headers: {\n    'X-API-KEY': 'Laravel_n8n_SecretKey_998877',\n    'X-SESSION-ID': sessionId\n  },\n  json: true\n};\n\ntry {\n  const response = await this.helpers.httpRequest(options);\n  const dataList = Array.isArray(response) ? response : (response.data || []);\n\n  // Membungkus respons dengan instruksi tegas agar LLM tidak melewatkan item\n  return JSON.stringify({\n    total_events_found: dataList.length,\n    events_list: dataList,\n    instruction: \"DILARANG MERANGKUM ATAU MEMOTONG. Tampilkan seluruh item yang ada di dalam array events_list tanpa terkecuali.\"\n  });\n} catch (error) {\n  return JSON.stringify({\n    status: 'error',\n    message: error.message\n  });\n}"
+        },
+        "id": "d510a8fd-defb-435f-8cd5-706f2d1cc2a1",
+        "name": "get_user_calendar2",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          -1224,
+          1128
+        ]
+      },
+      {
+        "parameters": {
+          "name": "create_user_event",
+          "description": "MANDATORY TOOL: Use this tool to create, add, or schedule a new event/calendar entry in the system database. MUST call this tool whenever the user asks to add or create a schedule. Parameters required: title (string), date (YYYY-MM-DD), start_time (HH:mm), end_time (HH:mm).",
+          "jsCode": "// 1. Ambil input parameter yang dikirim oleh AI Agent\nconst input = $input.first().json;\n\n// 2. Ambil session_id langsung dari context atau fallback aman\nlet sessionId = \"default_session\";\ntry {\n  sessionId = $('Webhook').first().json.body?.session_id || $('Webhook').first().json.session_id || \"default_session\";\n} catch (e) {\n  // Jika Webhook node tidak terjangkau, gunakan fallback dari input\n  sessionId = input.session_id || \"default_session\";\n}\n\n// 3. Susun payload sesuai kebutuhan API Laravel\nconst payload = {\n  title: input.title || input.name || 'Jadwal Baru',\n  subject: input.subject || 'Umum',\n  date: input.date,             // YYYY-MM-DD\n  start_time: input.start_time, // HH:mm\n  end_time: input.end_time       // HH:mm\n};\n\n// 4. Kirim request menggunakan fetch standar\nconst response = await fetch('https://studyplanner.web.id/api/ai/tool/calendar', {\n  method: 'POST',\n  headers: {\n    'Content-Type': 'application/json',\n    'Accept': 'application/json',\n    'X-API-KEY': 'Laravel_n8n_SecretKey_998877',\n    'X-SESSION-ID': String(sessionId)\n  },\n  body: JSON.stringify(payload)\n});\n\nconst result = await response.json();\n\nreturn JSON.stringify({\n  status: response.ok ? 'success' : 'error',\n  data: result\n});",
+          "specifyInputSchema": true,
+          "schemaType": "manual",
+          "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"title\": {\n      \"type\": \"string\",\n      \"description\": \"Judul acara atau kegiatan\"\n    },\n    \"subject\": {\n      \"type\": \"string\",\n      \"description\": \"Mata pelajaran atau kategori (opsional)\"\n    },\n    \"date\": {\n      \"type\": \"string\",\n      \"description\": \"Tanggal acara format YYYY-MM-DD\"\n    },\n    \"start_time\": {\n      \"type\": \"string\",\n      \"description\": \"Jam mulai format HH:MM\"\n    },\n    \"end_time\": {\n      \"type\": \"string\",\n      \"description\": \"Jam selesai format HH:MM\"\n    }\n  },\n  \"required\": [\"title\", \"date\", \"start_time\"]\n}"
+        },
+        "id": "fd2a10ab-9fe1-43b4-8b74-c131f578bfe8",
+        "name": "create_user_event2",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          -1096,
+          1128
+        ]
+      },
+      {
+        "parameters": {
+          "name": "get_user_tasks",
+          "description": "Fetch ALL tasks or to-do list items. Returns an array of tasks. You MUST iterate through the entire array and display EVERY SINGLE task returned.",
+          "jsCode": "const sessionId = $('Webhook').item.json.body.session_id;\n\nconst options = {\n  method: 'GET',\n  url: 'https://studyplanner.web.id/api/ai/tool/tasks',\n  headers: {\n    'X-API-KEY': 'Laravel_n8n_SecretKey_998877',\n    'X-SESSION-ID': sessionId\n  },\n  json: true\n};\n\ntry {\n  const response = await this.helpers.httpRequest(options);\n  const taskList = Array.isArray(response) ? response : (response.data || []);\n\n  return JSON.stringify({\n    total_tasks_found: taskList.length,\n    tasks_list: taskList,\n    instruction: \"DILARANG MERANGKUM ATAU MEMOTONG DAFTAR. Tampilkan seluruh item task yang ada di dalam array tasks_list dari awal sampai akhir tanpa terkecuali.\"\n  });\n} catch (error) {\n  return JSON.stringify({\n    status: 'error',\n    message: error.message\n  });\n}"
+        },
+        "id": "97449675-502f-430f-ac1e-c09fc4f5e6d7",
+        "name": "get_user_tasks1",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          -928,
+          656
+        ]
+      },
+      {
+        "parameters": {
+          "name": "get_user_tasks",
+          "description": "Fetch ALL tasks or to-do list items. Returns an array of tasks. You MUST iterate through the entire array and display EVERY SINGLE task returned.",
+          "jsCode": "const sessionId = $('Webhook').item.json.body.session_id;\n\nconst options = {\n  method: 'GET',\n  url: 'https://studyplanner.web.id/api/ai/tool/tasks',\n  headers: {\n    'X-API-KEY': 'Laravel_n8n_SecretKey_998877',\n    'X-SESSION-ID': sessionId\n  },\n  json: true\n};\n\ntry {\n  const response = await this.helpers.httpRequest(options);\n  const taskList = Array.isArray(response) ? response : (response.data || []);\n\n  return JSON.stringify({\n    total_tasks_found: taskList.length,\n    tasks_list: taskList,\n    instruction: \"DILARANG MERANGKUM ATAU MEMOTONG DAFTAR. Tampilkan seluruh item task yang ada di dalam array tasks_list dari awal sampai akhir tanpa terkecuali.\"\n  });\n} catch (error) {\n  return JSON.stringify({\n    status: 'error',\n    message: error.message\n  });\n}"
+        },
+        "id": "205391cc-02e6-411d-b4f8-3da1fa218550",
+        "name": "get_user_tasks2",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          -832,
+          1168
+        ]
+      },
+      {
+        "parameters": {
+          "name": "create_user_task",
+          "description": "Create a new task or to-do item for the user. Requires task title and due date.",
+          "jsCode": "// 1. Ambil payload asli dari AI (menangani berbagai format pembungkus dari n8n/LangChain)\nconst rawInput = $input.first().json;\nconst data = rawInput.args || rawInput.query || rawInput;\n\n// 2. Ambil session_id secara presisi dari Webhook\nlet sessionId = \"default_session\";\ntry {\n  sessionId = $('Webhook').first().json.body?.session_id || \n              $('Webhook').first().json.session_id || \n              data.session_id || \"default_session\";\n} catch (e) {\n  sessionId = data.session_id || \"default_session\";\n}\n\n// 3. Pastikan nilai tidak kosong atau undefined\nconst payload = {\n  title: data.title || data.task_name || data.input || 'Tugas Baru',\n  subject: data.subject || 'Umum',\n  due_date: data.due_date || data.date || '2026-09-21',\n  status: 'pending'\n};\n\n// 4. Request ke Laravel dengan penanganan error 422 agar detailnya kelihatan\ntry {\n  const response = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://studyplanner.web.id/api/ai/tool/tasks',\n    headers: {\n      'Content-Type': 'application/json',\n      'Accept': 'application/json',\n      'X-API-KEY': 'Laravel_n8n_SecretKey_998877',\n      'X-SESSION-ID': String(sessionId)\n    },\n    body: payload,\n    json: true\n  });\n\n  return JSON.stringify({\n    status: 'success',\n    data: response\n  });\n} catch (error) {\n  // Menampilkan pesan error spesifik dari validator Laravel (misal: \"field title required\")\n  const laravelError = error.cause?.response?.data || error.response?.data || error.message;\n  return JSON.stringify({\n    status: 'error_from_laravel',\n    detail: laravelError,\n    payload_sent: payload\n  });\n}",
+          "specifyInputSchema": true,
+          "schemaType": "manual",
+          "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"title\": { \"type\": \"string\" },\n    \"subject\": { \"type\": \"string\" },\n    \"due_date\": { \"type\": \"string\" }\n  },\n  \"required\": [\"title\", \"due_date\"]\n}"
+        },
+        "id": "31a89f23-588b-43b6-87c8-9fb92f080772",
+        "name": "create_user_task1",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          -784,
+          656
+        ]
+      },
+      {
+        "parameters": {
+          "name": "create_user_task",
+          "description": "Create a new task or to-do item for the user. Requires task title and due date.",
+          "jsCode": "// 1. Ambil payload asli dari AI (menangani berbagai format pembungkus dari n8n/LangChain)\nconst rawInput = $input.first().json;\nconst data = rawInput.args || rawInput.query || rawInput;\n\n// 2. Ambil session_id secara presisi dari Webhook\nlet sessionId = \"default_session\";\ntry {\n  sessionId = $('Webhook').first().json.body?.session_id || \n              $('Webhook').first().json.session_id || \n              data.session_id || \"default_session\";\n} catch (e) {\n  sessionId = data.session_id || \"default_session\";\n}\n\n// 3. Pastikan nilai tidak kosong atau undefined\nconst payload = {\n  title: data.title || data.task_name || data.input || 'Tugas Baru',\n  subject: data.subject || 'Umum',\n  due_date: data.due_date || data.date || '2026-09-21',\n  status: 'pending'\n};\n\n// 4. Request ke Laravel dengan penanganan error 422 agar detailnya kelihatan\ntry {\n  const response = await this.helpers.httpRequest({\n    method: 'POST',\n    url: 'https://studyplanner.web.id/api/ai/tool/tasks',\n    headers: {\n      'Content-Type': 'application/json',\n      'Accept': 'application/json',\n      'X-API-KEY': 'Laravel_n8n_SecretKey_998877',\n      'X-SESSION-ID': String(sessionId)\n    },\n    body: payload,\n    json: true\n  });\n\n  return JSON.stringify({\n    status: 'success',\n    data: response\n  });\n} catch (error) {\n  // Menampilkan pesan error spesifik dari validator Laravel (misal: \"field title required\")\n  const laravelError = error.cause?.response?.data || error.response?.data || error.message;\n  return JSON.stringify({\n    status: 'error_from_laravel',\n    detail: laravelError,\n    payload_sent: payload\n  });\n}",
+          "specifyInputSchema": true,
+          "schemaType": "manual",
+          "inputSchema": "{\n  \"type\": \"object\",\n  \"properties\": {\n    \"title\": { \"type\": \"string\" },\n    \"subject\": { \"type\": \"string\" },\n    \"due_date\": { \"type\": \"string\" }\n  },\n  \"required\": [\"title\", \"due_date\"]\n}"
+        },
+        "id": "96634903-e61c-4537-92b8-728568777a77",
+        "name": "create_user_task2",
+        "type": "@n8n/n8n-nodes-langchain.toolCode",
+        "typeVersion": 1,
+        "position": [
+          -656,
+          1184
+        ]
+      }
+    ],
+    "connections": {
+      "Webhook": {
+        "main": [
+          [
+            {
+              "node": "Code in JavaScript1",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Switch (Random Load Balancer)": {
+        "main": [
+          [
+            {
+              "node": "AI Agent1",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "AI Agent Groq",
+              "type": "main",
+              "index": 0
+            }
+          ],
+          [
+            {
+              "node": "AI Agent Backup",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AI Agent Groq": {
+        "main": [
+          [
+            {
+              "node": "Code in JavaScript",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Groq Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "AI Agent Groq",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Google Gemini Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "AI Agent1",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AI Agent1": {
+        "main": [
+          [
+            {
+              "node": "Respond to Webhook",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code in JavaScript": {
+        "main": [
+          [
+            {
+              "node": "Respond to Webhook Groq",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code in JavaScript1": {
+        "main": [
+          [
+            {
+              "node": "Switch (Random Load Balancer)",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Redis Chat Memory1": {
+        "ai_memory": [
+          [
+            {
+              "node": "AI Agent1",
+              "type": "ai_memory",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Redis Chat Memory": {
+        "ai_memory": [
+          [
+            {
+              "node": "AI Agent Groq",
+              "type": "ai_memory",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "OpenRouter Chat Model": {
+        "ai_languageModel": [
+          [
+            {
+              "node": "AI Agent Backup",
+              "type": "ai_languageModel",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Redis Chat Memory2": {
+        "ai_memory": [
+          [
+            {
+              "node": "AI Agent Backup",
+              "type": "ai_memory",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "Code in JavaScript2": {
+        "main": [
+          [
+            {
+              "node": "Respond to Webhook Backup",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "AI Agent Backup": {
+        "main": [
+          [
+            {
+              "node": "Code in JavaScript2",
+              "type": "main",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "get_user_calendar": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent1",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "create_user_event": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent1",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "get_user_tasks": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent1",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "create_user_task": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent1",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "get_user_calendar1": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent Groq",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "create_user_event1": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent Groq",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "get_user_calendar2": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent Backup",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "create_user_event2": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent Backup",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "get_user_tasks1": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent Groq",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "get_user_tasks2": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent Backup",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "create_user_task1": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent Groq",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      },
+      "create_user_task2": {
+        "ai_tool": [
+          [
+            {
+              "node": "AI Agent Backup",
+              "type": "ai_tool",
+              "index": 0
+            }
+          ]
+        ]
+      }
+    },
+    "nodeGroups": [],
+    "settings": {
+      "executionOrder": "v1",
+      "binaryMode": "separate",
+      "availableInMCP": false
+    },
+    "staticData": null,
+    "pinData": {},
+    "meta": {
+      "templateCredsSetupCompleted": true
+    },
+    "tags": [],
+    "shared": [
+      {
+        "role": "workflow:owner",
+        "workflowId": "ifMZ21KCdFbY2IjH",
+        "projectId": "tdFieuqtgaapBpYw",
+        "project": {
+          "id": "tdFieuqtgaapBpYw",
+          "name": "Rofiif Arifian <muhammadrofiif38@gmail.com>",
+          "type": "personal",
+          "icon": null,
+          "description": null,
+          "customTelemetryTags": [],
+          "creatorId": "d03694c2-2207-4d1e-b3bf-ea79bb3b7e9e",
+          "createdAt": "2026-08-31T12:17:42.511Z",
+          "updatedAt": "2026-08-31T13:06:28.037Z"
+        },
+        "createdAt": "2026-08-31T13:08:25.958Z",
+        "updatedAt": "2026-08-31T13:08:25.958Z"
+      }
+    ]
+  }
+}

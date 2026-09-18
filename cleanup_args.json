@@ -1,0 +1,53 @@
+{
+    "id": "ifMZ21KCdFbY2IjH",
+    "operations": [
+        {
+            "type": "removeNode",
+            "nodeName": "View Calendar"
+        },
+        {
+            "type": "removeNode",
+            "nodeName": "Create Event"
+        },
+        {
+            "type": "removeNode",
+            "nodeName": "View Tasks"
+        },
+        {
+            "type": "removeNode",
+            "nodeName": "Create Task"
+        },
+        {
+            "type": "removeNode",
+            "nodeName": "View Calendar1"
+        },
+        {
+            "type": "removeNode",
+            "nodeName": "Create Event1"
+        },
+        {
+            "type": "removeNode",
+            "nodeName": "View Tasks1"
+        },
+        {
+            "type": "removeNode",
+            "nodeName": "Create Task1"
+        },
+        {
+            "type": "removeNode",
+            "nodeName": "View Calendar2"
+        },
+        {
+            "type": "removeNode",
+            "nodeName": "Create Event2"
+        },
+        {
+            "type": "removeNode",
+            "nodeName": "View Tasks2"
+        },
+        {
+            "type": "removeNode",
+            "nodeName": "Create Task2"
+        }
+    ]
+}
