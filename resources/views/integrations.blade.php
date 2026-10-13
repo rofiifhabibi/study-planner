@@ -17,7 +17,8 @@
     </section>
 
     {{-- Google Card --}}
-    <section class="bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow">
+    <section class="bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow"
+        data-tour-step="1" data-tour-title="Integrasi Akun Google" data-tour-desc="Hubungkan akun Google Calendar & Tasks untuk sinkronisasi jadwal belajar dan daftar tugas otomatis.">
         <div class="flex items-center gap-3 mb-5">
             <div class="w-10 h-10 rounded-xl bg-[#F4E7EF] text-[#5B1744] flex items-center justify-center">
                 <i class="fa-brands fa-google text-base"></i>

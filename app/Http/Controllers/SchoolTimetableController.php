@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Models\SchoolTimetable;
+use App\Services\GoogleCalendarService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
-use App\Services\GoogleCalendarService;
 
 class SchoolTimetableController extends Controller
 {
@@ -15,12 +15,12 @@ class SchoolTimetableController extends Controller
             ->orderBy('day_of_week')
             ->orderBy('start_time')
             ->get();
-            
+
         // Group by day of week for easy display
         $grouped = $timetables->groupBy('day_of_week');
-        
+
         return view('timetable', [
-            'grouped' => $grouped
+            'grouped' => $grouped,
         ]);
     }
 
@@ -35,7 +35,7 @@ class SchoolTimetableController extends Controller
 
         $timetable = SchoolTimetable::create([
             'user_id' => auth()->id(),
-            ...$validated
+            ...$validated,
         ]);
 
         $service = app(GoogleCalendarService::class, ['user' => auth()->user()]);
@@ -49,12 +49,12 @@ class SchoolTimetableController extends Controller
         if ($timetable->user_id !== auth()->id()) {
             abort(403);
         }
-        
+
         $service = app(GoogleCalendarService::class, ['user' => auth()->user()]);
         $service->deleteSchoolTimetableEvent($timetable);
-        
+
         $timetable->delete();
-        
+
         return redirect()->back()->with('success', 'Jadwal pelajaran berhasil dihapus.');
     }
 }

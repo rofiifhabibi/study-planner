@@ -14,9 +14,13 @@ class DailyTimetableAgenda extends Mailable
     use Queueable, SerializesModels;
 
     public Collection $timetables;
+
     public Collection $tasks;
+
     public Collection $schedules;
+
     public string $dayName;
+
     public string $targetType;
 
     public function __construct(Collection $timetables, Collection $tasks, Collection $schedules, string $dayName, string $targetType = 'tomorrow')
@@ -31,8 +35,9 @@ class DailyTimetableAgenda extends Mailable
     public function envelope(): Envelope
     {
         $targetWord = $this->targetType === 'today' ? 'Hari Ini' : 'Besok';
+
         return new Envelope(
-            subject: 'Daily Agenda: Jadwal Pelajaran ' . $targetWord . ' (' . $this->dayName . ')',
+            subject: 'Daily Agenda: Jadwal Pelajaran '.$targetWord.' ('.$this->dayName.')',
         );
     }
 

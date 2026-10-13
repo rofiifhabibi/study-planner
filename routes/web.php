@@ -4,13 +4,14 @@ use App\Http\Controllers\ChatController;
 use App\Http\Controllers\GoogleCalendarController;
 use App\Http\Controllers\PlannerController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SchoolTimetableController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['auth', 'verified'])->group(function () {
+Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [ChatController::class, 'dashboard'])->name('dashboard');
     Route::get('/chat', [ChatController::class, 'index'])->name('chat');
 
@@ -19,10 +20,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/progress', [PlannerController::class, 'progress'])->name('progress');
     Route::get('/integrations', [PlannerController::class, 'integrations'])->name('integrations');
     Route::get('/notes', [PlannerController::class, 'notes'])->name('notes');
-    
-    Route::get('/timetable', [\App\Http\Controllers\SchoolTimetableController::class, 'index'])->name('timetable.index');
-    Route::post('/timetable', [\App\Http\Controllers\SchoolTimetableController::class, 'store'])->name('timetable.store');
-    Route::delete('/timetable/{timetable}', [\App\Http\Controllers\SchoolTimetableController::class, 'destroy'])->name('timetable.destroy');
+
+    Route::get('/timetable', [SchoolTimetableController::class, 'index'])->name('timetable.index');
+    Route::post('/timetable', [SchoolTimetableController::class, 'store'])->name('timetable.store');
+    Route::delete('/timetable/{timetable}', [SchoolTimetableController::class, 'destroy'])->name('timetable.destroy');
 
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');

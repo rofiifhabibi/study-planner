@@ -36,6 +36,8 @@ class TaskController extends Controller
             'due_time' => 'nullable|date_format:H:i',
             'category' => 'required|in:school,project,study,personal',
             'priority' => 'required|in:low,medium,high',
+            'pomodoro_duration' => 'nullable|integer|min:1|max:180',
+            'break_duration' => 'nullable|integer|min:1|max:60',
         ]);
 
         $task = Task::create([
@@ -68,6 +70,8 @@ class TaskController extends Controller
             'status' => 'sometimes|required|in:pending,completed',
             'category' => 'sometimes|required|in:school,project,study,personal',
             'priority' => 'sometimes|required|in:low,medium,high',
+            'pomodoro_duration' => 'nullable|integer|min:1|max:180',
+            'break_duration' => 'nullable|integer|min:1|max:60',
         ]);
 
         $task->update($validated);
@@ -89,7 +93,7 @@ class TaskController extends Controller
             ], 403);
         }
 
-        if (!empty($task->google_task_id)) {
+        if (! empty($task->google_task_id)) {
             $this->calendarService()->deleteTaskInGoogle($task);
         }
 

@@ -21,60 +21,186 @@
         @php
             $stats = [
                 ['label' => "Today's Tasks", 'value' => "$todayCompleted/$todayTotal", 'icon' => 'fa-regular fa-circle-check', 'description' => "$todayCompleted completed"],
-                ['label' => 'Study Hours', 'value' => $totalStudyHours . 'h', 'icon' => 'fa-regular fa-clock', 'description' => "$todayStudyMinutes min today"],
+                ['label' => 'Study Time', 'value' => $totalStudyHours . 'h', 'icon' => 'fa-regular fa-clock', 'description' => "$todayStudyMinutes min today"],
                 ['label' => 'Completed', 'value' => (string) $totalCompleted, 'icon' => 'fa-solid fa-chart-line', 'description' => 'All time'],
                 ['label' => 'Study Streak', 'value' => (string) $streak, 'icon' => 'fa-solid fa-fire text-amber-500', 'description' => 'days in a row'],
             ];
         @endphp
         @foreach ($stats as $stat)
-            <div class="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 card-hover shadow-xs">
-                <div class="flex justify-between items-start">
-                    <div>
-                        <p class="text-[11px] text-gray-400 font-medium">{{ $stat['label'] }}</p>
-                        <p class="text-2xl sm:text-3xl font-bold mt-1 text-[#5B1744]">{{ $stat['value'] }}</p>
+            @if ($stat['label'] === 'Study Streak')
+                <div class="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 card-hover shadow-xs">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-[11px] text-gray-400 font-medium">{{ $stat['label'] }}</p>
+                            <p class="text-2xl sm:text-3xl font-bold mt-1 text-[#5B1744]">{{ $stat['value'] }}</p>
+                        </div>
+
+                        {{-- Flame streak vector contour from reference without emoji --}}
+                        <div class="relative w-10 h-12 sm:w-12 sm:h-14 flex items-center justify-center shrink-0">
+                            <img src="{{ asset('images/streak-flame.png') }}" alt="Streak Flame" class="w-full h-full object-contain filter drop-shadow-xs">
+                            <span class="absolute inset-0 flex items-center justify-center font-black text-gray-900 text-xs sm:text-sm pt-2 select-none leading-none">
+                                {{ $streak }}
+                            </span>
+                        </div>
                     </div>
-                    <div class="w-8 h-8 rounded-xl bg-[#F4E7EF] text-[#5B1744] flex items-center justify-center text-xs">
-                        <i class="{{ $stat['icon'] }}"></i>
-                    </div>
+                    <p class="text-[10px] sm:text-[11px] text-gray-400 mt-2">
+                        {{ $streak > 0 ? $streak . ' hari berturut-turut' : 'Mulai belajar hari ini' }}
+                    </p>
                 </div>
-                <p class="text-[10px] sm:text-[11px] text-gray-400 mt-2">{{ $stat['description'] }}</p>
-            </div>
+            @elseif ($stat['label'] === 'Study Time')
+                <div class="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 card-hover shadow-xs"
+                    data-tour-step="1" data-tour-title="Study Time & Statistik Otomatis" data-tour-desc="Total jam belajar efektifmu otomatis terhitung mundur di timer dan bertambah secara real-time pada kartu Study Time hari ini.">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-[11px] text-gray-400 font-medium">{{ $stat['label'] }}</p>
+                            <p id="stat-study-time-val" class="text-2xl sm:text-3xl font-bold mt-1 text-[#5B1744]">{{ $stat['value'] }}</p>
+                        </div>
+                        <div class="w-8 h-8 rounded-xl bg-[#F4E7EF] text-[#5B1744] flex items-center justify-center text-xs">
+                            <i class="{{ $stat['icon'] }}"></i>
+                        </div>
+                    </div>
+                    <p class="text-[10px] sm:text-[11px] text-gray-400 mt-2">
+                        <span id="stat-study-time-min">{{ $todayStudyMinutes }}</span> min today
+                    </p>
+                </div>
+            @else
+                <div class="bg-white rounded-2xl border border-gray-100 p-4 sm:p-5 card-hover shadow-xs">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <p class="text-[11px] text-gray-400 font-medium">{{ $stat['label'] }}</p>
+                            <p class="text-2xl sm:text-3xl font-bold mt-1 text-[#5B1744]">{{ $stat['value'] }}</p>
+                        </div>
+                        <div class="w-8 h-8 rounded-xl bg-[#F4E7EF] text-[#5B1744] flex items-center justify-center text-xs">
+                            <i class="{{ $stat['icon'] }}"></i>
+                        </div>
+                    </div>
+                    <p class="text-[10px] sm:text-[11px] text-gray-400 mt-2">{{ $stat['description'] }}</p>
+                </div>
+            @endif
         @endforeach
     </section>
 
-    {{-- Study Session Timer + Progress Ring --}}
+    {{-- Pomodoro Timer + Progress Ring --}}
     <section class="grid md:grid-cols-12 gap-5">
 
-        <div class="md:col-span-7 bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow flex flex-col">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-                <div class="flex items-center gap-4">
-                    <div id="study-timer-icon" class="w-14 h-14 rounded-2xl bg-[#F4E7EF] text-[#5B1744] flex items-center justify-center text-xl shrink-0">
-                        <i class="fa-solid fa-book-open"></i>
-                    </div>
+        {{-- Integrated Pomodoro & Step-by-Step Study Session Card --}}
+        <div class="md:col-span-7 bg-white rounded-3xl border-2 border-[#E7C8DB] p-6 sm:p-8 soft-shadow flex flex-col justify-between relative overflow-hidden"
+            data-tour-step="2" data-tour-title="Fokus Pomodoro & Hitung Mundur" data-tour-desc="Pilih tugas spesifik, waktu akan otomatis disinkronkan, lalu klik tombol play segitiga untuk hitung mundur.">
+            
+            <div>
+                {{-- Card Header --}}
+                <div class="flex items-center justify-between mb-5 pb-3.5 border-b border-[#F4E7EF]">
                     <div>
-                        <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">STUDY SESSION</p>
-                        <div id="study-timer-display" class="text-3xl font-bold text-[#5B1744] font-mono tabular-nums mt-1">--:--:--</div>
-                        <p id="study-timer-status" class="text-xs text-gray-400 mt-0.5">Ready to study</p>
+                        <p class="text-[9px] uppercase tracking-[.2em] text-[#5B1744] font-bold">FOCUS TIMER</p>
+                        <h2 class="text-base sm:text-lg font-bold text-gray-900 mt-0.5">Fokus Pomodoro & Langkah Belajar</h2>
+                    </div>
+                    <div class="flex items-center gap-1.5 text-xs text-gray-400">
+                        <i class="fa-regular fa-clock text-[#5B1744]"></i>
+                        <span>Hitung Mundur</span>
                     </div>
                 </div>
 
-                <div class="flex items-center gap-2">
-                    <div id="study-session-controls">
-                        <button onclick="openStartModal()" class="flex items-center gap-2 px-5 py-3 rounded-full bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-semibold shadow-md shadow-[#5B1744]/20 transition">
-                            <i class="fa-solid fa-play text-[10px]"></i>
-                            <span>Start Session</span>
+                {{-- Pomodoro Mode Indicator (Automatic Break Transition) --}}
+                <div class="flex items-center justify-center mb-3">
+                    <div id="pomo-mode-badge" class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition bg-[#5B1744] text-white shadow-2xs">
+                        <i id="pomo-mode-icon" class="fa-solid fa-bullseye text-[11px]"></i>
+                        <span id="pomo-mode-title">Sesi Fokus</span>
+                        <span class="text-white/60">·</span>
+                        <span id="pomo-focus-tab-min">25m</span>
+                    </div>
+                </div>
+
+                {{-- Dedicated Task Picker Button & Duration Presets (Clean, No Emojis) --}}
+                <div class="flex flex-wrap items-center justify-center gap-2.5 mb-2">
+                    {{-- Dedicated Button for Selecting Task --}}
+                    <button type="button" onclick="openPomoTaskPicker()" 
+                        data-tour-step="3" data-tour-title="Pilih Tugas & Langkah Belajar" data-tour-desc="Klik di sini untuk memilih tugas belajar spesifik. Checklist langkah belajar step-by-step akan otomatis muncul khusus untuk tugas yang kamu pilih."
+                        class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-[#FAF6F0] hover:bg-[#F4E7EF] border border-[#E7C8DB] text-xs font-bold text-[#5B1744] transition shadow-2xs">
+                        <i class="fa-solid fa-list-check text-[11px]"></i>
+                        <span id="pomo-active-task-label">Pilih Tugas</span>
+                        <i class="fa-solid fa-chevron-down text-[9px] text-gray-400 ml-0.5"></i>
+                    </button>
+
+                    {{-- Duration Preset Pills --}}
+                    <div class="inline-flex items-center p-1 bg-[#FAF6F0] rounded-xl border border-[#E7C8DB]">
+                        <button type="button" onclick="applyPomoPreset(15, 3)" id="preset-btn-15" class="pomo-preset-btn px-2.5 py-1 rounded-lg text-xs font-semibold text-gray-600 hover:text-[#5B1744] transition">15m</button>
+                        <button type="button" onclick="applyPomoPreset(25, 5)" id="preset-btn-25" class="pomo-preset-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-[#5B1744] text-white transition shadow-2xs">25m</button>
+                        <button type="button" onclick="applyPomoPreset(50, 10)" id="preset-btn-50" class="pomo-preset-btn px-2.5 py-1 rounded-lg text-xs font-semibold text-gray-600 hover:text-[#5B1744] transition">50m</button>
+                        <button type="button" onclick="toggleCustomPomoDuration()" id="preset-btn-custom" class="pomo-preset-btn px-2 py-1 rounded-lg text-xs font-semibold text-gray-600 hover:text-[#5B1744] transition" title="Kustom Durasi">
+                            <i class="fa-solid fa-sliders text-[11px]"></i>
                         </button>
                     </div>
                 </div>
-            </div>
-            
-            {{-- Active Checklist --}}
-            <div id="active-checklist-container" class="hidden mt-4 pt-4 border-t border-gray-100">
-                <p class="text-[10px] uppercase tracking-wider text-gray-400 font-bold mb-3">CHECKLIST TUGAS</p>
-                <div id="active-steps-list" class="space-y-2">
-                    <!-- Checklists will be rendered here -->
+
+                {{-- Custom duration inputs (hidden unless custom selected) --}}
+                <div id="pomo-custom-duration-box" class="hidden max-w-xs mx-auto mb-3 grid grid-cols-2 gap-2 p-2.5 bg-[#FAF6F0] rounded-2xl border border-[#E7C8DB] text-center">
+                    <div>
+                        <label class="text-[10px] text-gray-600 font-bold block">Fokus (menit)</label>
+                        <input type="number" id="pomo-custom-focus" min="1" max="180" value="25" onchange="onPomoCustomApply()" class="w-full mt-1 text-center px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold text-[#5B1744] focus:border-[#5B1744] outline-none">
+                    </div>
+                    <div>
+                        <label class="text-[10px] text-gray-600 font-bold block">Istirahat (menit)</label>
+                        <input type="number" id="pomo-custom-break" min="1" max="60" value="5" onchange="onPomoCustomApply()" class="w-full mt-1 text-center px-2 py-1 bg-white border border-gray-200 rounded-lg text-xs font-bold text-[#5B1744] focus:border-[#5B1744] outline-none">
+                    </div>
+                </div>
+
+                {{-- Big Countdown Display --}}
+                <div class="text-center my-6 select-none">
+                    <div id="pomo-countdown-display" class="text-6xl sm:text-7xl font-black text-[#5B1744] tracking-wider font-mono">
+                        25 : 00
+                    </div>
+                </div>
+
+                {{-- Three Controls --}}
+                <div class="flex items-center justify-center gap-4 mb-4">
+                    {{-- Reset --}}
+                    <button type="button" onclick="resetPomodoro()" title="Reset Waktu" 
+                        class="w-12 h-12 rounded-2xl bg-[#F4E7EF] border border-[#E7C8DB] text-[#5B1744] hover:bg-[#E7C8DB]/60 flex items-center justify-center text-base transition active:scale-95 shadow-2xs">
+                        <i class="fa-solid fa-rotate-left"></i>
+                    </button>
+
+                    {{-- Play / Pause 3D button (Color palette: #5B1744 with #330D26 3D shadow) --}}
+                    <button id="pomo-play-btn" type="button" onclick="togglePomodoroPlay()" title="Mulai / Jeda" 
+                        class="w-14 h-14 rounded-2xl bg-[#5B1744] border-2 border-[#330D26] text-white flex items-center justify-center text-xl shadow-[0_4px_0_0_#330D26] hover:shadow-[0_2px_0_0_#330D26] hover:translate-y-0.5 active:translate-y-1 active:shadow-none transition">
+                        <i id="pomo-play-icon" class="fa-solid fa-play"></i>
+                    </button>
+
+                    {{-- Skip / Switch Mode --}}
+                    <button type="button" onclick="skipPomodoroMode()" title="Ganti Mode Fokus/Istirahat" 
+                        class="w-12 h-12 rounded-2xl bg-[#F4E7EF] border border-[#E7C8DB] text-[#5B1744] hover:bg-[#E7C8DB]/60 flex items-center justify-center text-base transition active:scale-95 shadow-2xs">
+                        <i class="fa-solid fa-forward-step"></i>
+                    </button>
+                </div>
+
+                {{-- Finish Session Button --}}
+                <div class="max-w-md mx-auto">
+                    <button type="button" onclick="finishPomodoroSession()" 
+                        class="w-full py-3.5 px-6 rounded-2xl bg-[#5B1744] hover:bg-[#481236] text-white font-bold text-xs sm:text-sm flex items-center justify-center gap-2 transition shadow-md shadow-[#5B1744]/20">
+                        <i class="fa-regular fa-circle-check text-base"></i>
+                        <span>Selesaikan Sesi</span>
+                    </button>
                 </div>
             </div>
+
+            {{-- Interactive Step-by-Step Task Checklist (Hanya tampil saat tugas dipilih) --}}
+            <div id="active-checklist-container" class="mt-6 pt-5 border-t border-[#F4E7EF] hidden">
+                <div class="flex items-center justify-between mb-3">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-wider text-[#5B1744] font-bold flex items-center gap-1.5">
+                            <i class="fa-solid fa-list-check"></i>
+                            <span>LANGKAH BELAJAR STEP-BY-STEP</span>
+                        </p>
+                        <p id="active-task-subtitle" class="text-xs text-gray-500 mt-0.5 font-medium">
+                            Pilih tugas untuk membuka checklist langkah belajar step-by-step.
+                        </p>
+                    </div>
+                </div>
+
+                <div id="active-steps-list" class="space-y-2">
+                    <!-- Rendered by renderActiveChecklist() -->
+                </div>
+            </div>
+
         </div>
 
         <div class="md:col-span-5 bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow flex flex-col justify-between">
@@ -147,80 +273,188 @@
                 <div class="text-center py-10 text-gray-400">
                     <i class="fa-solid fa-book-open text-3xl mb-3"></i>
                     <p class="text-sm">Belum ada sesi belajar.</p>
-                    <button onclick="startStudySession()" class="mt-2 text-xs text-[#5B1744] font-semibold hover:underline">Mulai sesi sekarang</button>
+                    <button onclick="window.scrollTo({top: 0, behavior: 'smooth'}); openPomoTaskPicker();" class="mt-2 text-xs text-[#5B1744] font-semibold hover:underline">Mulai fokus sekarang</button>
                 </div>
             @endforelse
         </div>
     </section>
 
-    {{-- Start Session Modal --}}
-    <div id="start-session-modal" class="fixed inset-0 z-50 hidden transition-opacity duration-300">
-        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onclick="closeStartModal()"></div>
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-[2rem] p-6 sm:p-8 shadow-2xl transform scale-95 opacity-0 transition-all duration-300" id="modal-content-box">
-            
-            <div class="flex items-center justify-between mb-6">
-                <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 rounded-2xl bg-[#F4E7EF] text-[#5B1744] flex items-center justify-center text-lg">
-                        <i class="fa-solid fa-play"></i>
+    {{-- Activity Heatmap (GitHub-style Activity Graph) --}}
+    <section class="bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow"
+        data-tour-step="4" data-tour-title="Grafik Aktivitas Belajar 1 Tahun" data-tour-desc="Lacak rekam jejak aktivitas belajarmu selama 1 tahun penuh seperti di GitHub. Arahkan kursor ke setiap kotak untuk melihat detail tanggal dan tugas.">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+            <div>
+                <h3 class="text-sm sm:text-base font-bold text-gray-900">
+                    {{ $contributionHeatmap['totalActivities'] ?? 0 }} activities in the last year
+                </h3>
+            </div>
+            <div class="flex items-center gap-1.5 text-xs text-gray-400">
+                <i class="fa-regular fa-calendar text-[#5B1744]"></i>
+                <span>{{ $contributionHeatmap['startDate'] ?? '' }} — {{ $contributionHeatmap['endDate'] ?? '' }}</span>
+            </div>
+        </div>
+
+        {{-- Heatmap Outer Border Box (matching GitHub aesthetic) --}}
+        <div class="border border-[#E7C8DB]/60 bg-[#FAF6F0]/40 rounded-2xl p-4 sm:p-5">
+            <div class="overflow-x-auto pb-1 scrollbar-thin">
+                <div class="inline-block min-w-max pr-6">
+                    {{-- Month Headers Row --}}
+                    <div class="flex items-end mb-1 text-[10px] text-gray-500 font-medium select-none">
+                        {{-- Spacer for day labels column (approx 28px) --}}
+                        <div class="w-7 shrink-0"></div>
+
+                        {{-- Week month labels --}}
+                        <div class="flex gap-[3px]">
+                            @foreach ($contributionHeatmap['weeks'] ?? [] as $week)
+                                <div class="w-[11px] sm:w-[12px] h-4 flex items-end relative">
+                                    @if (!empty($week['month_label']))
+                                        <span class="absolute left-0 bottom-0 text-[10px] text-gray-600 font-semibold whitespace-nowrap pointer-events-none">{{ $week['month_label'] }}</span>
+                                    @endif
+                                </div>
+                            @endforeach
+                        </div>
                     </div>
-                    <h3 class="text-xl font-bold text-gray-900">Mulai Sesi</h3>
+
+                    {{-- Heatmap Body: Day Labels + Week Columns --}}
+                    <div class="flex items-start">
+                        {{-- Left Day-of-Week Labels (Mon, Wed, Fri only, matching GitHub) --}}
+                        <div class="flex flex-col gap-[3px] text-[9px] text-gray-500 font-medium select-none w-7 shrink-0 pr-1.5 pt-[1px]">
+                            <span class="h-[11px] sm:h-[12px] leading-[11px] sm:leading-[12px]">Mon</span>
+                            <span class="h-[11px] sm:h-[12px]"></span>
+                            <span class="h-[11px] sm:h-[12px] leading-[11px] sm:leading-[12px]">Wed</span>
+                            <span class="h-[11px] sm:h-[12px]"></span>
+                            <span class="h-[11px] sm:h-[12px] leading-[11px] sm:leading-[12px]">Fri</span>
+                            <span class="h-[11px] sm:h-[12px]"></span>
+                            <span class="h-[11px] sm:h-[12px]"></span>
+                        </div>
+
+                        {{-- Week Columns --}}
+                        <div class="flex gap-[3px]">
+                            @foreach ($contributionHeatmap['weeks'] ?? [] as $week)
+                                <div class="flex flex-col gap-[3px]">
+                                    @foreach ($week['days'] ?? [] as $day)
+                                        @php
+                                            $isFuture = $day['is_future'] ?? false;
+                                            $cellBg = 'bg-[#ebedf0]';
+                                            if (! $isFuture) {
+                                                $lvl = $day['level'] ?? 0;
+                                                if ($lvl === 1) $cellBg = 'bg-[#F4E7EF] border border-[#E7C8DB]/60';
+                                                elseif ($lvl === 2) $cellBg = 'bg-[#E7C8DB]';
+                                                elseif ($lvl === 3) $cellBg = 'bg-[#A33878]';
+                                                elseif ($lvl === 4) $cellBg = 'bg-[#5B1744]';
+                                            } else {
+                                                $cellBg = 'invisible pointer-events-none';
+                                            }
+                                            $isToday = $day['is_today'] ?? false;
+                                            $borderToday = $isToday ? 'ring-1 ring-[#5B1744] ring-offset-1' : '';
+                                            $tooltipText = $day['tooltip'] ?? '';
+                                        @endphp
+                                        <div class="w-[11px] h-[11px] sm:w-[12px] sm:h-[12px] rounded-[2px] transition cursor-pointer relative {{ $cellBg }} {{ $borderToday }}"
+                                            onmouseenter="showHeatmapTooltip(this, '{{ addslashes($tooltipText) }}')"
+                                            onmouseleave="hideHeatmapTooltip()">
+                                        </div>
+                                    @endforeach
+                                </div>
+                            @endforeach
+                        </div>
+                    </div>
                 </div>
-                <button onclick="closeStartModal()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 flex items-center justify-center transition">
-                    <i class="fa-solid fa-xmark"></i>
+            </div>
+
+            {{-- Heatmap Footer: Learn link & Legend (Less -> More) --}}
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mt-3 pt-3 border-t border-[#E7C8DB]/40 text-xs text-gray-500">
+                <span class="text-[11px] text-gray-400">Total aktivitas sesi fokus & tugas belajar</span>
+
+                {{-- Legend --}}
+                <div class="flex items-center gap-1.5 text-[11px] text-gray-500 self-end sm:self-auto">
+                    <span>Less</span>
+                    <div class="flex items-center gap-[3px]">
+                        <span class="w-[11px] h-[11px] rounded-[2px] bg-[#ebedf0] border border-gray-200" 
+                            onmouseenter="showHeatmapTooltip(this, '0 activities')" 
+                            onmouseleave="hideHeatmapTooltip()"></span>
+                        <span class="w-[11px] h-[11px] rounded-[2px] bg-[#F4E7EF] border border-[#E7C8DB]/60" 
+                            onmouseenter="showHeatmapTooltip(this, '1 activity')" 
+                            onmouseleave="hideHeatmapTooltip()"></span>
+                        <span class="w-[11px] h-[11px] rounded-[2px] bg-[#E7C8DB]" 
+                            onmouseenter="showHeatmapTooltip(this, '2 activities')" 
+                            onmouseleave="hideHeatmapTooltip()"></span>
+                        <span class="w-[11px] h-[11px] rounded-[2px] bg-[#A33878]" 
+                            onmouseenter="showHeatmapTooltip(this, '3 activities')" 
+                            onmouseleave="hideHeatmapTooltip()"></span>
+                        <span class="w-[11px] h-[11px] rounded-[2px] bg-[#5B1744]" 
+                            onmouseenter="showHeatmapTooltip(this, '4+ activities')" 
+                            onmouseleave="hideHeatmapTooltip()"></span>
+                    </div>
+                    <span>More</span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    {{-- Floating GitHub-Style Tooltip --}}
+    <div id="gh-heatmap-tooltip" class="fixed z-50 pointer-events-none hidden px-3 py-1.5 rounded-lg bg-[#24292f] text-white text-[11px] font-medium shadow-xl -translate-x-1/2 -translate-y-full transition-opacity duration-150">
+        <span id="gh-tooltip-text"></span>
+        <div class="absolute left-1/2 -bottom-1 -translate-x-1/2 w-2 h-2 bg-[#24292f] rotate-45"></div>
+    </div>
+    {{-- Dedicated Task Picker Modal for Pomodoro --}}
+    <div id="pomoTaskPickerModal" class="fixed inset-0 z-50 hidden transition-opacity duration-300">
+        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-xs transition-opacity" onclick="closePomoTaskPicker()"></div>
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-[2rem] p-6 sm:p-7 shadow-2xl border-2 border-[#E7C8DB] transform scale-95 opacity-0 transition-all duration-300" id="pomoTaskPickerModalBox">
+            
+            <div class="flex items-center justify-between pb-3.5 border-b border-[#F4E7EF] mb-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-2xl bg-[#F4E7EF] text-[#5B1744] flex items-center justify-center text-sm font-bold">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-base font-bold text-gray-900">Pilih Tugas Belajar</h3>
+                        <p class="text-xs text-gray-500">Pilih tugas yang ingin kamu fokuskan</p>
+                    </div>
+                </div>
+                <button type="button" onclick="closePomoTaskPicker()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-[#F4E7EF] text-gray-500 hover:text-[#5B1744] flex items-center justify-center transition">
+                    <i class="fa-solid fa-xmark text-xs"></i>
                 </button>
             </div>
-            
-            <div class="space-y-5">
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Pilih Tugas (Opsional)</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-list-check text-gray-400"></i>
+
+            <div class="space-y-2 max-h-72 overflow-y-auto pr-1">
+                {{-- Clear / Free Focus Option --}}
+                <div onclick="selectPomoTask(null, 'Fokus Umum', 25, 5)" class="p-3 rounded-2xl border border-dashed border-gray-200 hover:border-[#5B1744] hover:bg-[#FAF6F0] cursor-pointer transition flex items-center justify-between">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center text-xs">
+                            <i class="fa-solid fa-bullseye"></i>
                         </div>
-                        <select id="task-select" class="w-full pl-10 pr-10 py-3 rounded-2xl bg-gray-50 border-gray-200 text-sm focus:ring-2 focus:ring-[#5B1744]/20 focus:border-[#5B1744] transition-all cursor-pointer" onchange="onTaskSelect(this.value)">
-                            <option value="">-- Pilih tugas yang ingin dikerjakan --</option>
-                            @foreach($activeTasks ?? [] as $t)
-                                <option value="{{ $t->id }}">{{ $t->title }}</option>
-                            @endforeach
-                        </select>
-                    </div>
-                </div>
-                
-                <div>
-                    <label class="block text-xs font-bold text-gray-700 mb-1.5 uppercase tracking-wide">Judul Sesi Belajar</label>
-                    <div class="relative">
-                        <div class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                            <i class="fa-solid fa-pen text-gray-400"></i>
+                        <div>
+                            <p class="text-xs font-bold text-gray-800">Fokus Umum (Tanpa Tugas)</p>
+                            <p class="text-[11px] text-gray-400">Belajar bebas tanpa mengaitkan tugas tertentu</p>
                         </div>
-                        <input type="text" id="session-title" class="w-full pl-10 pr-4 py-3 rounded-2xl bg-gray-50 border-gray-200 text-sm focus:ring-2 focus:ring-[#5B1744]/20 focus:border-[#5B1744] transition-all" placeholder="Misal: Belajar Matematika...">
                     </div>
+                    <i class="fa-solid fa-arrow-right text-xs text-gray-400"></i>
                 </div>
 
-                <div id="checklist-setup" class="hidden">
-                    <div class="border-t border-gray-100 my-5"></div>
-                    <label class="block text-xs font-bold text-gray-700 mb-2.5 uppercase tracking-wide">Step-by-step Checklist</label>
-                    
-                    <div id="setup-steps-list" class="space-y-2 mb-3 max-h-40 overflow-y-auto pr-2 custom-scrollbar"></div>
-                    
-                    <div class="flex items-center gap-2 mt-3">
-                        <div class="relative flex-1">
-                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                <i class="fa-solid fa-plus text-gray-400 text-xs"></i>
+                {{-- Task Items --}}
+                @forelse($activeTasks ?? [] as $t)
+                    <div onclick="selectPomoTask({{ $t->id }}, '{{ addslashes($t->title) }}', {{ $t->pomodoro_duration ?? 25 }}, {{ $t->break_duration ?? 5 }})" 
+                        class="p-3.5 rounded-2xl border border-[#E7C8DB]/60 hover:border-[#5B1744] hover:bg-[#FAF6F0] cursor-pointer transition flex items-center justify-between group">
+                        <div class="flex items-center gap-3 min-w-0">
+                            <div class="w-8 h-8 rounded-xl bg-[#F4E7EF] text-[#5B1744] flex items-center justify-center text-xs shrink-0 group-hover:bg-[#5B1744] group-hover:text-white transition">
+                                <i class="fa-solid fa-book-open"></i>
                             </div>
-                            <input type="text" id="new-step-title" class="w-full pl-8 pr-3 py-2.5 rounded-xl bg-gray-50 border-dashed border-2 border-gray-200 text-sm focus:bg-white focus:border-solid focus:ring-2 focus:ring-[#5B1744]/20 focus:border-[#5B1744] transition-all" placeholder="Ketik langkah baru...">
+                            <div class="min-w-0">
+                                <p class="text-xs font-bold text-gray-900 truncate group-hover:text-[#5B1744]">{{ $t->title }}</p>
+                                <div class="flex items-center gap-2 mt-0.5">
+                                    <span class="text-[10px] text-gray-500 font-medium">{{ $t->pomodoro_duration ?? 25 }} menit fokus</span>
+                                    <span class="text-gray-300">·</span>
+                                    <span class="text-[10px] uppercase font-bold text-[#5B1744]">{{ $t->category ?? 'Tugas' }}</span>
+                                </div>
+                            </div>
                         </div>
-                        <button onclick="addStep()" class="h-10 px-4 bg-[#FAF6F0] hover:bg-[#F4E7EF] text-[#5B1744] border border-[#E7C8DB]/50 text-xs font-bold rounded-xl transition shadow-sm whitespace-nowrap">
-                            Tambah
-                        </button>
+                        <i class="fa-solid fa-chevron-right text-xs text-gray-400 group-hover:text-[#5B1744] transition"></i>
                     </div>
-                </div>
-
-                <div class="flex justify-end gap-3 mt-8 pt-5 border-t border-gray-100">
-                    <button onclick="closeStartModal()" class="px-5 py-2.5 text-sm font-bold text-gray-500 bg-gray-100 hover:bg-gray-200 rounded-xl transition">Batal</button>
-                    <button onclick="startSessionSubmit()" class="flex items-center gap-2 px-6 py-2.5 text-sm font-bold text-white bg-[#5B1744] rounded-xl hover:bg-[#481236] transition shadow-lg shadow-[#5B1744]/30 transform hover:-translate-y-0.5">
-                        <i class="fa-solid fa-play text-xs"></i> Mulai Sekarang
-                    </button>
-                </div>
+                @empty
+                    <div class="text-center py-6 text-gray-400 text-xs">
+                        Belum ada tugas aktif. Buat tugas di menu Tugas terlebih dahulu.
+                    </div>
+                @endforelse
             </div>
         </div>
     </div>
@@ -228,10 +462,300 @@
 
 @push('scripts')
 
-    // === STUDY SESSION TIMER ===
+    // === POMODORO COUNTDOWN TIMER ===
+    let pomoMode = 'focus'; // 'focus' | 'break'
+    let pomoFocusMinutes = 25;
+    let pomoBreakMinutes = 5;
+    let pomoTimeLeft = 25 * 60; // seconds, decreases every tick ('ngurang')
+    let pomoTimerInterval = null;
+    let pomoIsRunning = false;
+    let pomoSelectedTaskId = null;
+    let pomoTotalElapsedFocusSeconds = 0;
+    const initialTodayStudyMin = {{ (int)($todayStudyMinutes ?? 0) }};
+    const initialTotalStudyHours = {{ (float)($totalStudyHours ?? 0) }};
 
-    let studyTimerInterval = null;
-    let activeStudySession = null;
+    function updateStudyTimeDisplay() {
+        const addedMins = Math.floor(pomoTotalElapsedFocusSeconds / 60);
+        const currentTodayMin = initialTodayStudyMin + addedMins;
+        const currentTotalHours = (initialTotalStudyHours + (pomoTotalElapsedFocusSeconds / 3600)).toFixed(1);
+
+        const valEl = document.getElementById('stat-study-time-val');
+        const minEl = document.getElementById('stat-study-time-min');
+        if (valEl) valEl.textContent = currentTotalHours + 'h';
+        if (minEl) minEl.textContent = currentTodayMin;
+    }
+
+    function formatPomoTime(totalSec) {
+        const m = Math.floor(totalSec / 60);
+        const s = totalSec % 60;
+        return `${String(m).padStart(2, '0')} : ${String(s).padStart(2, '0')}`;
+    }
+
+    function renderPomoDisplay() {
+        const el = document.getElementById('pomo-countdown-display');
+        if (el) el.textContent = formatPomoTime(pomoTimeLeft);
+    }
+
+    function setPomoMode(mode) {
+        pomoMode = mode;
+        const badge = document.getElementById('pomo-mode-badge');
+        const icon = document.getElementById('pomo-mode-icon');
+        const title = document.getElementById('pomo-mode-title');
+        const durLabel = document.getElementById('pomo-focus-tab-min');
+
+        if (mode === 'focus') {
+            pomoTimeLeft = pomoFocusMinutes * 60;
+            if (badge) badge.className = "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition bg-[#5B1744] text-white shadow-2xs";
+            if (icon) icon.className = "fa-solid fa-bullseye text-[11px]";
+            if (title) title.textContent = "Sesi Fokus";
+            if (durLabel) durLabel.textContent = pomoFocusMinutes + "m";
+        } else {
+            pomoTimeLeft = pomoBreakMinutes * 60;
+            if (badge) badge.className = "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition bg-[#F4E7EF] text-[#5B1744] border border-[#E7C8DB]";
+            if (icon) icon.className = "fa-solid fa-mug-hot text-[11px]";
+            if (title) title.textContent = "Sesi Istirahat";
+            if (durLabel) durLabel.textContent = pomoBreakMinutes + "m";
+        }
+        renderPomoDisplay();
+    }
+
+    function tickPomodoro() {
+        if (pomoTimeLeft > 0) {
+            pomoTimeLeft--;
+            if (pomoMode === 'focus') {
+                pomoTotalElapsedFocusSeconds++;
+                updateStudyTimeDisplay();
+            }
+            renderPomoDisplay();
+            document.title = `(${formatPomoTime(pomoTimeLeft)}) ${pomoMode === 'focus' ? 'Fokus' : 'Istirahat'} - Study Planner`;
+        } else {
+            pausePomodoro();
+            playAlarmChime();
+
+            if ('Notification' in window && Notification.permission === 'granted') {
+                new Notification('Waktu Belajar Selesai!', {
+                    body: pomoMode === 'focus' 
+                        ? 'Sesi fokus telah selesai! Waktunya istirahat sejenak.' 
+                        : 'Sesi istirahat telah selesai! Siap untuk kembali fokus.'
+                });
+            } else if ('Notification' in window && Notification.permission !== 'denied') {
+                Notification.requestPermission();
+            }
+
+            if (pomoMode === 'focus') {
+                showToast("Alarm: Waktu fokus selesai! Otomatis beralih ke sesi istirahat.", "success");
+                setPomoMode('break');
+                startPomodoro(); // Otomatis mulai istirahat
+            } else {
+                showToast("Alarm: Waktu istirahat selesai! Siap untuk kembali fokus.", "success");
+                setPomoMode('focus');
+            }
+        }
+    }
+
+    function togglePomodoroPlay() {
+        if (pomoIsRunning) {
+            pausePomodoro();
+        } else {
+            startPomodoro();
+        }
+    }
+
+    function startPomodoro() {
+        pomoIsRunning = true;
+        const icon = document.getElementById('pomo-play-icon');
+        if (icon) icon.className = 'fa-solid fa-pause';
+        pomoTimerInterval = setInterval(tickPomodoro, 1000);
+    }
+
+    function pausePomodoro() {
+        pomoIsRunning = false;
+        if (pomoTimerInterval) {
+            clearInterval(pomoTimerInterval);
+            pomoTimerInterval = null;
+        }
+        const icon = document.getElementById('pomo-play-icon');
+        if (icon) icon.className = 'fa-solid fa-play';
+    }
+
+    function resetPomodoro() {
+        pausePomodoro();
+        pomoTimeLeft = (pomoMode === 'focus' ? pomoFocusMinutes : pomoBreakMinutes) * 60;
+        renderPomoDisplay();
+    }
+
+    function skipPomodoroMode() {
+        setPomoMode(pomoMode === 'focus' ? 'break' : 'focus');
+    }
+
+    async function finishPomodoroSession() {
+        pausePomodoro();
+        const elapsedMinutes = Math.max(1, Math.round(pomoTotalElapsedFocusSeconds / 60));
+        let sessionTitle = 'Sesi Pomodoro';
+        if (pomoSelectedTaskId) {
+            const label = document.getElementById('pomo-active-task-label');
+            if (label && label.textContent !== 'Pilih Tugas') {
+                sessionTitle = label.textContent;
+            }
+        }
+
+        try {
+            const res = await apiFetch(`${API_BASE}/study-sessions`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    title: sessionTitle,
+                    task_id: pomoSelectedTaskId || null
+                })
+            });
+            const data = await res.json();
+            if (data.status === 'success' && data.session) {
+                await apiFetch(`${API_BASE}/study-sessions/${data.session.id}/stop`, {
+                    method: 'POST'
+                });
+            }
+            showToast(`Sesi belajar berhasil diselesaikan! (+${elapsedMinutes} menit)`, 'success');
+            setTimeout(() => window.location.reload(), 1200);
+        } catch (e) {
+            showToast('Sesi selesai! Tetap semangat belajar!', 'success');
+            setTimeout(() => window.location.reload(), 1200);
+        }
+    }
+
+    function openPomoTaskPicker() {
+        const modal = document.getElementById('pomoTaskPickerModal');
+        const box = document.getElementById('pomoTaskPickerModalBox');
+        if (!modal || !box) return;
+        modal.classList.remove('hidden');
+        void modal.offsetWidth;
+        modal.classList.add('opacity-100');
+        box.classList.remove('scale-95', 'opacity-0');
+        box.classList.add('scale-100', 'opacity-100');
+    }
+
+    function closePomoTaskPicker() {
+        const modal = document.getElementById('pomoTaskPickerModal');
+        const box = document.getElementById('pomoTaskPickerModalBox');
+        if (!modal || !box) return;
+        modal.classList.remove('opacity-100');
+        box.classList.remove('scale-100', 'opacity-100');
+        box.classList.add('scale-95', 'opacity-0');
+        setTimeout(() => modal.classList.add('hidden'), 300);
+    }
+
+    let currentTaskId = null;
+    let currentSteps = [];
+
+    function selectPomoTask(taskId, taskTitle, focusMin = 25, breakMin = 5) {
+        closePomoTaskPicker();
+        pomoSelectedTaskId = taskId;
+        currentTaskId = taskId;
+
+        const container = document.getElementById('active-checklist-container');
+        const label = document.getElementById('pomo-active-task-label');
+        const subtitle = document.getElementById('active-task-subtitle');
+
+        if (taskId) {
+            if (label) label.textContent = taskTitle.length > 20 ? taskTitle.substring(0, 18) + '...' : taskTitle;
+            if (subtitle) subtitle.textContent = 'Mengerjakan tugas: ' + taskTitle;
+            
+            // Otomatis sinkronkan waktu countdown sesuai waktu di halaman task
+            const focus = parseInt(focusMin) || 25;
+            const brk = parseInt(breakMin) || 5;
+            applyPomoPreset(focus, brk);
+
+            // Tampilkan checklist khusus hanya saat tugas dipilih
+            if (container) container.classList.remove('hidden');
+
+            apiFetch(`${API_BASE}/tasks/${taskId}/steps`)
+                .then(res => res.json())
+                .then(data => {
+                    currentSteps = data.steps || [];
+                    renderActiveChecklist();
+                })
+                .catch(() => {
+                    currentSteps = [];
+                    renderActiveChecklist();
+                });
+        } else {
+            if (label) label.textContent = 'Pilih Tugas';
+            if (subtitle) subtitle.textContent = 'Pilih tugas untuk membuka checklist langkah belajar step-by-step.';
+            applyPomoPreset(25, 5);
+            currentSteps = [];
+            if (container) container.classList.add('hidden');
+        }
+    }
+
+    function applyPomoPreset(focus, breakMin) {
+        applyPomoDuration(focus, breakMin);
+        document.querySelectorAll('.pomo-preset-btn').forEach(btn => {
+            btn.className = 'pomo-preset-btn px-2.5 py-1 rounded-lg text-xs font-semibold text-gray-600 hover:text-[#5B1744] transition';
+        });
+        const activeBtn = document.getElementById(`preset-btn-${focus}`);
+        if (activeBtn) {
+            activeBtn.className = 'pomo-preset-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-[#5B1744] text-white transition shadow-2xs';
+        }
+    }
+
+    function toggleCustomPomoDuration() {
+        const box = document.getElementById('pomo-custom-duration-box');
+        if (box) box.classList.toggle('hidden');
+    }
+
+    function onPomoCustomApply() {
+        const f = parseInt(document.getElementById('pomo-custom-focus').value) || 25;
+        const b = parseInt(document.getElementById('pomo-custom-break').value) || 5;
+        applyPomoDuration(f, b);
+    }
+
+    function applyPomoDuration(focus, breakMin) {
+        pomoFocusMinutes = focus;
+        pomoBreakMinutes = breakMin;
+        const durLabel = document.getElementById('pomo-focus-tab-min');
+        if (durLabel) durLabel.textContent = (pomoMode === 'focus' ? focus : breakMin) + 'm';
+        pomoTimeLeft = (pomoMode === 'focus' ? pomoFocusMinutes : pomoBreakMinutes) * 60;
+        renderPomoDisplay();
+    }
+
+    function playAlarmChime() {
+        try {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            
+            // Pleasant multi-tone alarm chime sequence
+            const notes = [
+                { f1: 587.33, f2: 880.00, start: 0.00, end: 0.22 }, // D5 -> A5
+                { f1: 587.33, f2: 880.00, start: 0.30, end: 0.52 }, // D5 -> A5
+                { f1: 659.25, f2: 1046.5, start: 0.60, end: 0.95 }  // E5 -> C6
+            ];
+
+            notes.forEach(note => {
+                const osc1 = ctx.createOscillator();
+                const osc2 = ctx.createOscillator();
+                const gain = ctx.createGain();
+
+                osc1.type = 'sine';
+                osc2.type = 'sine';
+                osc1.frequency.setValueAtTime(note.f1, ctx.currentTime + note.start);
+                osc2.frequency.setValueAtTime(note.f2, ctx.currentTime + note.start);
+
+                gain.gain.setValueAtTime(0.35, ctx.currentTime + note.start);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + note.end);
+
+                osc1.connect(gain);
+                osc2.connect(gain);
+                gain.connect(ctx.destination);
+
+                osc1.start(ctx.currentTime + note.start);
+                osc2.start(ctx.currentTime + note.start);
+                osc1.stop(ctx.currentTime + note.end);
+                osc2.stop(ctx.currentTime + note.end);
+            });
+        } catch (e) {
+            console.warn('Alarm audio could not play:', e);
+        }
+    }
 
     function formatStudyTime(totalSeconds) {
         const h = Math.floor(totalSeconds / 3600);
@@ -240,297 +764,115 @@
         return String(h).padStart(2, '0') + ':' + String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0');
     }
 
-    function startStudyTimer(session) {
-        activeStudySession = session;
-        const baseSeconds = session.duration_seconds || 0;
-        const startTs = new Date(session.started_at).getTime();
-
-        function tick() {
-            const now = Date.now();
-            const elapsed = baseSeconds + Math.floor((now - startTs) / 1000);
-            document.getElementById('study-timer-display').textContent = formatStudyTime(elapsed);
-
-            // Pengingat waktu belajar efektif (Setiap 25 menit = 1500 detik)
-            if (elapsed > 0 && elapsed % 1500 === 0) {
-                const mins = Math.floor(elapsed / 60);
-                showToast(`Kerja bagus! Kamu sudah fokus selama ${mins} menit. Ambil jeda istirahat 5 menit ya!`, 'success');
-                
-                if ('Notification' in window && Notification.permission === 'granted') {
-                    new Notification('Waktunya Istirahat! ☕', {
-                        body: `Kamu sudah belajar fokus selama ${mins} menit. Istirahatkan matamu sebentar agar tetap efektif!`
-                    });
-                }
-            }
-        }
-
-        tick();
-        if (studyTimerInterval) clearInterval(studyTimerInterval);
-        studyTimerInterval = setInterval(tick, 1000);
-
-        document.getElementById('study-session-controls').innerHTML = `
-            <div class="flex items-center gap-2">
-                <button onclick="pauseStudySession()" class="flex items-center gap-2 px-4 py-3 rounded-full bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold shadow-md transition">
-                    <i class="fa-solid fa-pause text-[10px]"></i>
-                    <span>Pause</span>
-                </button>
-                <button onclick="stopStudySession()" class="flex items-center gap-2 px-4 py-3 rounded-full bg-red-500 hover:bg-red-600 text-white text-xs font-semibold shadow-md transition">
-                    <i class="fa-solid fa-stop text-[10px]"></i>
-                    <span>Stop</span>
-                </button>
-            </div>
-        `;
-        document.getElementById('study-timer-status').textContent = 'Studying: ' + session.title;
-        document.getElementById('study-timer-status').setAttribute('data-title', session.title);
-        document.getElementById('study-timer-icon').innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i>';
-        renderActiveChecklist();
-    }
-
-
-    let currentTaskId = null;
-    let currentSteps = [];
-
     function loadPastSession(session) {
-        activeStudySession = session;
-        clearInterval(studyTimerInterval);
-        
-        document.getElementById('study-timer-status').textContent = session.status.toUpperCase() + ': ' + session.title;
-        document.getElementById('study-timer-status').setAttribute('data-title', session.title);
-        document.getElementById('study-timer-display').textContent = formatStudyTime(session.duration_seconds || 0);
-        
-        if (session.status === 'running') {
-            startStudyTimer(session);
-            return;
-        }
-        
-        document.getElementById('study-timer-icon').innerHTML = session.status === 'completed' ? '<i class="fa-solid fa-check-circle text-green-500"></i>' : '<i class="fa-solid fa-pause text-amber-500"></i>';
-        
-        document.getElementById('study-session-controls').innerHTML = `
-            <div class="flex items-center gap-2">
-                <button onclick="resumeStudySession()" class="flex items-center gap-2 px-4 py-3 rounded-full bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-semibold shadow-md transition">
-                    <i class="fa-solid fa-play text-[10px]"></i>
-                    <span>Lanjutkan</span>
-                </button>
-                <button onclick="deleteStudySession(${session.id})" class="flex items-center gap-2 px-4 py-3 rounded-full bg-red-100 hover:bg-red-200 text-red-600 text-xs font-semibold shadow-md transition">
-                    <i class="fa-solid fa-trash text-[10px]"></i>
-                    <span>Hapus</span>
-                </button>
-            </div>
-        `;
-        
         if (session.task_id) {
-            currentTaskId = session.task_id;
-            apiFetch(`${API_BASE}/tasks/${session.task_id}/steps`)
-                .then(res => res.json())
-                .then(data => {
-                    currentSteps = data.steps || [];
-                    renderActiveChecklist();
-                });
+            selectPomoTask(session.task_id, session.title, 25, 5);
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            showToast(`Tugas "${session.title}" dimuat ke timer fokus.`, 'success');
         } else {
-            currentTaskId = null;
-            currentSteps = [];
-            renderActiveChecklist();
+            showToast(`Sesi "${session.title}" berdurasi ${formatStudyTime(session.duration_seconds || 0)}.`, 'info');
         }
-        
-        // Scroll to top
-        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     async function deleteStudySession(id) {
-        if (!confirm('Yakin ingin menghapus sesi belajar ini?')) return;
+        if (!confirm('Yakin ingin menghapus sesi belajar ini dari riwayat?')) return;
         try {
             const res = await apiFetch(`${API_BASE}/study-sessions/${id}`, { method: 'DELETE' });
             const data = await res.json();
             if (data.status === 'success') {
-                window.location.reload();
+                showToast('Sesi riwayat berhasil dihapus.', 'success');
+                setTimeout(() => window.location.reload(), 800);
             }
         } catch (e) {
             alert('Gagal menghapus sesi.');
         }
     }
 
-    function openStartModal(taskId = null) {
-        const modal = document.getElementById('start-session-modal');
-        const box = document.getElementById('modal-content-box');
-        
-        modal.classList.remove('hidden');
-        // trigger reflow
-        void modal.offsetWidth;
-        
-        modal.classList.add('opacity-100');
-        box.classList.remove('scale-95', 'opacity-0');
-        box.classList.add('scale-100', 'opacity-100');
-
-        if (taskId) {
-            const select = document.getElementById('task-select');
-            select.value = taskId;
-            if (select.selectedIndex >= 0) {
-                document.getElementById('session-title').value = select.options[select.selectedIndex].text;
-                onTaskSelect(taskId);
-            }
-        } else {
-            document.getElementById('session-title').value = 'Belajar hari ini';
-        }
-    }
-
-    function closeStartModal() {
-        const modal = document.getElementById('start-session-modal');
-        const box = document.getElementById('modal-content-box');
-        
-        modal.classList.remove('opacity-100');
-        box.classList.remove('scale-100', 'opacity-100');
-        box.classList.add('scale-95', 'opacity-0');
-        
-        setTimeout(() => {
-            modal.classList.add('hidden');
-            document.getElementById('checklist-setup').classList.add('hidden');
-            currentTaskId = null;
-            currentSteps = [];
-        }, 300);
-    }
-
-    async function onTaskSelect(taskId) {
-        currentTaskId = taskId;
-        const titleInput = document.getElementById('session-title');
-        const setupDiv = document.getElementById('checklist-setup');
-        
-        if (!taskId) {
-            setupDiv.classList.add('hidden');
-            titleInput.value = 'Belajar hari ini';
-            currentSteps = [];
-            return;
-        }
-        
-        const select = document.getElementById('task-select');
-        titleInput.value = select.options[select.selectedIndex].text;
-        
-        setupDiv.classList.remove('hidden');
-        
-        // Fetch steps
-        try {
-            const res = await apiFetch(`${API_BASE}/tasks/${taskId}/steps`);
-            const data = await res.json();
-            currentSteps = data.steps || [];
-            renderSetupSteps();
-        } catch (e) {
-            console.error('Failed to load steps');
-        }
-    }
-
-    function renderSetupSteps() {
-        const list = document.getElementById('setup-steps-list');
-        list.innerHTML = '';
-        currentSteps.forEach(step => {
-            list.innerHTML += `
-                <div class="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100 shadow-sm">
-                    <i class="fa-solid fa-circle-check ${step.is_completed ? 'text-green-500' : 'text-gray-200'}"></i>
-                    <span class="text-sm font-semibold ${step.is_completed ? 'line-through text-gray-400' : 'text-gray-700'}">${step.title}</span>
-                </div>
-            `;
-        });
-    }
-
-    async function addStep() {
-        if (!currentTaskId) return;
-        const input = document.getElementById('new-step-title');
-        const title = input.value.trim();
-        if (!title) return;
-        
-        input.disabled = true;
-        try {
-            const res = await apiFetch(`${API_BASE}/tasks/${currentTaskId}/steps`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title })
-            });
-            const data = await res.json();
-            if (data.status === 'success') {
-                currentSteps.push(data.step);
-                renderSetupSteps();
-                input.value = '';
-            }
-        } catch(e) {
-            alert('Gagal menambah langkah.');
-        } finally {
-            input.disabled = false;
-            input.focus();
-        }
-    }
-
     async function toggleStep(stepId, isCompleted) {
-        if (!activeStudySession || !activeStudySession.task_id) return;
+        if (!currentTaskId) return;
         try {
-            const res = await apiFetch(`${API_BASE}/tasks/${activeStudySession.task_id}/steps/${stepId}`, {
+            const res = await apiFetch(`${API_BASE}/tasks/${currentTaskId}/steps/${stepId}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ is_completed: isCompleted })
             });
             const data = await res.json();
             if (data.status === 'success') {
-                // Update local active steps
                 const step = currentSteps.find(s => s.id === stepId);
                 if (step) step.is_completed = isCompleted;
                 renderActiveChecklist();
-                
+
                 if (data.task_status === 'completed' && isCompleted) {
-                    showToast('Semua langkah selesai! Tugas otomatis ditandai Selesai & disinkronkan ke Google Tasks.', 'success');
+                    showToast('Semua langkah selesai! Tugas berhasil diselesaikan.', 'success');
                 }
             }
-        } catch(e) {
-            alert('Gagal mengupdate checklist.');
+        } catch (e) {
+            alert('Gagal memperbarui langkah.');
         }
     }
 
     function renderActiveChecklist() {
         const container = document.getElementById('active-checklist-container');
         const list = document.getElementById('active-steps-list');
-        
-        // Always show container if a task is selected, even if steps are empty
+        if (!container || !list) return;
+
         if (!currentTaskId) {
             container.classList.add('hidden');
             return;
         }
-        
+
         container.classList.remove('hidden');
+
         list.innerHTML = '';
-        
+
         let completed = 0;
-        let total = currentSteps ? currentSteps.length : 0;
-        
+        const total = currentSteps ? currentSteps.length : 0;
+
         if (total > 0) {
+            let stepsHtml = '';
             currentSteps.forEach(step => {
                 if (step.is_completed) completed++;
                 const checkedStr = step.is_completed ? 'checked' : '';
-                const lineThrough = step.is_completed ? 'line-through text-gray-400' : 'text-gray-700';
-                
-                list.innerHTML += `
-                    <label class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl border border-gray-100 cursor-pointer hover:bg-gray-100 transition">
-                        <input type="checkbox" ${checkedStr} onchange="toggleStep(${step.id}, this.checked)" class="w-4 h-4 text-[#5B1744] rounded border-gray-300 focus:ring-[#5B1744]">
+                const lineThrough = step.is_completed ? 'line-through text-gray-400' : 'text-gray-800';
+
+                stepsHtml += `
+                    <label class="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100 hover:border-[#E7C8DB] cursor-pointer transition shadow-2xs">
+                        <input type="checkbox" ${checkedStr} onchange="toggleStep(${step.id}, this.checked)" class="w-4 h-4 text-[#5B1744] accent-[#5B1744] rounded border-gray-300 focus:ring-[#5B1744]">
                         <span class="text-xs font-semibold ${lineThrough}">${step.title}</span>
                     </label>
                 `;
             });
-            
+
             const percentage = Math.round((completed / total) * 100);
-            
+
             list.innerHTML = `
-                <div class="mb-3 flex items-center justify-between">
-                    <span class="text-xs font-bold text-[#5B1744]">Progress: ${percentage}%</span>
-                    <span class="text-xs text-gray-400">${completed}/${total} selesai</span>
+                <div class="mb-3">
+                    <div class="flex items-center justify-between mb-1.5">
+                        <span class="text-xs font-bold text-[#5B1744]">Progress Langkah: ${percentage}%</span>
+                        <span class="text-xs text-gray-400 font-medium">${completed}/${total} selesai</span>
+                    </div>
+                    <div class="w-full bg-gray-100 rounded-full h-2 overflow-hidden">
+                        <div class="bg-[#5B1744] h-2 rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+                    </div>
                 </div>
-                <div class="w-full bg-gray-100 rounded-full h-1.5 mb-4 overflow-hidden">
-                    <div class="bg-[#5B1744] h-1.5 rounded-full transition-all duration-500" style="width: ${percentage}%"></div>
+                <div class="space-y-2 mb-3">
+                    ${stepsHtml}
                 </div>
-            ` + list.innerHTML;
+            `;
         } else {
-            list.innerHTML = `<p class="text-xs text-gray-400 italic mb-3">Belum ada langkah. Silakan tambah di bawah.</p>`;
+            list.innerHTML = `<p class="text-xs text-gray-400 italic mb-3">Belum ada langkah belajar untuk tugas ini. Tambah langkah di bawah.</p>`;
         }
-        
-        // Add new step input
+
+        // Inline input to add steps directly
         list.innerHTML += `
             <div class="flex items-center gap-2 mt-3">
-                <input type="text" id="new-active-step-input" placeholder="Tambah langkah baru..." class="flex-1 text-xs px-3 py-2.5 bg-white border border-gray-200 rounded-xl focus:ring-1 focus:ring-[#5B1744] focus:border-[#5B1744]" onkeypress="if(event.key === 'Enter') addActiveStep()">
-                <button type="button" onclick="addActiveStep()" class="w-9 h-9 rounded-xl bg-gray-100 hover:bg-gray-200 text-gray-600 flex items-center justify-center transition">
-                    <i class="fa-solid fa-plus text-xs"></i>
+                <input type="text" id="new-active-step-input" placeholder="Tambah langkah baru lalu tekan Enter..." 
+                    class="flex-1 text-xs px-3.5 py-2.5 bg-[#FAF6F0]/60 border border-[#E7C8DB] rounded-xl outline-none focus:border-[#5B1744] focus:bg-white text-gray-800 transition placeholder:text-gray-400" 
+                    onkeypress="if(event.key === 'Enter') addActiveStep()">
+                <button type="button" onclick="addActiveStep()" 
+                    class="h-9 px-4 rounded-xl bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 shrink-0">
+                    <i class="fa-solid fa-plus text-[10px]"></i>
+                    <span>Tambah</span>
                 </button>
             </div>
         `;
@@ -539,9 +881,11 @@
     async function addActiveStep() {
         if (!currentTaskId) return;
         const input = document.getElementById('new-active-step-input');
+        if (!input) return;
         const title = input.value.trim();
         if (!title) return;
-        
+
+        input.disabled = true;
         try {
             const res = await apiFetch(`${API_BASE}/tasks/${currentTaskId}/steps`, {
                 method: 'POST',
@@ -555,129 +899,53 @@
                 const newInput = document.getElementById('new-active-step-input');
                 if (newInput) newInput.focus();
             }
-        } catch(e) {
+        } catch (e) {
             alert('Gagal menambah langkah.');
+        } finally {
+            if (input) input.disabled = false;
         }
     }
 
-    async function startSessionSubmit() {
-        const title = document.getElementById('session-title').value.trim() || 'Belajar hari ini';
-        const task_id = document.getElementById('task-select').value || null;
-
-        // Auto-add step if user forgot to click "Tambah"
-        if (task_id) {
-            const newStepInput = document.getElementById('new-step-title');
-            if (newStepInput && newStepInput.value.trim()) {
-                await addStep();
-            }
-        }
-
-        try {
-            const res = await apiFetch(`${API_BASE}/study-sessions`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title, task_id }),
-            });
-            const data = await res.json();
-            if (data.status === 'success') {
-                closeStartModal();
-                window.location.reload();
-            } else {
-                alert(data.message || 'Gagal memulai sesi.');
-            }
-        } catch (err) {
-            alert('Gagal memulai sesi belajar.');
-        }
-    }
-
-
-    async function pauseStudySession() {
-        if (!activeStudySession) return;
-        try {
-            clearInterval(studyTimerInterval);
-            const res = await apiFetch(`${API_BASE}/study-sessions/${activeStudySession.id}/pause`, { method: 'POST' });
-            const data = await res.json();
-            if (data.status === 'success') {
-                activeStudySession = data.session;
-                const sessionTitle = document.getElementById('study-timer-status').getAttribute('data-title') || 'Belajar';
-                document.getElementById('study-timer-status').textContent = 'Paused: ' + sessionTitle;
-                document.getElementById('study-timer-icon').innerHTML = '<i class="fa-solid fa-pause"></i>';
-                document.getElementById('study-session-controls').innerHTML = `
-                    <div class="flex items-center gap-2">
-                        <button onclick="resumeStudySession()" class="flex items-center gap-2 px-4 py-3 rounded-full bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-semibold shadow-md transition">
-                            <i class="fa-solid fa-play text-[10px]"></i>
-                            <span>Resume</span>
-                        </button>
-                        <button onclick="stopStudySession()" class="flex items-center gap-2 px-4 py-3 rounded-full bg-red-500 hover:bg-red-600 text-white text-xs font-semibold shadow-md transition">
-                            <i class="fa-solid fa-stop text-[10px]"></i>
-                            <span>Stop</span>
-                        </button>
-                    </div>
-                `;
-            }
-        } catch (err) {
-            alert('Gagal pause sesi.');
-        }
-    }
-
-    async function resumeStudySession() {
-        if (!activeStudySession) return;
-        try {
-            const res = await apiFetch(`${API_BASE}/study-sessions/${activeStudySession.id}/resume`, { method: 'POST' });
-            const data = await res.json();
-            if (data.status === 'success') {
-                startStudyTimer(data.session);
-            } else {
-                alert(data.message || 'Gagal melanjutkan sesi.');
-            }
-        } catch (err) {
-            alert('Gagal resume sesi.');
-        }
-    }
-
-    async function stopStudySession() {
-        if (!activeStudySession) return;
-        if (!confirm('Akhiri sesi belajar ini?')) return;
-        try {
-            clearInterval(studyTimerInterval);
-            const res = await apiFetch(`${API_BASE}/study-sessions/${activeStudySession.id}/stop`, { method: 'POST' });
-            const data = await res.json();
-            if (data.status === 'success') {
-                const dur = data.session.formatted_duration || formatStudyTime(data.session.duration_seconds);
-                alert('Sesi belajar selesai! Durasi: ' + dur);
-                window.location.reload();
-            }
-        } catch (err) {
-            alert('Gagal menghentikan sesi.');
-        }
-    }
-
-    async function checkActiveStudySession() {
-        try {
-            const res = await apiFetch(`${API_BASE}/study-sessions/active`);
-            const data = await res.json();
-            if (data.session) {
-                if (data.session.task_id) {
-                    currentTaskId = data.session.task_id;
-                    const stepRes = await apiFetch(`${API_BASE}/tasks/${data.session.task_id}/steps`);
-                    const stepData = await stepRes.json();
-                    currentSteps = stepData.steps || [];
-                    renderActiveChecklist();
-                }
-                startStudyTimer(data.session);
-            }
-        } catch (err) {}
-    }
-
-    checkActiveStudySession().then(() => {
+    // Auto-detect task_id / start_task_id in query string
+    document.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
-        if (urlParams.has('start_task_id')) {
-            const taskId = urlParams.get('start_task_id');
-            if (!activeStudySession) {
-                setTimeout(() => openStartModal(taskId), 500);
+        const taskId = urlParams.get('task_id') || urlParams.get('start_task_id');
+        if (taskId) {
+            // Find task option in list if available
+            const taskEl = document.querySelector(`[onclick*="selectPomoTask(${taskId},"]`);
+            if (taskEl) {
+                taskEl.click();
+            } else {
+                apiFetch(`${API_BASE}/tasks/${taskId}`)
+                    .then(r => r.json())
+                    .then(data => {
+                        if (data.task) {
+                            selectPomoTask(data.task.id, data.task.title, data.task.pomodoro_duration || 25, data.task.break_duration || 5);
+                        }
+                    })
+                    .catch(() => {});
             }
             window.history.replaceState({}, document.title, window.location.pathname);
         }
     });
+
+    // === GITHUB HEATMAP FLOATING TOOLTIP ===
+    function showHeatmapTooltip(el, text) {
+        const tt = document.getElementById('gh-heatmap-tooltip');
+        const txt = document.getElementById('gh-tooltip-text');
+        if (!tt || !txt || !text) return;
+        txt.textContent = text;
+        const rect = el.getBoundingClientRect();
+        tt.style.left = (rect.left + rect.width / 2) + 'px';
+        tt.style.top = (rect.top - 8) + 'px';
+        tt.classList.remove('hidden');
+    }
+
+    function hideHeatmapTooltip() {
+        const tt = document.getElementById('gh-heatmap-tooltip');
+        if (tt) tt.classList.add('hidden');
+    }
+
+    window.addEventListener('scroll', hideHeatmapTooltip, { passive: true });
 
 @endpush

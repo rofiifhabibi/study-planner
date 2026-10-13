@@ -2,16 +2,16 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Models\User;
-use App\Models\Task;
 use App\Mail\DeadlineReminder;
+use App\Models\Task;
+use App\Models\User;
+use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
-use Carbon\Carbon;
 
 class SendDeadlineEmail extends Command
 {
     protected $signature = 'agenda:send-deadline';
+
     protected $description = 'Send email reminder for all pending tasks and upcoming deadlines';
 
     public function handle()
@@ -32,7 +32,7 @@ class SendDeadlineEmail extends Command
                 $this->info("No pending tasks for {$user->email}");
             }
         }
-        
+
         $this->info('Task reminder emails dispatched!');
     }
 }

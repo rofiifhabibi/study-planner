@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Schedule;
 use App\Services\GoogleCalendarService;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -24,8 +25,8 @@ class ScheduleController extends Controller
 
         if ($start && $end) {
             $query->whereBetween('date', [
-                \Carbon\Carbon::parse($start)->format('Y-m-d'),
-                \Carbon\Carbon::parse($end)->format('Y-m-d')
+                Carbon::parse($start)->format('Y-m-d'),
+                Carbon::parse($end)->format('Y-m-d'),
             ]);
         } elseif ($date) {
             $query->whereDate('date', $date);
@@ -40,14 +41,15 @@ class ScheduleController extends Controller
                 return [
                     'id' => $schedule->id,
                     'title' => $schedule->title,
-                    'start' => $schedule->date->format('Y-m-d') . 'T' . $schedule->start_time->format('H:i:s'),
-                    'end' => $schedule->date->format('Y-m-d') . 'T' . $schedule->end_time->format('H:i:s'),
+                    'start' => $schedule->date->format('Y-m-d').'T'.$schedule->start_time->format('H:i:s'),
+                    'end' => $schedule->date->format('Y-m-d').'T'.$schedule->end_time->format('H:i:s'),
                     'extendedProps' => [
                         'status' => $schedule->status,
                         'subject' => $schedule->subject,
-                    ]
+                    ],
                 ];
             });
+
             return response()->json($events);
         }
 

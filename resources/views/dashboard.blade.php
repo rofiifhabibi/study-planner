@@ -13,7 +13,7 @@
     <section class="fade-up flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
             <h1 class="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight mt-1 text-gray-900">
-                Selamat datang, {{ auth()->user()->name }} 👋
+                Selamat datang, {{ auth()->user()->name }}
             </h1>
             <p class="text-sm text-gray-500 mt-1">Ringkasan ruang belajarmu hari ini.</p>
         </div>
@@ -53,7 +53,8 @@
     </section>
 
     {{-- Stats --}}
-    <section class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4"
+        data-tour-step="1" data-tour-title="Ringkasan Statistik Belajar" data-tour-desc="Pantau tugas hari ini, total jam belajar, tugas selesai, dan rentetan streak harianmu secara instan.">
         @php
             $stats = [
                 ['label' => "Today's Tasks", 'value' => (string) $todayTotal, 'icon' => 'fa-regular fa-circle-check', 'description' => "$todayCompleted completed"],
@@ -79,7 +80,8 @@
     </section>
 
     {{-- Today's Tasks Summary --}}
-    <section class="bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow fade-up">
+    <section class="bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow fade-up"
+        data-tour-step="2" data-tour-title="Daftar Tugas Hari Ini" data-tour-desc="Lihat dan kelola tugas yang harus diselesaikan hari ini berdasarkan prioritas dan tenggat waktu.">
         <div class="flex justify-between items-center mb-5">
             <div>
                 <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">TODAY'S TASKS</p>
@@ -112,7 +114,8 @@
     </section>
 
     {{-- Today's Schedule + Progress --}}
-        <section class="grid md:grid-cols-12 gap-5">
+        <section class="grid md:grid-cols-12 gap-5"
+            data-tour-step="3" data-tour-title="Jadwal Pelajaran Sekolah" data-tour-desc="Pantau jadwal mata pelajaran hari ini dan besok sesuai dengan Class Schedule mingguanmu.">
 
         {{-- JADWAL PELAJARAN SEKOLAH --}}
         <div class="md:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-6 fade-up">

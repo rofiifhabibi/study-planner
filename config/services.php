@@ -35,10 +35,15 @@ return [
         ],
     ],
 
-    'n8n' => [
-        'webhook_url' => env('N8N_CHAT_WEBHOOK_URL'),
-        'secret_key' => env('N8N_SECRET_KEY'),
-        'timeout' => env('N8N_TIMEOUT', 90),
+    'groq' => [
+        'api_key' => env('GROQ_API_KEY'),
+        'model' => env('GROQ_MODEL', 'qwen/qwen3.8-27b'),
+        'timeout' => env('GROQ_TIMEOUT', 60),
+        'max_tokens' => env('GROQ_MAX_TOKENS', 1024),
+    ],
+
+    'ai' => [
+        'api_secret' => env('AI_API_SECRET'),
     ],
 
     'google' => [
@@ -46,7 +51,7 @@ return [
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI', rtrim((string) env('APP_URL'), '/').'/auth/google/callback'),
         'calendar_timezone' => env('GOOGLE_CALENDAR_TIMEZONE', 'Asia/Jakarta'),
-        'tasks_task_list' => env('GOOGLE_TASKS_TASK_LIST', "@default"),
+        'tasks_task_list' => env('GOOGLE_TASKS_TASK_LIST', '@default'),
     ],
 
     'telegram' => [

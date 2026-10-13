@@ -5,10 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\ChatMessage;
 use App\Models\ChatSession;
 use App\Models\Schedule;
+use App\Models\SchoolTimetable;
+use App\Services\GroqAiService;
 use App\Services\ProgressService;
-use Illuminate\Http\Client\ConnectionException;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
@@ -59,13 +59,13 @@ class ChatController extends Controller
             ->get();
 
         $todayDayOfWeek = now()->dayOfWeek;
-        $todayTimetables = \App\Models\SchoolTimetable::where('user_id', $user->id)
+        $todayTimetables = SchoolTimetable::where('user_id', $user->id)
             ->where('day_of_week', $todayDayOfWeek)
             ->orderBy('start_time')
             ->get();
 
         $tomorrowDayOfWeek = now()->addDay()->dayOfWeek;
-        $tomorrowTimetables = \App\Models\SchoolTimetable::where('user_id', $user->id)
+        $tomorrowTimetables = SchoolTimetable::where('user_id', $user->id)
             ->where('day_of_week', $tomorrowDayOfWeek)
             ->orderBy('start_time')
             ->get();
@@ -201,19 +201,6 @@ class ChatController extends Controller
         $userMessage = $request->message;
         $fileUrl = $request->file_url;
 
-        $webhookUrl = config('services.n8n.webhook_url');
-        $secretKey = config('services.n8n.secret_key');
-        $timeout = config('services.n8n.timeout', 90);
-
-        if (empty($webhookUrl)) {
-            Log::error('n8n webhook URL tidak dikonfigurasi');
-
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Konfigurasi n8n webhook belum diatur.',
-            ], 500);
-        }
-
         $session = ChatSession::where('id', $sessionId)
             ->where('user_id', auth()->id())
             ->firstOrFail();
@@ -225,111 +212,64 @@ class ChatController extends Controller
             'file_url' => $fileUrl,
         ]);
 
-        $memoryKey = 'user_'.auth()->id().'_session_'.$session->session_key;
+        /** @var GroqAiService $groq */
+        $groq = app(GroqAiService::class);
+        $history = $groq->buildHistoryFromSession($session);
 
-        $payload = [
-            'user_id' => auth()->id(),
-            'session_id' => $memoryKey,
-            'message' => $userMessage,
-            'file_url' => $fileUrl,
-        ];
-
+        // Jika sesi adalah bagian dari project, sertakan history dari sesi saudara
         if ($session->parent_id) {
             $siblingIds = ChatSession::where('parent_id', $session->parent_id)
                 ->where('user_id', auth()->id())
                 ->whereKeyNot($session->id)
                 ->pluck('id');
 
-            $history = ChatMessage::whereIn('chat_session_id', $siblingIds)
+            $siblingHistory = ChatMessage::whereIn('chat_session_id', $siblingIds)
+                ->where('is_canceled', false)
                 ->orderByDesc('created_at')
                 ->limit(20)
                 ->get()
                 ->reverse()
                 ->map(fn (ChatMessage $m) => [
-                    'role' => $m->role,
+                    'role' => $m->role === 'assistant' ? 'assistant' : 'user',
                     'content' => $m->content,
-                    'is_canceled' => $m->is_canceled,
                 ])
                 ->values()
                 ->all();
 
-            if ($history !== []) {
-                $payload['history'] = $history;
-            }
+            $history = array_merge($siblingHistory, $history);
         }
 
         try {
-            $response = Http::withHeaders([
-                'X-API-KEY' => $secretKey,
-            ])->timeout($timeout)->post($webhookUrl, $payload);
-        } catch (ConnectionException $e) {
-            Log::error('n8n webhook timeout', [
-                'url' => $webhookUrl,
-                'error' => $e->getMessage(),
-            ]);
+            $aiReply = $groq->chat($userMessage, $history);
+        } catch (\Throwable $e) {
+            Log::error('Groq chat error pada sendMessage', ['error' => $e->getMessage()]);
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Gagal terhubung ke n8n AI. Webhook tidak dapat dijangkau.',
-            ], 504);
-        } catch (\Exception $e) {
-            Log::error('n8n webhook error', [
-                'url' => $webhookUrl,
-                'error' => $e->getMessage(),
-            ]);
+                'message' => 'Gagal terhubung ke AI: '.$e->getMessage(),
+            ], 502);
+        }
+
+        if (empty($aiReply)) {
+            Log::warning('Groq memberikan respons kosong pada sendMessage');
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Terjadi kesalahan saat menghubungi n8n AI.',
-            ], 500);
+                'message' => 'AI memberikan respons kosong.',
+            ], 502);
         }
 
-        if ($response->successful()) {
-            $aiReply = $response->json('output')
-                    ?? $response->json('reply')
-                    ?? $response->json('message')
-                    ?? $response->json('text')
-                    ?? '';
-
-            if (is_string($aiReply)) {
-                $aiReply = trim($aiReply);
-            }
-
-            if (empty($aiReply)) {
-                Log::warning('n8n respons kosong', [
-                    'url' => $webhookUrl,
-                    'raw_response' => $response->body(),
-                ]);
-
-                return response()->json([
-                    'status' => 'error',
-                    'message' => 'AI memberikan respons kosong.',
-                ], 502);
-            }
-
-            ChatMessage::create([
-                'chat_session_id' => $sessionId,
-                'role' => 'assistant',
-                'content' => $aiReply,
-            ]);
-
-            return response()->json([
-                'status' => 'success',
-                'reply' => $aiReply,
-                'message_id' => $savedUserMessage->id,
-            ]);
-        }
-
-        Log::warning('n8n webhook error', [
-            'url' => $webhookUrl,
-            'status' => $response->status(),
-            'body' => $response->body(),
+        ChatMessage::create([
+            'chat_session_id' => $sessionId,
+            'role' => 'assistant',
+            'content' => $aiReply,
         ]);
 
         return response()->json([
-            'status' => 'error',
-            'message' => 'Gagal mendapatkan respon dari n8n AI',
-        ], 502);
+            'status' => 'success',
+            'reply' => $aiReply,
+            'message_id' => $savedUserMessage->id,
+        ]);
     }
 
     public function updateMessage(Request $request, ChatMessage $message)
@@ -352,71 +292,41 @@ class ChatController extends Controller
             'is_canceled' => false,
         ]);
 
-        $webhookUrl = config('services.n8n.webhook_url');
-        $secretKey = config('services.n8n.secret_key');
-        $timeout = config('services.n8n.timeout', 90);
-
-        if (empty($webhookUrl)) {
-            Log::error('n8n webhook URL tidak dikonfigurasi');
-
-            return response()->json([
-                'status' => 'error',
-                'message' => 'Konfigurasi n8n webhook belum diatur.',
-            ], 500);
-        }
+        /** @var GroqAiService $groq */
+        $groq = app(GroqAiService::class);
+        $history = $groq->buildHistoryFromSession($session);
 
         try {
-            $response = Http::withHeaders([
-                'X-API-KEY' => $secretKey,
-            ])->timeout($timeout)->post($webhookUrl, [
-                'user_id' => auth()->id(),
-                'session_id' => 'user_'.auth()->id().'_session_'.$session->session_key,
-                'message' => $request->message,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('n8n webhook error saat edit pesan', [
-                'url' => $webhookUrl,
-                'error' => $e->getMessage(),
-            ]);
+            $aiReply = $groq->chat($request->message, $history);
+        } catch (\Throwable $e) {
+            Log::error('Groq chat error pada updateMessage', ['error' => $e->getMessage()]);
 
             return response()->json([
                 'status' => 'error',
-                'message' => 'Terjadi kesalahan saat menghubungi n8n AI.',
+                'message' => 'Terjadi kesalahan saat menghubungi AI: '.$e->getMessage(),
             ], 502);
         }
 
-        if ($response->successful()) {
-            $aiReply = trim((string) ($response->json('output')
-                ?? $response->json('reply')
-                ?? $response->json('message')
-                ?? $response->json('text')
-                ?? ''));
+        if ($aiReply !== '') {
+            $replyMessage = ChatMessage::create([
+                'chat_session_id' => $session->id,
+                'role' => 'assistant',
+                'content' => $aiReply,
+            ]);
 
-            if ($aiReply !== '') {
-                $replyMessage = ChatMessage::create([
-                    'chat_session_id' => $session->id,
-                    'role' => 'assistant',
-                    'content' => $aiReply,
-                ]);
-
-                return response()->json([
-                    'status' => 'success',
-                    'reply' => $aiReply,
-                    'message' => $message->fresh(),
-                    'reply_message' => $replyMessage,
-                ]);
-            }
+            return response()->json([
+                'status' => 'success',
+                'reply' => $aiReply,
+                'message' => $message->fresh(),
+                'reply_message' => $replyMessage,
+            ]);
         }
 
-        Log::warning('n8n webhook error saat edit pesan', [
-            'url' => $webhookUrl,
-            'status' => $response->status(),
-            'body' => $response->body(),
-        ]);
+        Log::warning('Groq memberikan respons kosong pada updateMessage');
 
         return response()->json([
             'status' => 'error',
-            'message' => 'Gagal mendapatkan respon dari n8n AI',
+            'message' => 'Gagal mendapatkan respon dari AI',
         ], 502);
     }
 

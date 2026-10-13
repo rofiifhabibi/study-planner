@@ -2,18 +2,19 @@
 
 namespace App\Console\Commands;
 
-use Illuminate\Console\Command;
-use App\Models\User;
+use App\Mail\DailyTimetableAgenda;
+use App\Models\Schedule;
 use App\Models\SchoolTimetable;
 use App\Models\Task;
-use App\Models\Schedule;
-use App\Mail\DailyTimetableAgenda;
-use Illuminate\Support\Facades\Mail;
+use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Console\Command;
+use Illuminate\Support\Facades\Mail;
 
 class SendDailyAgendaEmail extends Command
 {
     protected $signature = 'agenda:send-daily {--target=tomorrow : The target day to send agenda for (today or tomorrow)}';
+
     protected $description = 'Send daily agenda email for today or tomorrow\'s school timetable to all users';
 
     public function handle()
@@ -29,12 +30,12 @@ class SendDailyAgendaEmail extends Command
                 ->where('day_of_week', $targetDayOfWeek)
                 ->orderBy('start_time')
                 ->get();
-                
+
             $tasks = Task::where('user_id', $user->id)
                 ->where('status', 'pending')
                 ->where('due_date', $target->toDateString())
                 ->get();
-                
+
             $schedules = Schedule::where('user_id', $user->id)
                 ->where('date', $target->toDateString())
                 ->orderBy('start_time')
@@ -44,7 +45,7 @@ class SendDailyAgendaEmail extends Command
             Mail::to($user->email)->send(new DailyTimetableAgenda($timetables, $tasks, $schedules, $dayName, $this->option('target')));
             $this->info("Sent agenda to {$user->email}");
         }
-        
+
         $this->info('Daily agenda emails dispatched!');
     }
 }

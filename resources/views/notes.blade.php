@@ -14,7 +14,8 @@
             <h1 class="text-2xl sm:text-3xl font-bold tracking-tight mt-1 text-gray-900">Notes</h1>
             <p class="text-sm text-gray-500 mt-1">Simpan catatan belajarmu di satu tempat.</p>
         </div>
-        <button onclick="openNoteModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-semibold transition shadow-md shadow-[#5B1744]/20 shrink-0">
+        <button onclick="openNoteModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-semibold transition shadow-md shadow-[#5B1744]/20 shrink-0"
+            data-tour-step="1" data-tour-title="Buat Catatan Baru" data-tour-desc="Tulis materi pelajaran, rangkuman, atau poin penting dengan cepat.">
             <i class="fa-solid fa-plus text-[10px]"></i>
             <span>Add Note</span>
         </button>
@@ -45,7 +46,8 @@
     </section>
 
     {{-- Notes grid --}}
-    <section class="bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow">
+    <section class="bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow"
+        data-tour-step="2" data-tour-title="Daftar & Edit Catatan" data-tour-desc="Lihat semua catatan yang tersimpan, klik untuk menyunting langsung, atau hapus saat sudah tidak diperlukan.">
         <div class="flex justify-between items-center mb-5">
             <div>
                 <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">ALL NOTES</p>

@@ -14,14 +14,16 @@
             <h1 class="text-2xl sm:text-3xl font-bold tracking-tight mt-1 text-gray-900">My Tasks</h1>
             <p class="text-sm text-gray-500 mt-1">Kelola semua tugasmu dalam satu tempat.</p>
         </div>
-        <button onclick="openTaskModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-semibold transition shadow-md shadow-[#5B1744]/20 shrink-0">
+        <button onclick="openTaskModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-semibold transition shadow-md shadow-[#5B1744]/20 shrink-0"
+            data-tour-step="1" data-tour-title="Tambah Tugas Baru" data-tour-desc="Buat tugas baru, tentukan kategori, tenggat waktu, serta durasi fokus Pomodoro khusus untuk tugas tersebut.">
             <i class="fa-solid fa-plus text-[10px]"></i>
             <span>Add Task</span>
         </button>
     </section>
 
     {{-- Stats row --}}
-    <section class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4">
+    <section class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4"
+        data-tour-step="2" data-tour-title="Statistik & Status Tugas" data-tour-desc="Pantau jumlah total tugas, tugas yang belum selesai, serta persentase keberhasilan belajarmu.">
         @php
             $statBoxes = [
                 ['label' => 'Total Tasks', 'value' => (string) $totalTasks, 'icon' => 'fa-regular fa-circle-check'],
@@ -46,7 +48,8 @@
     </section>
 
     {{-- Task list --}}
-    <section class="bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow">
+    <section class="bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow"
+        data-tour-step="3" data-tour-title="Daftar Tugas & Checklist" data-tour-desc="Kelola tugasmu, centang jika selesai, buat sub-langkah belajar bertahap, atau mulai timer fokus Pomodoro langsung dari sini.">
         <div class="flex justify-between items-center mb-5">
             <div>
                 <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">ALL TASKS</p>
@@ -63,12 +66,21 @@
                         @endif
                     </button>
                     <div class="flex-1 min-w-0">
-                        <p class="font-semibold text-xs text-gray-900 {{ $task->status === 'completed' ? 'line-through text-gray-400' : '' }}">{{ $task->title }}</p>
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <p class="font-semibold text-xs text-gray-900 {{ $task->status === 'completed' ? 'line-through text-gray-400' : '' }}">{{ $task->title }}</p>
+                            <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#F4E7EF] text-[#5B1744] border border-[#E7C8DB]/60 font-semibold">
+                                <i class="fa-solid fa-stopwatch text-[9px] mr-1"></i>{{ $task->pomodoro_duration ?? 25 }}m
+                            </span>
+                        </div>
                         <p class="text-[11px] text-gray-400 mt-0.5">{{ ucfirst($task->category) }} · {{ $task->due_date ? $task->due_date->format('d M Y') . ($task->due_time ? ' at ' . \Carbon\Carbon::parse($task->due_time)->format('H:i') : '') : 'No deadline' }}</p>
                         @if ($task->description)
                             <p class="text-[11px] text-gray-500 mt-1 leading-relaxed">{{ $task->description }}</p>
                         @endif
                     </div>
+                    <a href="{{ route('progress', ['task_id' => $task->id]) }}" title="Mulai Pomodoro untuk tugas ini" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F4E7EF] hover:bg-[#E7C8DB] text-[#5B1744] text-[11px] font-semibold border border-[#E7C8DB] transition shrink-0">
+                        <i class="fa-solid fa-play text-[9px]"></i>
+                        <span>Fokus</span>
+                    </a>
                     <span class="text-[10px] px-2.5 py-1 rounded-full shrink-0 {{ $task->priority === 'high' ? 'bg-red-50 text-red-600' : ($task->priority === 'medium' ? 'bg-amber-50 text-amber-600' : 'bg-gray-50 text-gray-500') }}">
                         {{ ucfirst($task->priority) }}
                     </span>
@@ -86,68 +98,152 @@
         </div>
     </section>
 
-    {{-- ADD TASK MODAL --}}
+    {{-- ADD TASK MODAL (Friendly Cartoonish Redesign) --}}
     <div id="taskModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
         <div onclick="closeTaskModal()" class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
 
-        <div class="relative w-full max-w-md bg-[#FAF6F0] rounded-3xl p-6 sm:p-7 shadow-2xl fade-up">
-            <div class="flex justify-between items-start mb-5">
-                <div>
-                    <p class="text-[9px] uppercase tracking-[.2em] text-[#5B1744] font-bold">NEW TASK</p>
-                    <h2 class="text-xl font-bold text-gray-900 mt-0.5">Add something to your day</h2>
+        <div class="relative w-full max-w-lg bg-[#FAF6F0] rounded-[2rem] p-6 sm:p-7 shadow-2xl border-2 border-[#E7C8DB] fade-up max-h-[92vh] overflow-y-auto">
+            
+            {{-- Modal Header --}}
+            <div class="flex items-center justify-between pb-4 border-b border-[#E7C8DB]/60 mb-5">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-[#F4E7EF] border border-[#E7C8DB] flex items-center justify-center shrink-0 text-[#5B1744] text-lg">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-[#5B1744] bg-[#F4E7EF] px-2.5 py-0.5 rounded-full">Tambah Tugas</span>
+                        <h2 class="text-lg font-bold text-gray-900 mt-1">Buat Rencana Tugas</h2>
+                    </div>
                 </div>
-                <button onclick="closeTaskModal()" class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50">
+                <button type="button" onclick="closeTaskModal()" class="w-8 h-8 rounded-full bg-white border border-[#E7C8DB] flex items-center justify-center text-gray-500 hover:bg-[#F4E7EF] hover:text-[#5B1744] transition">
                     <i class="fa-solid fa-xmark text-xs"></i>
                 </button>
             </div>
 
             <form id="taskForm" class="space-y-4">
                 @csrf
-                <div>
-                    <label class="text-xs font-bold text-gray-600">Task name</label>
-                    <input type="text" name="title" required placeholder="e.g. Finish networking assignment" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744] transition">
+                {{-- Hidden Inputs for interactive pill choices --}}
+                <input type="hidden" name="category" id="inputTaskCategory" value="school">
+                <input type="hidden" name="priority" id="inputTaskPriority" value="medium">
+                <input type="hidden" name="pomodoro_duration" id="taskPomodoroFocus" value="25">
+                <input type="hidden" name="break_duration" id="taskPomodoroBreak" value="5">
+
+                {{-- 1. Judul Tugas --}}
+                <div class="bg-white p-3.5 rounded-2xl border border-[#E7C8DB] shadow-2xs">
+                    <label class="text-xs font-bold text-gray-800 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5"><i class="fa-regular fa-pen-to-square text-[#5B1744]"></i> Judul Tugas</span>
+                        <span class="text-[10px] text-red-500 font-semibold">*Wajib</span>
+                    </label>
+                    <input type="text" name="title" required placeholder="Misal: Rangkuman Biologi Bab 3" 
+                        class="w-full mt-2 px-3 py-2.5 rounded-xl bg-[#FAF6F0]/60 border border-transparent focus:border-[#5B1744] focus:bg-white text-xs font-medium text-gray-900 outline-none transition placeholder:text-gray-400">
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div class="grid grid-cols-2 gap-4">
+                {{-- 2. Kategori Visual --}}
+                <div class="bg-white p-3.5 rounded-2xl border border-[#E7C8DB] shadow-2xs">
+                    <label class="text-xs font-bold text-gray-800 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-tag text-[#5B1744]"></i> Kategori</span>
+                        <span id="categoryLabelText" class="text-[10px] text-[#5B1744] font-bold">Sekolah</span>
+                    </label>
+                    <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2.5">
+                        <button type="button" onclick="selectCategory('school')" id="catBtn-school" 
+                            class="cat-chip flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-[11px] font-bold border-2 transition active:scale-95 bg-[#5B1744] text-white border-[#5B1744] shadow-xs">
+                            <i class="fa-solid fa-graduation-cap text-xs"></i> <span>Sekolah</span>
+                        </button>
+                        <button type="button" onclick="selectCategory('project')" id="catBtn-project" 
+                            class="cat-chip flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-[11px] font-semibold border-2 transition active:scale-95 bg-white text-gray-700 border-gray-200 hover:border-[#E7C8DB]">
+                            <i class="fa-solid fa-code text-xs"></i> <span>Proyek</span>
+                        </button>
+                        <button type="button" onclick="selectCategory('study')" id="catBtn-study" 
+                            class="cat-chip flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-[11px] font-semibold border-2 transition active:scale-95 bg-white text-gray-700 border-gray-200 hover:border-[#E7C8DB]">
+                            <i class="fa-solid fa-book-open text-xs"></i> <span>Belajar</span>
+                        </button>
+                        <button type="button" onclick="selectCategory('personal')" id="catBtn-personal" 
+                            class="cat-chip flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-[11px] font-semibold border-2 transition active:scale-95 bg-white text-gray-700 border-gray-200 hover:border-[#E7C8DB]">
+                            <i class="fa-solid fa-user text-xs"></i> <span>Pribadi</span>
+                        </button>
+                    </div>
+                </div>
+
+                {{-- 3. Deadline / Waktu Selesai --}}
+                <div class="bg-white p-3.5 rounded-2xl border border-[#E7C8DB] shadow-2xs">
+                    <label class="text-xs font-bold text-gray-800 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5"><i class="fa-regular fa-calendar text-[#5B1744]"></i> Tenggat Waktu</span>
+                        <span class="text-[10px] text-gray-400">Pilihan cepat:</span>
+                    </label>
+                    <div class="flex items-center gap-2 mt-2 mb-2.5">
+                        <button type="button" onclick="setQuickDate(0)" class="px-3 py-1 rounded-lg text-[10px] font-bold bg-[#F4E7EF] text-[#5B1744] border border-[#E7C8DB] hover:bg-[#E7C8DB] transition">Hari Ini</button>
+                        <button type="button" onclick="setQuickDate(1)" class="px-3 py-1 rounded-lg text-[10px] font-semibold bg-gray-50 text-gray-700 border border-gray-200 hover:bg-[#F4E7EF] transition">Besok</button>
+                        <button type="button" onclick="setQuickDate(3)" class="px-3 py-1 rounded-lg text-[10px] font-semibold bg-gray-50 text-gray-700 border border-gray-200 hover:bg-[#F4E7EF] transition">3 Hari</button>
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
                         <div>
-                            <label class="text-xs font-bold text-gray-600">Due Date</label>
-                            <input type="date" name="due_date" required value="{{ date('Y-m-d') }}" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744]">
+                            <span class="text-[10px] text-gray-500 font-medium block mb-1">Tanggal:</span>
+                            <input type="date" name="due_date" id="inputDueDate" required value="{{ date('Y-m-d') }}" 
+                                class="w-full px-3 py-2 rounded-xl bg-[#FAF6F0]/60 border border-gray-200 text-xs font-semibold text-gray-800 outline-none focus:border-[#5B1744]">
                         </div>
                         <div>
-                            <label class="text-xs font-bold text-gray-600">Time</label>
-                            <input type="time" name="due_time" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744]">
+                            <span class="text-[10px] text-gray-500 font-medium block mb-1">Jam (Opsional):</span>
+                            <input type="time" name="due_time" id="inputDueTime" 
+                                class="w-full px-3 py-2 rounded-xl bg-[#FAF6F0]/60 border border-gray-200 text-xs font-semibold text-gray-800 outline-none focus:border-[#5B1744]">
                         </div>
                     </div>
-                    <div>
-                        <label class="text-xs font-bold text-gray-600">Category</label>
-                        <select name="category" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744]">
-                            <option value="school">School</option>
-                            <option value="project">Project</option>
-                            <option value="study">Study</option>
-                            <option value="personal">Personal</option>
-                        </select>
+                </div>
+
+                {{-- 4. Prioritas & Mode Fokus Pomodoro --}}
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {{-- Prioritas --}}
+                    <div class="bg-white p-3 rounded-2xl border border-[#E7C8DB] shadow-2xs">
+                        <label class="text-[11px] font-bold text-gray-800 block mb-2">Prioritas:</label>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button type="button" onclick="selectPriority('low')" id="prioBtn-low" 
+                                class="prio-chip py-1.5 rounded-xl text-[10px] font-semibold border-2 transition flex items-center justify-center gap-1.5 bg-white text-gray-700 border-gray-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Rendah
+                            </button>
+                            <button type="button" onclick="selectPriority('medium')" id="prioBtn-medium" 
+                                class="prio-chip py-1.5 rounded-xl text-[10px] font-bold border-2 transition flex items-center justify-center gap-1.5 bg-[#5B1744] text-white border-[#5B1744]">
+                                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span> Sedang
+                            </button>
+                            <button type="button" onclick="selectPriority('high')" id="prioBtn-high" 
+                                class="prio-chip py-1.5 rounded-xl text-[10px] font-semibold border-2 transition flex items-center justify-center gap-1.5 bg-white text-gray-700 border-gray-200">
+                                <span class="w-1.5 h-1.5 rounded-full bg-rose-500"></span> Tinggi
+                            </button>
+                        </div>
+                    </div>
+
+                    {{-- Mode Pomodoro --}}
+                    <div class="bg-white p-3 rounded-2xl border border-[#E7C8DB] shadow-2xs">
+                        <label class="text-[11px] font-bold text-gray-800 block mb-2">Target Sesi Fokus:</label>
+                        <div class="grid grid-cols-3 gap-1.5">
+                            <button type="button" onclick="selectPomoDuration(15, 3)" id="pomoChip-15" 
+                                class="pomo-chip py-1.5 rounded-xl text-[10px] font-semibold border-2 transition text-center bg-white text-gray-700 border-gray-200">
+                                15 Menit
+                            </button>
+                            <button type="button" onclick="selectPomoDuration(25, 5)" id="pomoChip-25" 
+                                class="pomo-chip py-1.5 rounded-xl text-[10px] font-bold border-2 transition text-center bg-[#5B1744] text-white border-[#5B1744]">
+                                25 Menit
+                            </button>
+                            <button type="button" onclick="selectPomoDuration(50, 10)" id="pomoChip-50" 
+                                class="pomo-chip py-1.5 rounded-xl text-[10px] font-semibold border-2 transition text-center bg-white text-gray-700 border-gray-200">
+                                50 Menit
+                            </button>
+                        </div>
                     </div>
                 </div>
 
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="text-xs font-bold text-gray-600">Priority</label>
-                        <select name="priority" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744]">
-                            <option value="medium">Medium</option>
-                            <option value="high">High</option>
-                            <option value="low">Low</option>
-                        </select>
-                    </div>
+                {{-- 5. Catatan Tambahan (Opsional) --}}
+                <div class="bg-white p-3.5 rounded-2xl border border-[#E7C8DB] shadow-2xs">
+                    <label class="text-xs font-bold text-gray-800 flex items-center justify-between">
+                        <span class="flex items-center gap-1.5"><i class="fa-regular fa-note-sticky text-[#5B1744]"></i> Catatan</span>
+                        <span class="text-[10px] text-gray-400">Opsional</span>
+                    </label>
+                    <textarea name="description" rows="2" placeholder="Catat detail atau instruksi khusus pengerjaan..." 
+                        class="w-full mt-2 px-3 py-2 rounded-xl bg-[#FAF6F0]/60 border border-transparent focus:border-[#5B1744] focus:bg-white text-xs font-medium text-gray-800 outline-none transition placeholder:text-gray-400"></textarea>
                 </div>
 
-                <div>
-                    <label class="text-xs font-bold text-gray-600">Notes</label>
-                    <textarea name="description" rows="3" placeholder="Optional notes..." class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744] transition"></textarea>
-                </div>
-
-                <button type="submit" class="w-full py-3 rounded-xl bg-[#5B1744] text-white text-xs font-bold hover:bg-[#481236] transition shadow-xs mt-2">
-                    Add to my planner
+                {{-- Submit Button --}}
+                <button type="submit" 
+                    class="w-full py-3.5 rounded-2xl bg-[#5B1744] hover:bg-[#481236] text-white text-xs sm:text-sm font-bold transition shadow-lg shadow-[#5B1744]/20 flex items-center justify-center gap-2 mt-2 transform active:scale-98">
+                    <i class="fa-solid fa-check text-xs"></i> <span>Simpan Tugas</span>
                 </button>
             </form>
         </div>
@@ -190,6 +286,63 @@
 @push('scripts')
 
     const taskModal = document.getElementById('taskModal');
+
+    function selectCategory(cat) {
+        const inp = document.getElementById('inputTaskCategory');
+        if (inp) inp.value = cat;
+        const labels = {
+            school: 'Sekolah',
+            project: 'Proyek',
+            study: 'Belajar',
+            personal: 'Pribadi'
+        };
+        const lbl = document.getElementById('categoryLabelText');
+        if (lbl) lbl.textContent = labels[cat] || cat;
+
+        document.querySelectorAll('.cat-chip').forEach(btn => {
+            btn.className = "cat-chip flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-[11px] font-semibold border-2 transition active:scale-95 bg-white text-gray-700 border-gray-200 hover:border-[#E7C8DB]";
+        });
+        const activeBtn = document.getElementById('catBtn-' + cat);
+        if (activeBtn) {
+            activeBtn.className = "cat-chip flex items-center justify-center gap-1.5 py-2 px-2 rounded-xl text-[11px] font-bold border-2 transition active:scale-95 bg-[#5B1744] text-white border-[#5B1744] shadow-xs";
+        }
+    }
+
+    function selectPriority(prio) {
+        const inp = document.getElementById('inputTaskPriority');
+        if (inp) inp.value = prio;
+        document.querySelectorAll('.prio-chip').forEach(btn => {
+            btn.className = "prio-chip py-1.5 rounded-xl text-[10px] font-semibold border-2 transition flex items-center justify-center gap-1.5 bg-white text-gray-700 border-gray-200";
+        });
+        const activeBtn = document.getElementById('prioBtn-' + prio);
+        if (activeBtn) {
+            activeBtn.className = "prio-chip py-1.5 rounded-xl text-[10px] font-bold border-2 transition flex items-center justify-center gap-1.5 bg-[#5B1744] text-white border-[#5B1744]";
+        }
+    }
+
+    function selectPomoDuration(focus, breakMin) {
+        const fInp = document.getElementById('taskPomodoroFocus');
+        const bInp = document.getElementById('taskPomodoroBreak');
+        if (fInp) fInp.value = focus;
+        if (bInp) bInp.value = breakMin;
+        document.querySelectorAll('.pomo-chip').forEach(btn => {
+            btn.className = "pomo-chip py-1.5 rounded-xl text-[10px] font-semibold border-2 transition text-center bg-white text-gray-700 border-gray-200";
+        });
+        const activeBtn = document.getElementById('pomoChip-' + focus);
+        if (activeBtn) {
+            activeBtn.className = "pomo-chip py-1.5 rounded-xl text-[10px] font-bold border-2 transition text-center bg-[#5B1744] text-white border-[#5B1744]";
+        }
+    }
+
+    function setQuickDate(offsetDays) {
+        const d = new Date();
+        d.setDate(d.getDate() + offsetDays);
+        const yyyy = d.getFullYear();
+        const mm = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        const inp = document.getElementById('inputDueDate');
+        if (inp) inp.value = `${yyyy}-${mm}-${dd}`;
+    }
 
     function openTaskModal() {
         taskModal.classList.remove('hidden');

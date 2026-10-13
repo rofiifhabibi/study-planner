@@ -3,7 +3,7 @@
 use App\Models\ChatMessage;
 use App\Models\ChatSession;
 use App\Models\User;
-use Illuminate\Support\Facades\Http;
+use App\Services\GroqAiService;
 
 test('halaman chat mengalihkan sesi yang bukan milik pengguna', function () {
     $user = User::factory()->create();
@@ -120,14 +120,10 @@ test('pengguna tidak dapat membatalkan pesan milik orang lain', function () {
 });
 
 test('mengirim pesan menyimpan pesan dan mengembalikan id', function () {
-    Http::fake([
-        'n8n.test/*' => Http::response(['output' => 'Jawaban AI']),
-    ]);
-
-    config([
-        'services.n8n.webhook_url' => 'https://n8n.test/webhook',
-        'services.n8n.secret_key' => 'rahasia',
-    ]);
+    $this->mock(GroqAiService::class, function ($mock) {
+        $mock->shouldReceive('buildHistoryFromSession')->once()->andReturn([]);
+        $mock->shouldReceive('chat')->once()->with('Halo', [])->andReturn('Jawaban AI');
+    });
 
     $user = User::factory()->create();
     $session = ChatSession::factory()->create(['user_id' => $user->id]);
@@ -157,14 +153,15 @@ test('mengirim pesan menyimpan pesan dan mengembalikan id', function () {
 });
 
 test('mengirim pesan di sesi project mengirim history lintas sesi', function () {
-    Http::fake([
-        'n8n.test/*' => Http::response(['output' => 'Jawaban AI']),
-    ]);
-
-    config([
-        'services.n8n.webhook_url' => 'https://n8n.test/webhook',
-        'services.n8n.secret_key' => 'rahasia',
-    ]);
+    $this->mock(GroqAiService::class, function ($mock) {
+        $mock->shouldReceive('buildHistoryFromSession')->once()->andReturn([]);
+        $mock->shouldReceive('chat')->once()->withArgs(function ($msg, $history) {
+            return $msg === 'Gimana cara bikin workflow?'
+                && count($history) === 2
+                && $history[0]['role'] === 'user'
+                && $history[0]['content'] === 'Bagaimana cara install n8n?';
+        })->andReturn('Jawaban AI');
+    });
 
     $user = User::factory()->create();
     $project = ChatSession::factory()->project()->create(['user_id' => $user->id]);
@@ -194,26 +191,13 @@ test('mengirim pesan di sesi project mengirim history lintas sesi', function () 
         ])
         ->assertOk()
         ->assertJsonPath('status', 'success');
-
-    Http::assertSent(function ($request) use ($active) {
-        return $request['session_id'] === 'user_'.auth()->id().'_session_'.$active->session_key
-            && $request['message'] === 'Gimana cara bikin workflow?'
-            && $request['history'] === [
-                ['role' => 'user', 'content' => 'Bagaimana cara install n8n?', 'is_canceled' => false],
-                ['role' => 'assistant', 'content' => 'Install dengan npm atau docker.', 'is_canceled' => false],
-            ];
-    });
 });
 
 test('mengirim pesan di sesi biasa tidak mengirim history', function () {
-    Http::fake([
-        'n8n.test/*' => Http::response(['output' => 'Jawaban AI']),
-    ]);
-
-    config([
-        'services.n8n.webhook_url' => 'https://n8n.test/webhook',
-        'services.n8n.secret_key' => 'rahasia',
-    ]);
+    $this->mock(GroqAiService::class, function ($mock) {
+        $mock->shouldReceive('buildHistoryFromSession')->once()->andReturn([]);
+        $mock->shouldReceive('chat')->once()->with('Halo', [])->andReturn('Jawaban AI');
+    });
 
     $user = User::factory()->create();
     $session = ChatSession::factory()->create(['user_id' => $user->id]);
@@ -224,8 +208,6 @@ test('mengirim pesan di sesi biasa tidak mengirim history', function () {
             'message' => 'Halo',
         ])
         ->assertOk();
-
-    Http::assertSent(fn ($request) => ! array_key_exists('history', $request->data()));
 });
 
 test('menghapus project menghapus sesi anaknya', function () {
@@ -303,14 +285,10 @@ test('ganti nama tanpa title divalidasi', function () {
 });
 
 test('pesan dapat diedit dan balasan baru dibuat', function () {
-    Http::fake([
-        'n8n.test/*' => Http::response(['output' => ' Balasan dari AI ']),
-    ]);
-
-    config([
-        'services.n8n.webhook_url' => 'https://n8n.test/webhook',
-        'services.n8n.secret_key' => 'rahasia',
-    ]);
+    $this->mock(GroqAiService::class, function ($mock) {
+        $mock->shouldReceive('buildHistoryFromSession')->once()->andReturn([]);
+        $mock->shouldReceive('chat')->once()->with('Pertanyaan revisi', [])->andReturn('Balasan dari AI');
+    });
 
     $user = User::factory()->create();
     $session = ChatSession::factory()->create(['user_id' => $user->id]);
@@ -341,13 +319,6 @@ test('pesan dapat diedit dan balasan baru dibuat', function () {
 });
 
 test('edit pesan milik orang lain ditolak', function () {
-    Http::fake();
-
-    config([
-        'services.n8n.webhook_url' => 'https://n8n.test/webhook',
-        'services.n8n.secret_key' => 'rahasia',
-    ]);
-
     $user = User::factory()->create();
     $otherUser = User::factory()->create();
     $session = ChatSession::factory()->create(['user_id' => $otherUser->id]);

@@ -43,15 +43,15 @@ class ProfileController extends Controller
     public function destroy(Request $request): RedirectResponse
     {
         $user = $request->user();
-        
+
         // If the user has a social login, we might not want to force password validation
         // since they might have a randomly generated password.
         // We'll only require the password if they don't have a social login,
         // or we can just bypass it if they leave it empty and have a social login.
-        
-        $hasSocial = !empty($user->google_id) || !empty($user->telegram_id);
-        
-        if (!$hasSocial) {
+
+        $hasSocial = ! empty($user->google_id) || ! empty($user->telegram_id);
+
+        if (! $hasSocial) {
             $request->validateWithBag('userDeletion', [
                 'password' => ['required', 'current_password'],
             ]);

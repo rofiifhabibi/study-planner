@@ -1,13 +1,15 @@
 <?php
 
+use App\Http\Controllers\AiIntegrationController;
 use App\Http\Controllers\ChatController;
 use App\Http\Controllers\NoteController;
 use App\Http\Controllers\ScheduleController;
 use App\Http\Controllers\StudySessionController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\TaskStepController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['web', 'auth', 'verified'])->group(function () {
+Route::middleware(['web', 'auth'])->group(function () {
     Route::get('/chat/sessions', [ChatController::class, 'getSessions']);
     Route::get('/chat/sessions/{sessionId}/messages', [ChatController::class, 'getMessages']);
     Route::delete('/chat/sessions/{sessionId}', [ChatController::class, 'deleteSession']);
@@ -28,10 +30,10 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
     Route::put('/schedules/{schedule}', [ScheduleController::class, 'update']);
     Route::delete('/schedules/{schedule}', [ScheduleController::class, 'destroy']);
 
-    Route::get('/tasks/{task}/steps', [App\Http\Controllers\TaskStepController::class, 'index']);
-    Route::post('/tasks/{task}/steps', [App\Http\Controllers\TaskStepController::class, 'store']);
-    Route::put('/tasks/{task}/steps/{step}', [App\Http\Controllers\TaskStepController::class, 'update']);
-    Route::delete('/tasks/{task}/steps/{step}', [App\Http\Controllers\TaskStepController::class, 'destroy']);
+    Route::get('/tasks/{task}/steps', [TaskStepController::class, 'index']);
+    Route::post('/tasks/{task}/steps', [TaskStepController::class, 'store']);
+    Route::put('/tasks/{task}/steps/{step}', [TaskStepController::class, 'update']);
+    Route::delete('/tasks/{task}/steps/{step}', [TaskStepController::class, 'destroy']);
 
     Route::get('/study-sessions', [StudySessionController::class, 'index']);
     Route::get('/study-sessions/active', [StudySessionController::class, 'active']);
@@ -47,11 +49,11 @@ Route::middleware(['web', 'auth', 'verified'])->group(function () {
     Route::delete('/notes/{note}', [NoteController::class, 'destroy']);
 });
 
-// AI Integrations (Callable from n8n)
+// AI Integrations (Internal / External tools)
 Route::middleware('api')->group(function () {
-    Route::get('/ai/tool/calendar', [\App\Http\Controllers\AiIntegrationController::class, 'getCalendar']);
-    Route::post('/ai/tool/calendar', [\App\Http\Controllers\AiIntegrationController::class, 'createCalendarEvent']);
-    Route::get('/ai/tool/tasks', [\App\Http\Controllers\AiIntegrationController::class, 'getTasks']);
-    Route::get('/ai/tool/timetable', [\App\Http\Controllers\AiIntegrationController::class, 'getTimetable']);
-    Route::post('/ai/tool/tasks', [\App\Http\Controllers\AiIntegrationController::class, 'createTask']);
+    Route::get('/ai/tool/calendar', [AiIntegrationController::class, 'getCalendar']);
+    Route::post('/ai/tool/calendar', [AiIntegrationController::class, 'createCalendarEvent']);
+    Route::get('/ai/tool/tasks', [AiIntegrationController::class, 'getTasks']);
+    Route::get('/ai/tool/timetable', [AiIntegrationController::class, 'getTimetable']);
+    Route::post('/ai/tool/tasks', [AiIntegrationController::class, 'createTask']);
 });

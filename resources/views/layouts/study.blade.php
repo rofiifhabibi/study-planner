@@ -147,7 +147,7 @@
 
                         <a href="{{ route('timetable.index') }}" class="sidebar-item {{ ($activeNav ?? '') === 'timetable' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs">
                             <i class="fa-solid fa-graduation-cap w-4 text-center"></i>
-                            Jadwal Pelajaran
+                            Class Schedule
                         </a>
 
                         <a href="{{ url('/notes') }}" class="sidebar-item {{ ($activeNav ?? '') === 'notes' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs">
@@ -251,7 +251,13 @@
                     </div>
 
                     {{-- Right Controls --}}
-                    <div class="flex items-center gap-3">
+                    <div class="flex items-center gap-2.5">
+                        <button type="button" onclick="startFeatureTour()" title="Panduan Fitur Halaman Ini" 
+                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-[#5B1744] hover:bg-[#F4E7EF] hover:border-[#E7C8DB] transition shadow-xs text-xs font-bold active:scale-95">
+                            <i class="fa-regular fa-circle-question text-sm text-[#5B1744]"></i>
+                            <span class="hidden sm:inline">Panduan</span>
+                        </button>
+
                         <button type="button" class="relative w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:border-[#5B1744]/30 transition shadow-xs">
                             <i class="fa-regular fa-bell text-xs"></i>
                             <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#5B1744]"></span>
@@ -408,7 +414,50 @@
         </div>
     </div>
 
-    <div id="toastContainer" class="fixed top-4 right-4 z-[60] flex flex-col gap-2"></div>
+    {{-- FEATURE TOUR SPOTLIGHT & MODAL CARD (Matches User Reference Image & Website Palette) --}}
+    <div id="tour-overlay-container" class="fixed inset-0 z-[9990] hidden select-none" onclick="handleTourBackdropClick(event)">
+        {{-- Spotlight Frame with Cutout Box Shadow --}}
+        <div id="tour-spotlight-box" class="fixed pointer-events-none transition-all duration-300 ease-out z-[9992] rounded-2xl"
+            style="box-shadow: 0 0 0 9999px rgba(35, 8, 26, 0.82); border: 2.5px solid #E7C8DB;"></div>
+
+        {{-- Guide Card Modal in Brand Color Palette --}}
+        <div id="tour-card" onclick="event.stopPropagation()" class="fixed z-[9999] w-[350px] max-w-[92vw] bg-[#481236] text-white rounded-3xl p-5 sm:p-6 shadow-2xl transition-all duration-300 ease-out border border-[#E7C8DB]/40">
+            <div class="flex items-center gap-2.5 mb-2.5">
+                <div class="w-8 h-8 rounded-xl bg-white/10 text-[#E7C8DB] flex items-center justify-center text-sm shadow-xs border border-white/15">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <div>
+                    <span id="tour-badge" class="text-[10px] uppercase tracking-wider text-[#E7C8DB] font-extrabold flex items-center gap-1.5">
+                        <span class="w-2.5 h-0.5 bg-[#E7C8DB] rounded-full inline-block"></span>
+                        <span id="tour-step-counter">PANDUAN 1/4</span>
+                    </span>
+                </div>
+            </div>
+
+            <h4 id="tour-title" class="text-base sm:text-lg font-bold text-white mb-2 leading-snug">Judul Panduan</h4>
+            <p id="tour-desc" class="text-xs sm:text-sm text-white/80 leading-relaxed mb-5 font-normal">Penjelasan fitur yang ringkas dan jelas.</p>
+
+            <div class="flex items-center justify-between pt-3 border-t border-white/15">
+                <div id="tour-dots" class="flex items-center gap-1.5">
+                    <!-- Dots dynamically injected -->
+                </div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="endFeatureTour()" class="text-xs font-semibold text-white/60 hover:text-white px-2 py-1.5 transition">
+                        Lewati
+                    </button>
+                    <button type="button" onclick="prevFeatureTourStep()" id="tour-prev-btn" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs transition border border-white/15 disabled:opacity-30 disabled:cursor-not-allowed">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <button type="button" onclick="nextFeatureTourStep()" id="tour-next-btn" class="px-4 py-2 rounded-xl bg-[#E7C8DB] hover:bg-[#F4E7EF] text-[#5B1744] text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-black/20 active:scale-95">
+                        <span id="tour-next-btn-text">Berikutnya</span>
+                        <i id="tour-next-btn-icon" class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toastContainer" class="fixed top-4 right-4 z-[60] flex flex-col gap-2 pointer-events-none"></div>
 
     <script>
         const sidebar = document.getElementById('sidebar');
@@ -436,7 +485,7 @@
 
             const isSuccess = type !== 'error';
             const el = document.createElement('div');
-            el.className = 'flex items-center gap-2 px-4 py-3 rounded-2xl shadow-lg border text-xs font-semibold bg-white ' +
+            el.className = 'pointer-events-auto flex items-center gap-2 px-4 py-3 rounded-2xl shadow-lg border text-xs font-semibold bg-white ' +
                 (isSuccess ? 'border-green-200 text-green-700' : 'border-red-200 text-red-700');
             el.innerHTML = '<i class="fa-solid ' + (isSuccess ? 'fa-circle-check' : 'fa-circle-exclamation') + '"></i><span></span>';
             el.querySelector('span').textContent = message;
@@ -489,6 +538,169 @@
                 document.getElementById('delete-account-password')?.focus();
             }
         }
+
+        // ==========================================
+        // INTERACTIVE SPOTLIGHT FEATURE TOUR
+        // ==========================================
+        let tourSteps = [];
+        let currentTourIndex = 0;
+
+        function startFeatureTour() {
+            tourSteps = Array.from(document.querySelectorAll('[data-tour-step]'))
+                .filter(el => {
+                    const style = window.getComputedStyle(el);
+                    return style.display !== 'none' && style.visibility !== 'hidden' && (el.offsetWidth > 0 || el.offsetHeight > 0);
+                })
+                .sort((a, b) => parseInt(a.getAttribute('data-tour-step')) - parseInt(b.getAttribute('data-tour-step')));
+
+            if (tourSteps.length === 0) {
+                showToast('Halaman ini tidak memiliki langkah panduan tambahan.', 'info');
+                return;
+            }
+
+            currentTourIndex = 0;
+            const container = document.getElementById('tour-overlay-container');
+            if (container) {
+                container.classList.remove('hidden');
+            }
+            renderTourStep();
+        }
+
+        function positionTourSpotlight(el) {
+            const rect = el.getBoundingClientRect();
+            const spotlight = document.getElementById('tour-spotlight-box');
+            const card = document.getElementById('tour-card');
+            if (!spotlight || !card) return;
+
+            const pad = 10;
+            const top = Math.max(0, rect.top - pad);
+            const left = Math.max(0, rect.left - pad);
+            const width = Math.max(20, rect.width + pad * 2);
+            const height = Math.max(20, rect.height + pad * 2);
+
+            spotlight.style.top = top + 'px';
+            spotlight.style.left = left + 'px';
+            spotlight.style.width = width + 'px';
+            spotlight.style.height = height + 'px';
+
+            const cardWidth = Math.min(360, window.innerWidth * 0.92);
+            const cardHeight = card.offsetHeight || 220;
+
+            let cardTop = rect.bottom + 18;
+            let cardLeft = rect.left + (rect.width / 2) - (cardWidth / 2);
+
+            if (cardTop + cardHeight > window.innerHeight - 20) {
+                cardTop = rect.top - cardHeight - 18;
+            }
+
+            if (cardTop < 20 || cardTop + cardHeight > window.innerHeight - 10) {
+                cardTop = Math.max(20, Math.min(window.innerHeight - cardHeight - 20, (window.innerHeight - cardHeight) / 2));
+            }
+
+            cardLeft = Math.max(16, Math.min(window.innerWidth - cardWidth - 16, cardLeft));
+
+            card.style.top = cardTop + 'px';
+            card.style.left = cardLeft + 'px';
+        }
+
+        function renderTourStep() {
+            if (currentTourIndex < 0 || currentTourIndex >= tourSteps.length) return;
+            const el = tourSteps[currentTourIndex];
+            const title = el.getAttribute('data-tour-title') || 'Panduan Fitur';
+            const desc = el.getAttribute('data-tour-desc') || '';
+            const total = tourSteps.length;
+
+            const rect = el.getBoundingClientRect();
+            const needsScroll = (rect.top < 70 || rect.bottom > window.innerHeight - 70);
+            if (needsScroll) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+            }
+
+            const counterEl = document.getElementById('tour-step-counter');
+            if (counterEl) counterEl.textContent = `PANDUAN ${currentTourIndex + 1}/${total}`;
+            const titleEl = document.getElementById('tour-title');
+            if (titleEl) titleEl.textContent = title;
+            const descEl = document.getElementById('tour-desc');
+            if (descEl) descEl.textContent = desc;
+
+            const dotsBox = document.getElementById('tour-dots');
+            if (dotsBox) {
+                dotsBox.innerHTML = '';
+                for (let i = 0; i < total; i++) {
+                    const dot = document.createElement('span');
+                    dot.className = i === currentTourIndex 
+                        ? 'w-2 h-2 rounded-full bg-[#E7C8DB] transition-all duration-300' 
+                        : 'w-1.5 h-1.5 rounded-full bg-white/25 transition-all';
+                    dotsBox.appendChild(dot);
+                }
+            }
+
+            const prevBtn = document.getElementById('tour-prev-btn');
+            if (prevBtn) prevBtn.disabled = (currentTourIndex === 0);
+
+            const nextBtnText = document.getElementById('tour-next-btn-text');
+            const nextBtnIcon = document.getElementById('tour-next-btn-icon');
+            if (currentTourIndex === total - 1) {
+                if (nextBtnText) nextBtnText.textContent = 'Selesai';
+                if (nextBtnIcon) nextBtnIcon.className = 'fa-solid fa-check text-[10px]';
+            } else {
+                if (nextBtnText) nextBtnText.textContent = 'Berikutnya';
+                if (nextBtnIcon) nextBtnIcon.className = 'fa-solid fa-arrow-right text-[10px]';
+            }
+
+            // Immediately position spotlight and card
+            positionTourSpotlight(el);
+
+            // If scrolling occurred, refine position once scroll settles
+            if (needsScroll) {
+                setTimeout(() => {
+                    positionTourSpotlight(el);
+                }, 260);
+            }
+        }
+
+        function nextFeatureTourStep() {
+            if (currentTourIndex < tourSteps.length - 1) {
+                currentTourIndex++;
+                renderTourStep();
+            } else {
+                endFeatureTour();
+            }
+        }
+
+        function prevFeatureTourStep() {
+            if (currentTourIndex > 0) {
+                currentTourIndex--;
+                renderTourStep();
+            }
+        }
+
+        function endFeatureTour() {
+            const container = document.getElementById('tour-overlay-container');
+            if (container) container.classList.add('hidden');
+        }
+
+        function handleTourBackdropClick(e) {
+            if (e.target.id === 'tour-overlay-container') {
+                endFeatureTour();
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            const container = document.getElementById('tour-overlay-container');
+            if (container && !container.classList.contains('hidden') && tourSteps[currentTourIndex]) {
+                positionTourSpotlight(tourSteps[currentTourIndex]);
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            const container = document.getElementById('tour-overlay-container');
+            if (container && !container.classList.contains('hidden')) {
+                if (e.key === 'Escape') endFeatureTour();
+                if (e.key === 'ArrowRight') nextFeatureTourStep();
+                if (e.key === 'ArrowLeft') prevFeatureTourStep();
+            }
+        });
 
         @stack('scripts')
     </script>

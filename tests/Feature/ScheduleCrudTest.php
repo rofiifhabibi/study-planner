@@ -197,4 +197,3 @@ it('rejects an invalid recurrence frequency', function () {
         ->assertUnprocessable()
         ->assertJsonValidationErrors(['recurrence_frequency']);
 });
-

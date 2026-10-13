@@ -3,8 +3,8 @@
 namespace App\Services;
 
 use App\Models\Schedule;
-use App\Models\Task;
 use App\Models\SchoolTimetable;
+use App\Models\Task;
 use App\Models\User;
 use Carbon\Carbon;
 use Google\Client;
@@ -338,27 +338,27 @@ class GoogleCalendarService
                 $title = $event->getSummary() ?? 'Untitled Event';
                 $startDate = Carbon::parse($startDateTime);
                 $endDate = Carbon::parse($endDateTime);
-                
+
                 // If title contains [Pelajaran], it belongs to SchoolTimetable
                 if (stripos($title, '[Pelajaran]') !== false) {
                     $subject = trim(str_ireplace('[Pelajaran]', '', $title));
                     // 0=Sun, 1=Mon, 2=Tue, 3=Wed, 4=Thu, 5=Fri, 6=Sat
-                    $dayOfWeek = $startDate->dayOfWeek; 
-                    
+                    $dayOfWeek = $startDate->dayOfWeek;
+
                     // Check by google_event_id OR by subject, day, and time to prevent duplicates from recurring instances
-                    $existingTimetable = \App\Models\SchoolTimetable::where('user_id', $this->user->id)
-                        ->where(function($q) use ($event, $subject, $dayOfWeek, $startDate) {
+                    $existingTimetable = SchoolTimetable::where('user_id', $this->user->id)
+                        ->where(function ($q) use ($event, $subject, $dayOfWeek, $startDate) {
                             $q->where('google_event_id', $event->getId())
-                              ->orWhere(function($subQ) use ($subject, $dayOfWeek, $startDate) {
-                                  $subQ->where('subject', $subject)
+                                ->orWhere(function ($subQ) use ($subject, $dayOfWeek, $startDate) {
+                                    $subQ->where('subject', $subject)
                                         ->where('day_of_week', $dayOfWeek)
                                         ->where('start_time', $startDate->format('H:i').':00');
-                              });
+                                });
                         })
                         ->first();
-                        
-                    if (!$existingTimetable) {
-                        \App\Models\SchoolTimetable::create([
+
+                    if (! $existingTimetable) {
+                        SchoolTimetable::create([
                             'user_id' => $this->user->id,
                             'subject' => $subject,
                             'day_of_week' => $dayOfWeek,
@@ -368,6 +368,7 @@ class GoogleCalendarService
                         ]);
                         $imported++;
                     }
+
                     continue;
                 }
 
@@ -559,7 +560,7 @@ class GoogleCalendarService
         $taskListId = $taskListId ?? $this->taskListId();
 
         $priorityEmoji = ['high' => '🔴', 'medium' => '🟡', 'low' => '🟢'][$task->priority] ?? '';
-        $taskTitle = trim($priorityEmoji . ' ' . $task->title);
+        $taskTitle = trim($priorityEmoji.' '.$task->title);
 
         $googleTask = new GoogleTasks\Task([
             'title' => $taskTitle,
@@ -592,12 +593,14 @@ class GoogleCalendarService
 
         try {
             $this->upsertSchoolTimetable($timetable);
+
             return true;
         } catch (\Exception $e) {
             Log::error('Google Calendar timetable sync error', [
                 'timetable_id' => $timetable->id,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -611,6 +614,7 @@ class GoogleCalendarService
         try {
             $calendar = new GoogleCalendar($this->client);
             $calendar->events->delete('primary', $timetable->google_event_id);
+
             return true;
         } catch (\Exception $e) {
             if ($e->getCode() == 404 || str_contains($e->getMessage(), 'Not Found')) {
@@ -620,6 +624,7 @@ class GoogleCalendarService
                 'timetable_id' => $timetable->id,
                 'error' => $e->getMessage(),
             ]);
+
             return false;
         }
     }
@@ -638,32 +643,32 @@ class GoogleCalendarService
             4 => 'TH',
             5 => 'FR',
             6 => 'SA',
-            0 => 'SU'
+            0 => 'SU',
         ];
-        
+
         $carbonDay = $timetable->day_of_week == 0 ? 0 : $timetable->day_of_week;
         $dayNames = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
         $nextDate = now()->next($dayNames[$carbonDay]);
-        
+
         $startTime = Carbon::parse($timetable->start_time);
         $endTime = $timetable->end_time ? Carbon::parse($timetable->end_time) : $startTime->copy()->addHour();
-        
+
         // Graphite / Grey color in Google Calendar
         $colorId = '8';
 
         $event = new Event([
-            'summary' => '[Pelajaran] ' . $timetable->subject,
+            'summary' => '[Pelajaran] '.$timetable->subject,
             'colorId' => $colorId,
             'start' => [
-                'dateTime' => $nextDate->format('Y-m-d') . 'T' . $startTime->format('H:i') . ':00',
+                'dateTime' => $nextDate->format('Y-m-d').'T'.$startTime->format('H:i').':00',
                 'timeZone' => $this->calendarTimezone(),
             ],
             'end' => [
-                'dateTime' => $nextDate->format('Y-m-d') . 'T' . $endTime->format('H:i') . ':00',
+                'dateTime' => $nextDate->format('Y-m-d').'T'.$endTime->format('H:i').':00',
                 'timeZone' => $this->calendarTimezone(),
             ],
             'recurrence' => [
-                'RRULE:FREQ=WEEKLY;BYDAY=' . $dayMap[$timetable->day_of_week]
+                'RRULE:FREQ=WEEKLY;BYDAY='.$dayMap[$timetable->day_of_week],
             ],
             'reminders' => [
                 'useDefault' => false,
@@ -676,6 +681,7 @@ class GoogleCalendarService
 
         if (! empty($timetable->google_event_id)) {
             $calendar->events->update('primary', $timetable->google_event_id, $event);
+
             return;
         }
 
