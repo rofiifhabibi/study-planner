@@ -30,17 +30,29 @@
         .typing-dots span:nth-child(3) { animation-delay: 0s; }
         @keyframes bounce { 0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; } 40% { transform: scale(1); opacity: 1; } }
 
-        #mobile-float-burger {
-            position: fixed;
-            top: 12px;
-            left: 12px;
-            z-index: 50;
-            display: none;
-        }
-        @media (max-width: 767px) {
-            #mobile-float-burger {
-                display: flex;
+        @keyframes tourGuideGlow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(163, 56, 120, 0.75), 0 2px 4px rgba(0, 0, 0, 0.08);
+                border-color: #5B1744;
+                transform: scale(1);
             }
+            50% {
+                box-shadow: 0 0 0 10px rgba(163, 56, 120, 0), 0 4px 14px rgba(91, 23, 68, 0.3);
+                border-color: #A33878;
+                transform: scale(1.05);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(163, 56, 120, 0), 0 2px 4px rgba(0, 0, 0, 0.08);
+                border-color: #5B1744;
+                transform: scale(1);
+            }
+        }
+
+        .tour-guide-glowing {
+            animation: tourGuideGlow 1.6s infinite ease-in-out !important;
+            background-color: #F4E7EF !important;
+            color: #5B1744 !important;
+            border-color: #5B1744 !important;
         }
 
         .msg-fade {
@@ -76,9 +88,9 @@
 </head>
 
 <body class="bg-[#FAF6F0] text-[#241C21] antialiased">
-    <div class="h-screen flex flex-row overflow-hidden">
+    <div class="h-screen h-[100dvh] flex flex-row overflow-hidden">
         <!-- SIDEBAR -->
-        <aside id="sidebar" class="fixed md:sticky top-0 left-0 z-50 h-screen w-[260px] bg-[#5B1744] text-white flex flex-col -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0">
+        <aside id="sidebar" class="fixed md:sticky top-0 left-0 z-50 h-screen h-[100dvh] w-[260px] bg-[#5B1744] text-white flex flex-col -translate-x-full md:translate-x-0 transition-transform duration-300 ease-in-out shrink-0">
             <div class="p-6 pb-8">
                 <a href="/" class="flex items-center gap-3">
                     <div class="w-10 h-10 overflow-hidden">
@@ -93,10 +105,10 @@
 
             <div class="px-4 flex-1 overflow-y-auto space-y-6">
                 <div>
-                    <button type="button" onclick="startNewDraft()" class="flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 transition text-white">
+                    <button type="button" onclick="startNewDraft()" class="flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 transition text-white cursor-pointer">
                         <i class="fa-solid fa-plus w-4 text-center"></i> New chat
                     </button>
-                    <button type="button" onclick="showProjectCreateModal()" class="mt-2 flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 transition text-white">
+                    <button type="button" onclick="showProjectCreateModal()" class="mt-2 flex items-center gap-3 w-full px-3.5 py-2.5 rounded-xl text-xs font-semibold bg-white/10 hover:bg-white/20 transition text-white cursor-pointer">
                         <i class="fa-solid fa-folder-plus w-4 text-center"></i> New Project
                     </button>
                     <p class="px-3 mt-6 mb-2 text-[10px] uppercase tracking-[.2em] text-white/40 font-bold">Recent Sessions</p>
@@ -118,7 +130,7 @@
                 <form method="POST" action="{{ route('logout') }}" class="m-0">
                     @csrf
                     <button type="submit" title="Log out"
-                        class="text-white/50 hover:text-white transition p-1.5 rounded-lg hover:bg-white/10">
+                        class="text-white/50 hover:text-white transition p-1.5 rounded-lg hover:bg-white/10 cursor-pointer">
                         <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
                     </button>
                 </form>
@@ -127,16 +139,11 @@
     </aside>
 
     <!-- Overlay for Mobile Drawer -->
-    <div id="overlay" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 hidden md:hidden"></div>
-
-    <!-- Floating Burger Button (Mobile) -->
-    <button type="button" id="mobile-float-burger" onclick="document.getElementById('sidebar').classList.remove('-translate-x-full'); document.getElementById('overlay').classList.remove('hidden');" class="md:hidden w-11 h-11 rounded-full bg-[#5B1744] text-white items-center justify-center shadow-lg shadow-[#5B1744]/30 active:scale-95 transition">
-        <i class="fa-solid fa-bars text-sm"></i>
-    </button>
+    <div id="overlay" onclick="closeSidebar()" class="fixed inset-0 bg-black/40 backdrop-blur-xs z-40 hidden md:hidden"></div>
 
     <!-- Confirmation Modal -->
-    <div id="confirmModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
+    <div id="confirmModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-xs" onclick="hideConfirmModal()"></div>
         <div class="relative w-full max-w-sm bg-[#FAF6F0] rounded-3xl p-6 shadow-2xl">
             <h3 id="confirmModalTitle" class="text-lg font-bold text-gray-900 mb-2">Hapus Sesi?</h3>
             <p id="confirmModalBody" class="text-sm text-gray-600 mb-6">Apakah Anda yakin ingin menghapus sesi percakapan ini? Tindakan ini tidak dapat dibatalkan.</p>
@@ -148,13 +155,13 @@
     </div>
 
 
-        <!-- Project Name Modal -->
-    <div id="projectModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-        <div class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
+    <!-- Project Name Modal -->
+    <div id="projectModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+        <div class="absolute inset-0 bg-black/40 backdrop-blur-xs" onclick="hideProjectModal()"></div>
         <form id="project-form" class="relative w-full max-w-sm bg-[#FAF6F0] rounded-3xl p-6 shadow-2xl">
             <h3 id="projectModalTitle" class="text-lg font-bold text-gray-900 mb-1">Buat Proyek Baru</h3>
             <p class="text-sm text-gray-600 mb-4">Beri nama proyek untuk mengelompokkan sesi percakapan yang berbagi konteks.</p>
-            <input type="text" id="project-name-input" placeholder="Contoh: Belajar n8n" maxlength="100" autocomplete="off" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm outline-none focus:border-[#5B1744] focus:ring-2 focus:ring-[#5B1744]/20 mb-5">
+            <input type="text" id="project-name-input" placeholder="Contoh: Belajar Biologi" maxlength="100" autocomplete="off" class="w-full px-4 py-2.5 rounded-xl border border-gray-300 text-sm outline-none focus:border-[#5B1744] focus:ring-2 focus:ring-[#5B1744]/20 mb-5">
             <div class="flex gap-3">
                 <button type="button" onclick="hideProjectModal()" class="flex-1 py-2 rounded-xl bg-gray-100 hover:bg-gray-200 text-xs font-bold transition">Batal</button>
                 <button type="submit" id="projectSaveBtn" class="flex-1 py-2 rounded-xl bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-bold transition">Simpan</button>
@@ -163,72 +170,94 @@
     </div>
 
     <!-- MAIN -->
-        <main class="flex-1 flex flex-col h-screen overflow-hidden">
-            <header class="h-16 bg-[#FAF6F0]/80 backdrop-blur-md border-b border-[#5B1744]/5 sticky top-0 z-30 px-6 flex items-center justify-between shrink-0">
-                <div class="flex items-center gap-3">
-                    <button type="button" id="menuButton" class="md:hidden w-9 h-9 rounded-xl bg-white border border-gray-200 flex items-center justify-center text-gray-700 shadow-xs">
-                        <i class="fa-solid fa-bars text-sm"></i>
+    <main class="flex-1 flex flex-col h-screen h-[100dvh] overflow-hidden">
+        <header class="h-16 bg-[#FAF6F0]/90 backdrop-blur-md border-b border-[#5B1744]/10 sticky top-0 z-30 px-4 sm:px-6 flex items-center justify-between shrink-0">
+            <div class="flex items-center gap-3">
+                <button type="button" id="menuButton" onclick="openSidebar()" aria-label="Buka Menu Navigasi" 
+                    data-tour-step="1" data-tour-title="Menu & Proyek Belajar" data-tour-desc="Buka menu navigasi untuk membuat chat baru, melihat riwayat sesi, atau mengelompokkan materi dalam Proyek Belajar."
+                    class="md:hidden w-9 h-9 rounded-xl bg-[#5B1744] text-white flex items-center justify-center shadow-xs active:scale-95 transition cursor-pointer">
+                    <i class="fa-solid fa-bars text-sm"></i>
+                </button>
+                <div class="flex items-center gap-2">
+                    <span class="font-bold text-base text-[#5B1744] tracking-tight">AI Study</span>
+                    <span class="hidden sm:inline-block text-[10px] px-2 py-0.5 rounded-full bg-[#F4E7EF] text-[#5B1744] font-semibold border border-[#E7C8DB]">Asisten Belajar</span>
+                </div>
+            </div>
+
+            <div class="flex items-center gap-2 sm:gap-2.5">
+                {{-- Panduan Button with Idle Pulse --}}
+                <button type="button" onclick="startFeatureTour()" id="tour-guide-btn" title="Panduan Fitur AI Study"
+                    class="relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-white border border-gray-200 text-[#5B1744] hover:bg-[#F4E7EF] hover:border-[#E7C8DB] transition shadow-xs text-xs font-bold active:scale-95 cursor-pointer">
+                    <span id="tour-guide-ping" class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#5B1744] ring-2 ring-white animate-ping hidden"></span>
+                    <span id="tour-guide-dot" class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#5B1744] ring-2 ring-white hidden"></span>
+                    <i class="fa-regular fa-circle-question text-sm text-[#5B1744]"></i>
+                    <span>Panduan</span>
+                </button>
+
+                <a href="{{ route('dashboard') }}" title="Kembali ke Dashboard"
+                    class="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:text-[#5B1744] hover:border-[#5B1744]/30 transition shadow-xs">
+                    <i class="fa-solid fa-house text-xs"></i>
+                </a>
+
+                <form method="POST" action="{{ route('logout') }}" class="m-0">
+                    @csrf
+                    <button type="submit" title="Log out"
+                        class="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:text-[#B91C1C] hover:border-[#B91C1C]/30 transition shadow-xs cursor-pointer">
+                        <i class="fa-solid fa-arrow-right-from-bracket text-xs"></i>
                     </button>
-                    <span class="font-bold text-base text-[#5B1744]">AI Study</span>
-                </div>
+                </form>
+            </div>
+        </header>
 
-                <div class="flex items-center gap-3">
-                    <form method="POST" action="{{ route('logout') }}" class="m-0">
-                        @csrf
-                        <button type="submit" title="Log out"
-                            class="w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:text-[#B91C1C] hover:border-[#B91C1C]/30 transition shadow-xs">
-                            <i class="fa-solid fa-arrow-right-from-bracket text-sm"></i>
-                        </button>
-                    </form>
-                </div>
-            </header>
+        <div class="flex-1 flex flex-col relative min-h-0" id="main">
+            <div class="messages-wrap flex-1 overflow-y-auto min-h-0" id="messages-wrap">
+                <div class="messages max-w-3xl mx-auto p-4 sm:p-6 pb-36 sm:pb-44 md:pb-48" id="messages">
+                    <div class="text-center mt-8 sm:mt-12 max-w-lg mx-auto" id="welcome-state"
+                        data-tour-step="2" data-tour-title="Template Pertanyaan Instan" data-tour-desc="Klik template pertanyaan ini untuk langsung menanyakan tugas deadline, jadwal kelas, atau rencana belajar harian secara otomatis tanpa repot mengetik.">
+                        <div class="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3.5 rounded-3xl bg-[#F4E7EF] border border-[#E7C8DB] text-[#5B1744] flex items-center justify-center text-xl sm:text-2xl shadow-xs">
+                            <i class="fa-solid fa-wand-magic-sparkles"></i>
+                        </div>
+                        <h2 class="text-xl sm:text-3xl font-bold mb-1.5 text-gray-900 tracking-tight">Mau belajar apa hari ini?</h2>
+                        <p class="text-xs sm:text-sm text-gray-500 mb-5 sm:mb-6">Tanyakan apa saja seputar tugas, jadwal kelas, atau materi pelajaranmu.</p>
 
-            <div class="flex-1 flex flex-col relative min-h-0" id="main">
-                <div class="messages-wrap flex-1 overflow-y-auto min-h-0" id="messages-wrap">
-                    <div class="messages max-w-3xl mx-auto p-4 sm:p-6 pb-48 md:pb-52" id="messages">
-                        <div class="text-center mt-12 sm:mt-16 max-w-lg mx-auto" id="welcome-state">
-                            <div class="w-16 h-16 mx-auto mb-4 rounded-3xl bg-[#F4E7EF] border border-[#E7C8DB] text-[#5B1744] flex items-center justify-center text-2xl shadow-xs">
-                                <i class="fa-solid fa-wand-magic-sparkles"></i>
-                            </div>
-                            <h2 class="text-2xl sm:text-3xl font-bold mb-2 text-gray-900 tracking-tight">Mau belajar apa hari ini?</h2>
-                            <p class="text-sm text-gray-500 mb-6">Tanyakan apa saja seputar tugas, jadwal kelas, atau materi pelajaranmu.</p>
-
-                            <!-- Quick prompt pills -->
-                            <div class="flex flex-wrap items-center justify-center gap-2">
-                                <button type="button" onclick="setQuickPrompt('Ada tugas apa saja yang belum selesai dan kapan deadlinenya?')" 
-                                    class="px-3.5 py-2 rounded-2xl bg-white hover:bg-[#F4E7EF] border border-[#E7C8DB] text-xs font-semibold text-[#5B1744] transition shadow-2xs">
-                                    <i class="fa-regular fa-circle-check mr-1.5 text-[11px]"></i>Cek tugas & deadline
-                                </button>
-                                <button type="button" onclick="setQuickPrompt('Apa jadwal kelasku hari ini dan besok?')" 
-                                    class="px-3.5 py-2 rounded-2xl bg-white hover:bg-[#F4E7EF] border border-[#E7C8DB] text-xs font-semibold text-[#5B1744] transition shadow-2xs">
-                                    <i class="fa-solid fa-graduation-cap mr-1.5 text-[11px]"></i>Cek jadwal kelas
-                                </button>
-                                <button type="button" onclick="setQuickPrompt('Bantu buatkan jadwal belajar malam ini yang efektif')" 
-                                    class="px-3.5 py-2 rounded-2xl bg-white hover:bg-[#F4E7EF] border border-[#E7C8DB] text-xs font-semibold text-[#5B1744] transition shadow-2xs">
-                                    <i class="fa-regular fa-clock mr-1.5 text-[11px]"></i>Buat jadwal belajar
-                                </button>
-                            </div>
+                        <!-- Quick prompt pills -->
+                        <div class="flex flex-wrap items-center justify-center gap-2">
+                            <button type="button" onclick="setQuickPrompt('Ada tugas apa saja yang belum selesai dan kapan deadlinenya?')" 
+                                class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl bg-white hover:bg-[#F4E7EF] border border-[#E7C8DB] text-xs font-semibold text-[#5B1744] transition shadow-2xs cursor-pointer">
+                                <i class="fa-regular fa-circle-check mr-1.5 text-[11px]"></i>Cek tugas & deadline
+                            </button>
+                            <button type="button" onclick="setQuickPrompt('Apa jadwal kelasku hari ini dan besok?')" 
+                                class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl bg-white hover:bg-[#F4E7EF] border border-[#E7C8DB] text-xs font-semibold text-[#5B1744] transition shadow-2xs cursor-pointer">
+                                <i class="fa-solid fa-graduation-cap mr-1.5 text-[11px]"></i>Cek jadwal kelas
+                            </button>
+                            <button type="button" onclick="setQuickPrompt('Bantu buatkan jadwal belajar malam ini yang efektif')" 
+                                class="px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-2xl bg-white hover:bg-[#F4E7EF] border border-[#E7C8DB] text-xs font-semibold text-[#5B1744] transition shadow-2xs cursor-pointer">
+                                <i class="fa-regular fa-clock mr-1.5 text-[11px]"></i>Buat jadwal belajar
+                            </button>
                         </div>
                     </div>
                 </div>
-
-                {{-- Floating Input Bar (Elevated with larger comfortable touch targets) --}}
-                <div class="absolute bottom-8 sm:bottom-12 md:bottom-14 inset-x-0 z-20 px-4 sm:px-6 pointer-events-none">
-                    <form id="chat-form" onsubmit="handleChatInput(event)" class="max-w-3xl mx-auto pointer-events-auto">
-                        <div id="editing-indicator" class="hidden mb-2 flex items-center justify-between bg-white text-[#5B1744] text-xs font-semibold px-4 py-2.5 rounded-2xl shadow-lg border border-[#E7C8DB]">
-                            <span><i class="fa-solid fa-pen mr-2"></i>Mengedit pesan</span>
-                            <button type="button" onclick="stopEditing()" class="hover:underline text-gray-500">Batal edit</button>
-                        </div>
-                        <div id="input-shell" class="flex items-end sm:items-center gap-3 bg-white p-2.5 sm:p-3 pl-4 sm:pl-5 rounded-3xl border-2 border-[#E7C8DB] shadow-2xl shadow-[#5B1744]/12 focus-within:border-[#5B1744] focus-within:ring-2 focus-within:ring-[#5B1744]/15 transition-all">
-                            <textarea id="chat-input" rows="1" placeholder="Tanyakan tugas, jadwal kelas, atau materi belajar..." oninput="autoResize(this);toggleSend()" class="flex-1 bg-transparent border-none focus:ring-0 py-1.5 px-1 resize-none outline-none text-sm sm:text-base leading-relaxed text-gray-800 placeholder:text-gray-400 max-h-48 [overflow-wrap:anywhere]"></textarea>
-                            <button type="submit" class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#5B1744] hover:bg-[#481236] text-white flex items-center justify-center disabled:opacity-40 transition active:scale-95 shadow-md shadow-[#5B1744]/25 shrink-0" id="btn-send" disabled title="Kirim Pesan">
-                                <i class="fa-solid fa-paper-plane text-sm sm:text-base"></i>
-                            </button>
-                        </div>
-                    </form>
-                </div>
             </div>
-        </main>
+
+            {{-- Floating Input Bar (Responsive bottom margin & shadow) --}}
+            <div class="absolute bottom-3 sm:bottom-6 md:bottom-8 inset-x-0 z-20 px-3 sm:px-6 pointer-events-none">
+                <form id="chat-form" onsubmit="handleChatInput(event)" class="max-w-3xl mx-auto pointer-events-auto">
+                    <div id="editing-indicator" class="hidden mb-2 flex items-center justify-between bg-white text-[#5B1744] text-xs font-semibold px-4 py-2.5 rounded-2xl shadow-lg border border-[#E7C8DB]">
+                        <span><i class="fa-solid fa-pen mr-2"></i>Mengedit pesan</span>
+                        <button type="button" onclick="stopEditing()" class="hover:underline text-gray-500 cursor-pointer">Batal edit</button>
+                    </div>
+                    <div id="input-shell" 
+                        data-tour-step="3" data-tour-title="Tanya AI Seputar Belajar" data-tour-desc="Ketik pertanyaan atau materi sulitmu di sini. AI Study terhubung langsung ke jadwal kelas, tugas sekolah, dan catatan pribadimu!"
+                        class="flex items-end sm:items-center gap-2.5 sm:gap-3 bg-white p-2 sm:p-2.5 pl-3.5 sm:pl-4 rounded-3xl border-2 border-[#E7C8DB] shadow-xl shadow-[#5B1744]/10 focus-within:border-[#5B1744] focus-within:ring-2 focus-within:ring-[#5B1744]/15 transition-all">
+                        <textarea id="chat-input" rows="1" placeholder="Tanyakan tugas, jadwal kelas, atau materi belajar..." oninput="autoResize(this);toggleSend()" class="flex-1 bg-transparent border-none focus:ring-0 py-1.5 px-1 resize-none outline-none text-xs sm:text-sm md:text-base leading-relaxed text-gray-800 placeholder:text-gray-400 max-h-40 [overflow-wrap:anywhere]"></textarea>
+                        <button type="submit" class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#5B1744] hover:bg-[#481236] text-white flex items-center justify-center disabled:opacity-40 transition active:scale-95 shadow-md shadow-[#5B1744]/25 shrink-0 cursor-pointer" id="btn-send" disabled title="Kirim Pesan">
+                            <i class="fa-solid fa-paper-plane text-xs sm:text-sm"></i>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
     </div>
 
     <script>
@@ -238,10 +267,12 @@
         const sidebar = document.getElementById('sidebar');
         const overlay = document.getElementById('overlay');
 
-        document.getElementById('menuButton')?.addEventListener('click', () => {
-            sidebar.classList.remove('-translate-x-full');
-            overlay.classList.remove('hidden');
-        });
+        function openSidebar() {
+            sidebar?.classList.remove('-translate-x-full');
+            overlay?.classList.remove('hidden');
+        }
+
+        document.getElementById('menuButton')?.addEventListener('click', openSidebar);
 
         function closeSidebar() {
             sidebar.classList.add('-translate-x-full');
@@ -838,6 +869,300 @@
         if (currentSessionId) {
             selectSession(currentSessionId);
         }
+
+        // ==========================================
+        // INTERACTIVE SPOTLIGHT FEATURE TOUR & IDLE PULSE
+        // ==========================================
+        let tourSteps = [];
+        let currentTourIndex = 0;
+        let tourRafId = null;
+
+        // Continuously track element position during smooth scroll and layout changes
+        function syncTourPositionContinuously(durationMs = 650) {
+            if (tourRafId) cancelAnimationFrame(tourRafId);
+            const startTime = performance.now();
+            function loop(currentTime) {
+                const container = document.getElementById('tour-overlay-container');
+                if (!container || container.classList.contains('hidden') || !tourSteps[currentTourIndex]) {
+                    return;
+                }
+                positionTourSpotlight(tourSteps[currentTourIndex]);
+                if (currentTime - startTime < durationMs) {
+                    tourRafId = requestAnimationFrame(loop);
+                }
+            }
+            tourRafId = requestAnimationFrame(loop);
+        }
+
+        function startFeatureTour() {
+            resetIdleTimer();
+            tourSteps = Array.from(document.querySelectorAll('[data-tour-step]'))
+                .filter(el => {
+                    const style = window.getComputedStyle(el);
+                    return style.display !== 'none' && style.visibility !== 'hidden' && (el.offsetWidth > 0 || el.offsetHeight > 0);
+                })
+                .sort((a, b) => parseInt(a.getAttribute('data-tour-step')) - parseInt(b.getAttribute('data-tour-step')));
+
+            if (tourSteps.length === 0) {
+                return;
+            }
+
+            currentTourIndex = 0;
+            const container = document.getElementById('tour-overlay-container');
+            if (container) {
+                container.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
+            }
+            renderTourStep();
+        }
+
+        function positionTourSpotlight(el) {
+            if (!el) return;
+            const rect = el.getBoundingClientRect();
+            const spotlight = document.getElementById('tour-spotlight-box');
+            const card = document.getElementById('tour-card');
+            if (!spotlight || !card) return;
+
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+
+            // 1. Spotlight Box Calculation (clamp within viewport with padding)
+            const pad = 8;
+            const spotTop = Math.max(0, rect.top - pad);
+            const spotLeft = Math.max(0, rect.left - pad);
+            const spotWidth = Math.min(vw - spotLeft, rect.width + pad * 2);
+            const spotHeight = Math.min(vh - spotTop, rect.height + pad * 2);
+
+            spotlight.style.top = `${spotTop}px`;
+            spotlight.style.left = `${spotLeft}px`;
+            spotlight.style.width = `${Math.max(20, spotWidth)}px`;
+            spotlight.style.height = `${Math.max(20, spotHeight)}px`;
+
+            // 2. Card Dimensions
+            const cardWidth = Math.min(350, vw * 0.92);
+            const cardHeight = card.offsetHeight || 210;
+
+            // 3. Vertical Positioning: avoid overlapping target element
+            const spaceBelow = vh - rect.bottom;
+            const spaceAbove = rect.top;
+
+            let cardTop;
+            const isMobile = vw < 640;
+
+            if (isMobile) {
+                const elCenterY = rect.top + (rect.height / 2);
+                if (elCenterY > vh / 2) {
+                    cardTop = Math.max(12, Math.min(rect.top - cardHeight - 12, 16));
+                } else {
+                    cardTop = Math.min(vh - cardHeight - 16, Math.max(rect.bottom + 12, vh - cardHeight - 20));
+                }
+            } else {
+                if (spaceBelow >= cardHeight + 16) {
+                    cardTop = rect.bottom + 14;
+                } else if (spaceAbove >= cardHeight + 16) {
+                    cardTop = rect.top - cardHeight - 14;
+                } else {
+                    if (spaceBelow >= spaceAbove) {
+                        cardTop = Math.min(vh - cardHeight - 12, rect.bottom + 12);
+                    } else {
+                        cardTop = Math.max(12, rect.top - cardHeight - 12);
+                    }
+                }
+            }
+
+            // 4. Horizontal Positioning
+            let cardLeft = rect.left + (rect.width / 2) - (cardWidth / 2);
+            cardLeft = Math.max(12, Math.min(vw - cardWidth - 12, cardLeft));
+
+            card.style.top = `${Math.round(cardTop)}px`;
+            card.style.left = `${Math.round(cardLeft)}px`;
+            card.style.width = `${Math.round(cardWidth)}px`;
+        }
+
+        function renderTourStep() {
+            if (currentTourIndex < 0 || currentTourIndex >= tourSteps.length) return;
+            const el = tourSteps[currentTourIndex];
+            const title = el.getAttribute('data-tour-title') || 'Panduan Fitur';
+            const desc = el.getAttribute('data-tour-desc') || '';
+            const total = tourSteps.length;
+
+            const rect = el.getBoundingClientRect();
+            const needsScroll = (rect.top < 60 || rect.bottom > window.innerHeight - 60);
+            if (needsScroll) {
+                el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
+            }
+
+            const counterEl = document.getElementById('tour-step-counter');
+            if (counterEl) counterEl.textContent = `PANDUAN ${currentTourIndex + 1}/${total}`;
+            const titleEl = document.getElementById('tour-title');
+            if (titleEl) titleEl.textContent = title;
+            const descEl = document.getElementById('tour-desc');
+            if (descEl) descEl.textContent = desc;
+
+            const dotsBox = document.getElementById('tour-dots');
+            if (dotsBox) {
+                dotsBox.innerHTML = '';
+                for (let i = 0; i < total; i++) {
+                    const dot = document.createElement('span');
+                    dot.className = i === currentTourIndex 
+                        ? 'w-2 h-2 rounded-full bg-[#E7C8DB] transition-all duration-300' 
+                        : 'w-1.5 h-1.5 rounded-full bg-white/25 transition-all';
+                    dotsBox.appendChild(dot);
+                }
+            }
+
+            const prevBtn = document.getElementById('tour-prev-btn');
+            if (prevBtn) prevBtn.disabled = (currentTourIndex === 0);
+
+            const nextBtnText = document.getElementById('tour-next-btn-text');
+            const nextBtnIcon = document.getElementById('tour-next-btn-icon');
+            if (currentTourIndex === total - 1) {
+                if (nextBtnText) nextBtnText.textContent = 'Selesai';
+                if (nextBtnIcon) nextBtnIcon.className = 'fa-solid fa-check text-[10px]';
+            } else {
+                if (nextBtnText) nextBtnText.textContent = 'Berikutnya';
+                if (nextBtnIcon) nextBtnIcon.className = 'fa-solid fa-arrow-right text-[10px]';
+            }
+
+            positionTourSpotlight(el);
+            syncTourPositionContinuously(650);
+        }
+
+        function nextFeatureTourStep() {
+            if (currentTourIndex < tourSteps.length - 1) {
+                currentTourIndex++;
+                renderTourStep();
+            } else {
+                endFeatureTour();
+            }
+        }
+
+        function prevFeatureTourStep() {
+            if (currentTourIndex > 0) {
+                currentTourIndex--;
+                renderTourStep();
+            }
+        }
+
+        function endFeatureTour() {
+            const container = document.getElementById('tour-overlay-container');
+            if (container) container.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            if (tourRafId) cancelAnimationFrame(tourRafId);
+            resetIdleTimer();
+        }
+
+        function handleTourBackdropClick(e) {
+            if (e.target.id === 'tour-overlay-container') {
+                endFeatureTour();
+            }
+        }
+
+        window.addEventListener('resize', () => {
+            const container = document.getElementById('tour-overlay-container');
+            if (container && !container.classList.contains('hidden') && tourSteps[currentTourIndex]) {
+                positionTourSpotlight(tourSteps[currentTourIndex]);
+            }
+        });
+
+        window.addEventListener('scroll', () => {
+            const container = document.getElementById('tour-overlay-container');
+            if (container && !container.classList.contains('hidden') && tourSteps[currentTourIndex]) {
+                positionTourSpotlight(tourSteps[currentTourIndex]);
+            }
+        }, { passive: true });
+
+        document.addEventListener('keydown', (e) => {
+            const container = document.getElementById('tour-overlay-container');
+            if (container && !container.classList.contains('hidden')) {
+                if (e.key === 'Escape') endFeatureTour();
+                if (e.key === 'ArrowRight') nextFeatureTourStep();
+                if (e.key === 'ArrowLeft') prevFeatureTourStep();
+            }
+        });
+
+        // 10-Second Inactivity Detector: Panduan button glows/pulses when user is idle
+        let idleGuideTimer = null;
+        const IDLE_GUIDE_DELAY_MS = 10000; // 10 detik
+
+        function resetIdleTimer() {
+            const guideBtn = document.getElementById('tour-guide-btn');
+            const pingEl = document.getElementById('tour-guide-ping');
+            const dotEl = document.getElementById('tour-guide-dot');
+
+            if (guideBtn && guideBtn.classList.contains('tour-guide-glowing')) {
+                guideBtn.classList.remove('tour-guide-glowing');
+                if (pingEl) pingEl.classList.add('hidden');
+                if (dotEl) dotEl.classList.add('hidden');
+            }
+
+            if (idleGuideTimer) clearTimeout(idleGuideTimer);
+
+            const container = document.getElementById('tour-overlay-container');
+            if (container && !container.classList.contains('hidden')) {
+                return;
+            }
+
+            idleGuideTimer = setTimeout(() => {
+                const btn = document.getElementById('tour-guide-btn');
+                const ping = document.getElementById('tour-guide-ping');
+                const dot = document.getElementById('tour-guide-dot');
+                if (btn) {
+                    btn.classList.add('tour-guide-glowing');
+                    if (ping) ping.classList.remove('hidden');
+                    if (dot) dot.classList.remove('hidden');
+                }
+            }, IDLE_GUIDE_DELAY_MS);
+        }
+
+        ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
+            window.addEventListener(evt, resetIdleTimer, { passive: true });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            resetIdleTimer();
+        });
     </script>
+
+    {{-- FEATURE TOUR SPOTLIGHT & MODAL CARD --}}
+    <div id="tour-overlay-container" class="fixed inset-0 z-[9990] hidden select-none" onclick="handleTourBackdropClick(event)">
+        {{-- Spotlight Frame with Cutout Box Shadow --}}
+        <div id="tour-spotlight-box" class="fixed pointer-events-none transition-all duration-300 ease-out z-[9992] rounded-2xl"
+            style="box-shadow: 0 0 0 9999px rgba(35, 8, 26, 0.82); border: 2.5px solid #E7C8DB;"></div>
+
+        {{-- Guide Card Modal in Brand Color Palette --}}
+        <div id="tour-card" onclick="event.stopPropagation()" class="fixed z-[9999] w-[350px] max-w-[92vw] bg-[#481236] text-white rounded-3xl p-5 sm:p-6 shadow-2xl transition-all duration-300 ease-out border border-[#E7C8DB]/40">
+            <div class="flex items-center gap-2.5 mb-2.5">
+                <div class="w-8 h-8 rounded-xl bg-white/10 text-[#E7C8DB] flex items-center justify-center text-sm shadow-xs border border-white/15">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <div>
+                    <span id="tour-badge" class="text-[10px] uppercase tracking-wider text-[#E7C8DB] font-extrabold flex items-center gap-1.5">
+                        <span class="w-2.5 h-0.5 bg-[#E7C8DB] rounded-full inline-block"></span>
+                        <span id="tour-step-counter">PANDUAN 1/3</span>
+                    </span>
+                </div>
+            </div>
+
+            <h4 id="tour-title" class="text-base sm:text-lg font-bold text-white mb-2 leading-snug">Judul Panduan</h4>
+            <p id="tour-desc" class="text-xs sm:text-sm text-white/80 leading-relaxed mb-5 font-normal">Penjelasan fitur yang ringkas dan jelas.</p>
+
+            <div class="flex items-center justify-between pt-3 border-t border-white/15">
+                <div id="tour-dots" class="flex items-center gap-1.5"></div>
+                <div class="flex items-center gap-2">
+                    <button type="button" onclick="endFeatureTour()" class="text-xs font-semibold text-white/60 hover:text-white px-2 py-1.5 transition cursor-pointer">
+                        Lewati
+                    </button>
+                    <button type="button" onclick="prevFeatureTourStep()" id="tour-prev-btn" class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white flex items-center justify-center text-xs transition border border-white/15 disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer">
+                        <i class="fa-solid fa-arrow-left"></i>
+                    </button>
+                    <button type="button" onclick="nextFeatureTourStep()" id="tour-next-btn" class="px-4 py-2 rounded-xl bg-[#E7C8DB] hover:bg-[#F4E7EF] text-[#5B1744] text-xs font-bold transition flex items-center gap-1.5 shadow-md shadow-black/20 active:scale-95 cursor-pointer">
+                        <span id="tour-next-btn-text">Berikutnya</span>
+                        <i id="tour-next-btn-icon" class="fa-solid fa-arrow-right text-[10px]"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>

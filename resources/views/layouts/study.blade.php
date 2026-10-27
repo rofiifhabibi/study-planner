@@ -84,6 +84,31 @@
                 transform: translateY(0);
             }
         }
+
+        @keyframes tourGuideGlow {
+            0% {
+                box-shadow: 0 0 0 0 rgba(163, 56, 120, 0.75), 0 2px 4px rgba(0, 0, 0, 0.08);
+                border-color: #5B1744;
+                transform: scale(1);
+            }
+            50% {
+                box-shadow: 0 0 0 10px rgba(163, 56, 120, 0), 0 4px 14px rgba(91, 23, 68, 0.3);
+                border-color: #A33878;
+                transform: scale(1.05);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(163, 56, 120, 0), 0 2px 4px rgba(0, 0, 0, 0.08);
+                border-color: #5B1744;
+                transform: scale(1);
+            }
+        }
+
+        .tour-guide-glowing {
+            animation: tourGuideGlow 1.6s infinite ease-in-out !important;
+            background-color: #F4E7EF !important;
+            color: #5B1744 !important;
+            border-color: #5B1744 !important;
+        }
     </style>
 
     @yield('styles')
@@ -261,10 +286,12 @@
                             <span id="global-pomo-mode" class="text-[10px] uppercase font-bold text-[#5B1744]/75">Fokus</span>
                         </a>
 
-                        <button type="button" onclick="startFeatureTour()" title="Panduan Fitur Halaman Ini" 
-                            class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-[#5B1744] hover:bg-[#F4E7EF] hover:border-[#E7C8DB] transition shadow-xs text-xs font-bold active:scale-95">
+                        <button type="button" onclick="startFeatureTour()" id="tour-guide-btn" title="Panduan Fitur Halaman Ini" 
+                            class="relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-white border border-gray-200 text-[#5B1744] hover:bg-[#F4E7EF] hover:border-[#E7C8DB] transition shadow-xs text-xs font-bold active:scale-95 cursor-pointer">
+                            <span id="tour-guide-ping" class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#5B1744] ring-2 ring-white animate-ping hidden"></span>
+                            <span id="tour-guide-dot" class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#5B1744] ring-2 ring-white hidden"></span>
                             <i class="fa-regular fa-circle-question text-sm text-[#5B1744]"></i>
-                            <span class="hidden sm:inline">Panduan</span>
+                            <span>Panduan</span>
                         </button>
 
                         <button type="button" class="relative w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:border-[#5B1744]/30 transition shadow-xs">
@@ -333,7 +360,7 @@
     </div>
 
     {{-- PROFILE MODAL --}}
-    <div id="profileModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    <div id="profileModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
         <div onclick="closeProfileModal()" class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
 
         <div class="relative w-full max-w-md bg-[#FAF6F0] rounded-3xl p-6 sm:p-7 shadow-2xl fade-up max-h-[92vh] overflow-y-auto">
@@ -593,12 +620,31 @@
         updateGlobalPomoPill();
 
         // ==========================================
-        // INTERACTIVE SPOTLIGHT FEATURE TOUR
+        // INTERACTIVE SPOTLIGHT FEATURE TOUR & IDLE PULSE
         // ==========================================
         let tourSteps = [];
         let currentTourIndex = 0;
+        let tourRafId = null;
+
+        // Continuously track element position during smooth scroll and layout changes
+        function syncTourPositionContinuously(durationMs = 650) {
+            if (tourRafId) cancelAnimationFrame(tourRafId);
+            const startTime = performance.now();
+            function loop(currentTime) {
+                const container = document.getElementById('tour-overlay-container');
+                if (!container || container.classList.contains('hidden') || !tourSteps[currentTourIndex]) {
+                    return;
+                }
+                positionTourSpotlight(tourSteps[currentTourIndex]);
+                if (currentTime - startTime < durationMs) {
+                    tourRafId = requestAnimationFrame(loop);
+                }
+            }
+            tourRafId = requestAnimationFrame(loop);
+        }
 
         function startFeatureTour() {
+            resetIdleTimer();
             tourSteps = Array.from(document.querySelectorAll('[data-tour-step]'))
                 .filter(el => {
                     const style = window.getComputedStyle(el);
@@ -615,45 +661,72 @@
             const container = document.getElementById('tour-overlay-container');
             if (container) {
                 container.classList.remove('hidden');
+                document.body.classList.add('overflow-hidden');
             }
             renderTourStep();
         }
 
         function positionTourSpotlight(el) {
+            if (!el) return;
             const rect = el.getBoundingClientRect();
             const spotlight = document.getElementById('tour-spotlight-box');
             const card = document.getElementById('tour-card');
             if (!spotlight || !card) return;
 
-            const pad = 10;
-            const top = Math.max(0, rect.top - pad);
-            const left = Math.max(0, rect.left - pad);
-            const width = Math.max(20, rect.width + pad * 2);
-            const height = Math.max(20, rect.height + pad * 2);
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
 
-            spotlight.style.top = top + 'px';
-            spotlight.style.left = left + 'px';
-            spotlight.style.width = width + 'px';
-            spotlight.style.height = height + 'px';
+            // 1. Spotlight Box Calculation (clamp within viewport with padding)
+            const pad = 8;
+            const spotTop = Math.max(0, rect.top - pad);
+            const spotLeft = Math.max(0, rect.left - pad);
+            const spotWidth = Math.min(vw - spotLeft, rect.width + pad * 2);
+            const spotHeight = Math.min(vh - spotTop, rect.height + pad * 2);
 
-            const cardWidth = Math.min(360, window.innerWidth * 0.92);
-            const cardHeight = card.offsetHeight || 220;
+            spotlight.style.top = `${spotTop}px`;
+            spotlight.style.left = `${spotLeft}px`;
+            spotlight.style.width = `${Math.max(20, spotWidth)}px`;
+            spotlight.style.height = `${Math.max(20, spotHeight)}px`;
 
-            let cardTop = rect.bottom + 18;
+            // 2. Card Dimensions
+            const cardWidth = Math.min(350, vw * 0.92);
+            const cardHeight = card.offsetHeight || 210;
+
+            // 3. Vertical Positioning: avoid overlapping target element
+            const spaceBelow = vh - rect.bottom;
+            const spaceAbove = rect.top;
+
+            let cardTop;
+            const isMobile = vw < 640;
+
+            if (isMobile) {
+                const elCenterY = rect.top + (rect.height / 2);
+                if (elCenterY > vh / 2) {
+                    cardTop = Math.max(12, Math.min(rect.top - cardHeight - 12, 16));
+                } else {
+                    cardTop = Math.min(vh - cardHeight - 16, Math.max(rect.bottom + 12, vh - cardHeight - 20));
+                }
+            } else {
+                if (spaceBelow >= cardHeight + 16) {
+                    cardTop = rect.bottom + 14;
+                } else if (spaceAbove >= cardHeight + 16) {
+                    cardTop = rect.top - cardHeight - 14;
+                } else {
+                    if (spaceBelow >= spaceAbove) {
+                        cardTop = Math.min(vh - cardHeight - 12, rect.bottom + 12);
+                    } else {
+                        cardTop = Math.max(12, rect.top - cardHeight - 12);
+                    }
+                }
+            }
+
+            // 4. Horizontal Positioning
             let cardLeft = rect.left + (rect.width / 2) - (cardWidth / 2);
+            cardLeft = Math.max(12, Math.min(vw - cardWidth - 12, cardLeft));
 
-            if (cardTop + cardHeight > window.innerHeight - 20) {
-                cardTop = rect.top - cardHeight - 18;
-            }
-
-            if (cardTop < 20 || cardTop + cardHeight > window.innerHeight - 10) {
-                cardTop = Math.max(20, Math.min(window.innerHeight - cardHeight - 20, (window.innerHeight - cardHeight) / 2));
-            }
-
-            cardLeft = Math.max(16, Math.min(window.innerWidth - cardWidth - 16, cardLeft));
-
-            card.style.top = cardTop + 'px';
-            card.style.left = cardLeft + 'px';
+            card.style.top = `${Math.round(cardTop)}px`;
+            card.style.left = `${Math.round(cardLeft)}px`;
+            card.style.width = `${Math.round(cardWidth)}px`;
         }
 
         function renderTourStep() {
@@ -664,7 +737,7 @@
             const total = tourSteps.length;
 
             const rect = el.getBoundingClientRect();
-            const needsScroll = (rect.top < 70 || rect.bottom > window.innerHeight - 70);
+            const needsScroll = (rect.top < 60 || rect.bottom > window.innerHeight - 60);
             if (needsScroll) {
                 el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'nearest' });
             }
@@ -701,15 +774,8 @@
                 if (nextBtnIcon) nextBtnIcon.className = 'fa-solid fa-arrow-right text-[10px]';
             }
 
-            // Immediately position spotlight and card
             positionTourSpotlight(el);
-
-            // If scrolling occurred, refine position once scroll settles
-            if (needsScroll) {
-                setTimeout(() => {
-                    positionTourSpotlight(el);
-                }, 260);
-            }
+            syncTourPositionContinuously(650);
         }
 
         function nextFeatureTourStep() {
@@ -731,6 +797,9 @@
         function endFeatureTour() {
             const container = document.getElementById('tour-overlay-container');
             if (container) container.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            if (tourRafId) cancelAnimationFrame(tourRafId);
+            resetIdleTimer();
         }
 
         function handleTourBackdropClick(e) {
@@ -746,6 +815,13 @@
             }
         });
 
+        window.addEventListener('scroll', () => {
+            const container = document.getElementById('tour-overlay-container');
+            if (container && !container.classList.contains('hidden') && tourSteps[currentTourIndex]) {
+                positionTourSpotlight(tourSteps[currentTourIndex]);
+            }
+        }, { passive: true });
+
         document.addEventListener('keydown', (e) => {
             const container = document.getElementById('tour-overlay-container');
             if (container && !container.classList.contains('hidden')) {
@@ -755,8 +831,53 @@
             }
         });
 
+        // 10-Second Inactivity Detector: Panduan button glows/pulses when user is idle
+        let idleGuideTimer = null;
+        const IDLE_GUIDE_DELAY_MS = 10000; // 10 detik
+
+        function resetIdleTimer() {
+            const guideBtn = document.getElementById('tour-guide-btn');
+            const pingEl = document.getElementById('tour-guide-ping');
+            const dotEl = document.getElementById('tour-guide-dot');
+
+            if (guideBtn && guideBtn.classList.contains('tour-guide-glowing')) {
+                guideBtn.classList.remove('tour-guide-glowing');
+                if (pingEl) pingEl.classList.add('hidden');
+                if (dotEl) dotEl.classList.add('hidden');
+            }
+
+            if (idleGuideTimer) clearTimeout(idleGuideTimer);
+
+            const container = document.getElementById('tour-overlay-container');
+            if (container && !container.classList.contains('hidden')) {
+                return;
+            }
+
+            idleGuideTimer = setTimeout(() => {
+                const btn = document.getElementById('tour-guide-btn');
+                const ping = document.getElementById('tour-guide-ping');
+                const dot = document.getElementById('tour-guide-dot');
+                if (btn) {
+                    btn.classList.add('tour-guide-glowing');
+                    if (ping) ping.classList.remove('hidden');
+                    if (dot) dot.classList.remove('hidden');
+                }
+            }, IDLE_GUIDE_DELAY_MS);
+        }
+
+        ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'].forEach(evt => {
+            window.addEventListener(evt, resetIdleTimer, { passive: true });
+        });
+
+        document.addEventListener('DOMContentLoaded', () => {
+            resetIdleTimer();
+        });
+
         @stack('scripts')
     </script>
+
+    {{-- Global Modals Portal (Renders at body root to avoid stacking context & header clipping) --}}
+    @stack('modals')
 
 </body>
 

@@ -98,11 +98,14 @@
         </div>
     </section>
 
-    {{-- ADD TASK MODAL (Friendly Cartoonish Redesign) --}}
-    <div id="taskModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-        <div onclick="closeTaskModal()" class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
+@endsection
 
-        <div class="relative w-full max-w-lg bg-[#FAF6F0] rounded-[2rem] p-6 sm:p-7 shadow-[0_0_50px_rgba(0,0,0,0.35),0_15px_35px_rgba(91,23,68,0.2)] border-2 border-[#E7C8DB] fade-up max-h-[92vh] overflow-y-auto">
+@push('modals')
+    {{-- ADD TASK MODAL (Friendly Cartoonish Redesign) --}}
+    <div id="taskModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+        <div onclick="closeTaskModal()" class="absolute inset-0 bg-black/50 backdrop-blur-xs"></div>
+
+        <div class="relative w-full max-w-lg bg-[#FAF6F0] rounded-[2rem] p-6 sm:p-7 shadow-[0_0_60px_rgba(0,0,0,0.4),0_20px_40px_rgba(91,23,68,0.25)] border-2 border-[#E7C8DB] max-h-[90vh] overflow-y-auto my-auto">
             
             {{-- Modal Header --}}
             <div class="flex items-center justify-between pb-4 border-b border-[#E7C8DB]/60 mb-5">
@@ -250,10 +253,10 @@
     </div>
 
     {{-- DELETE TASK CONFIRM MODAL --}}
-    <div id="deleteTaskModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
-        <div onclick="closeDeleteTaskModal()" class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
+    <div id="deleteTaskModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+        <div onclick="closeDeleteTaskModal()" class="absolute inset-0 bg-black/50 backdrop-blur-xs"></div>
 
-        <div class="relative w-full max-w-sm bg-[#FAF6F0] rounded-3xl p-6 sm:p-7 shadow-[0_0_50px_rgba(0,0,0,0.35),0_15px_35px_rgba(91,23,68,0.2)] fade-up">
+        <div class="relative w-full max-w-sm bg-[#FAF6F0] rounded-3xl p-6 sm:p-7 shadow-[0_0_60px_rgba(0,0,0,0.4),0_20px_40px_rgba(91,23,68,0.25)] border-2 border-[#E7C8DB] my-auto">
             <div class="flex justify-between items-start mb-4">
                 <div>
                     <p class="text-[9px] uppercase tracking-[.2em] text-[#B91C1C] font-bold">DELETE TASK</p>
@@ -280,8 +283,6 @@
             </div>
         </div>
     </div>
-
-@endsection
 
 @push('scripts')
 

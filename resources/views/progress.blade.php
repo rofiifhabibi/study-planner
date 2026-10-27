@@ -85,14 +85,14 @@
 
         {{-- Integrated Pomodoro & Step-by-Step Study Session Card --}}
         <div class="md:col-span-7 bg-white rounded-3xl border-2 border-[#E7C8DB] p-6 sm:p-8 soft-shadow flex flex-col justify-between relative overflow-hidden"
-            data-tour-step="2" data-tour-title="Fokus Pomodoro & Hitung Mundur" data-tour-desc="Pilih tugas spesifik, waktu akan otomatis disinkronkan, lalu klik tombol play segitiga untuk hitung mundur.">
+            data-tour-step="2" data-tour-title="Fokus & Hitung Mundur" data-tour-desc="Pilih tugas spesifik, waktu akan otomatis disinkronkan, lalu klik tombol play segitiga untuk hitung mundur.">
             
             <div>
                 {{-- Card Header --}}
                 <div class="flex items-center justify-between mb-5 pb-3.5 border-b border-[#F4E7EF]">
                     <div>
                         <p class="text-[9px] uppercase tracking-[.2em] text-[#5B1744] font-bold">FOCUS TIMER</p>
-                        <h2 class="text-base sm:text-lg font-bold text-gray-900 mt-0.5">Fokus Pomodoro & Langkah Belajar</h2>
+                        <h2 class="text-base sm:text-lg font-bold text-gray-900 mt-0.5">Fokus & Langkah Belajar</h2>
                     </div>
                     <div class="flex items-center gap-1.5 text-xs text-gray-400">
                         <i class="fa-regular fa-clock text-[#5B1744]"></i>
@@ -182,16 +182,20 @@
                 </div>
             </div>
 
-            {{-- Interactive Step-by-Step Task Checklist (Hanya tampil saat tugas dipilih) --}}
-            <div id="active-checklist-container" class="mt-6 pt-5 border-t border-[#F4E7EF] hidden">
-                <div class="flex items-center justify-between mb-3">
+            {{-- Interactive Step-by-Step Task Checklist --}}
+            <div id="active-checklist-container" class="mt-6 pt-5 border-t border-[#F4E7EF]"
+                data-tour-step="3" data-tour-title="Langkah Belajar Step-by-Step" data-tour-desc="Pecah tugas belajarmu menjadi langkah-langkah kecil. Setiap kali satu langkah dicentang, progres belajarmu otomatis tersimpan dan terhitung ke statistik harian!">
+                <div class="flex items-start sm:items-center justify-between gap-3 mb-3">
                     <div>
-                        <p class="text-[10px] uppercase tracking-wider text-[#5B1744] font-bold flex items-center gap-1.5">
-                            <i class="fa-solid fa-list-check"></i>
-                            <span>LANGKAH BELAJAR STEP-BY-STEP</span>
-                        </p>
-                        <p id="active-task-subtitle" class="text-xs text-gray-500 mt-0.5 font-medium">
-                            Pilih tugas untuk membuka checklist langkah belajar step-by-step.
+                        <div class="flex items-center gap-2 flex-wrap">
+                            <p class="text-[10px] uppercase tracking-wider text-[#5B1744] font-bold flex items-center gap-1.5">
+                                <i class="fa-solid fa-list-check"></i>
+                                <span>LANGKAH BELAJAR STEP-BY-STEP</span>
+                            </p>
+                            <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-[#F4E7EF] text-[#5B1744] font-bold border border-[#E7C8DB]">Fokus Terarah</span>
+                        </div>
+                        <p id="active-task-subtitle" class="text-xs text-gray-500 mt-1 font-medium">
+                            Pecah tugas besar menjadi bagian-bagian kecil agar belajar terasa ringan dan terarah.
                         </p>
                     </div>
                 </div>
@@ -396,10 +400,13 @@
         <span id="gh-tooltip-text"></span>
         <div class="absolute left-1/2 -bottom-1 -translate-x-1/2 w-2 h-2 bg-[#24292f] rotate-45"></div>
     </div>
+@endsection
+
+@push('modals')
     {{-- Dedicated Task Picker Modal for Pomodoro --}}
-    <div id="pomoTaskPickerModal" class="fixed inset-0 z-50 hidden transition-opacity duration-300">
-        <div class="absolute inset-0 bg-gray-900/60 backdrop-blur-xs transition-opacity" onclick="closePomoTaskPicker()"></div>
-        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-md bg-white rounded-[2rem] p-6 sm:p-7 shadow-2xl border-2 border-[#E7C8DB] transform scale-95 opacity-0 transition-all duration-300" id="pomoTaskPickerModalBox">
+    <div id="pomoTaskPickerModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+        <div class="fixed inset-0 bg-gray-900/60 backdrop-blur-xs transition-opacity" onclick="closePomoTaskPicker()"></div>
+        <div class="relative w-full max-w-md bg-white rounded-[2rem] p-6 sm:p-7 shadow-2xl border-2 border-[#E7C8DB] transform scale-95 opacity-0 transition-all duration-300 max-h-[90vh] overflow-y-auto" id="pomoTaskPickerModalBox">
             
             <div class="flex items-center justify-between pb-3.5 border-b border-[#F4E7EF] mb-4">
                 <div class="flex items-center gap-3">
@@ -411,7 +418,7 @@
                         <p class="text-xs text-gray-500">Pilih tugas yang ingin kamu fokuskan</p>
                     </div>
                 </div>
-                <button type="button" onclick="closePomoTaskPicker()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-[#F4E7EF] text-gray-500 hover:text-[#5B1744] flex items-center justify-center transition">
+                <button type="button" onclick="closePomoTaskPicker()" class="w-8 h-8 rounded-full bg-gray-100 hover:bg-[#F4E7EF] text-gray-500 hover:text-[#5B1744] flex items-center justify-center transition cursor-pointer">
                     <i class="fa-solid fa-xmark text-xs"></i>
                 </button>
             </div>
@@ -458,7 +465,7 @@
             </div>
         </div>
     </div>
-@endsection
+@endpush
 
 @push('scripts')
 
@@ -552,10 +559,8 @@
                 currentTaskId = state.selectedTaskId;
                 const label = document.getElementById('pomo-active-task-label');
                 const subtitle = document.getElementById('active-task-subtitle');
-                const container = document.getElementById('active-checklist-container');
                 if (label) label.textContent = state.selectedTaskTitle || 'Tugas Terpilih';
                 if (subtitle) subtitle.textContent = 'Mengerjakan tugas: ' + (state.selectedTaskTitle || '');
-                if (container) container.classList.remove('hidden');
 
                 apiFetch(`${API_BASE}/tasks/${state.selectedTaskId}/steps`)
                     .then(res => res.json())
@@ -563,7 +568,12 @@
                         currentSteps = data.steps || [];
                         renderActiveChecklist();
                     })
-                    .catch(() => {});
+                    .catch(() => {
+                        currentSteps = [];
+                        renderActiveChecklist();
+                    });
+            } else {
+                renderActiveChecklist();
             }
 
             setPomoMode(pomoMode, false);
@@ -706,7 +716,7 @@
         pausePomodoro(false);
         clearPomoState();
         const elapsedMinutes = Math.max(1, Math.round(pomoTotalElapsedFocusSeconds / 60));
-        let sessionTitle = 'Sesi Pomodoro';
+        let sessionTitle = 'Sesi Fokus';
         if (pomoSelectedTaskId) {
             const label = document.getElementById('pomo-active-task-label');
             if (label && label.textContent !== 'Pilih Tugas') {
@@ -741,9 +751,10 @@
         const modal = document.getElementById('pomoTaskPickerModal');
         const box = document.getElementById('pomoTaskPickerModalBox');
         if (!modal || !box) return;
+        document.body.classList.add('overflow-hidden');
         modal.classList.remove('hidden');
+        modal.classList.add('flex');
         void modal.offsetWidth;
-        modal.classList.add('opacity-100');
         box.classList.remove('scale-95', 'opacity-0');
         box.classList.add('scale-100', 'opacity-100');
     }
@@ -752,11 +763,23 @@
         const modal = document.getElementById('pomoTaskPickerModal');
         const box = document.getElementById('pomoTaskPickerModalBox');
         if (!modal || !box) return;
-        modal.classList.remove('opacity-100');
+        document.body.classList.remove('overflow-hidden');
         box.classList.remove('scale-100', 'opacity-100');
         box.classList.add('scale-95', 'opacity-0');
-        setTimeout(() => modal.classList.add('hidden'), 300);
+        setTimeout(() => {
+            modal.classList.remove('flex');
+            modal.classList.add('hidden');
+        }, 250);
     }
+
+    window.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            const modal = document.getElementById('pomoTaskPickerModal');
+            if (modal && !modal.classList.contains('hidden')) {
+                closePomoTaskPicker();
+            }
+        }
+    });
 
     let currentTaskId = null;
     let currentSteps = [];
@@ -779,7 +802,6 @@
             const brk = parseInt(breakMin) || 5;
             applyPomoPreset(focus, brk);
 
-            // Tampilkan checklist khusus hanya saat tugas dipilih
             if (container) container.classList.remove('hidden');
 
             apiFetch(`${API_BASE}/tasks/${taskId}/steps`)
@@ -793,11 +815,11 @@
                     renderActiveChecklist();
                 });
         } else {
-            if (label) label.textContent = 'Pilih Tugas';
-            if (subtitle) subtitle.textContent = 'Pilih tugas untuk membuka checklist langkah belajar step-by-step.';
+            if (label) label.textContent = 'Fokus Umum';
+            if (subtitle) subtitle.textContent = 'Mode fokus umum tanpa terhubung ke tugas tertentu.';
             applyPomoPreset(25, 5);
             currentSteps = [];
-            if (container) container.classList.add('hidden');
+            renderActiveChecklist();
         }
         savePomoState();
     }
@@ -928,17 +950,71 @@
         }
     }
 
+    async function deleteStep(stepId, event) {
+        if (event) event.stopPropagation();
+        if (!currentTaskId) return;
+        try {
+            const res = await apiFetch(`${API_BASE}/tasks/${currentTaskId}/steps/${stepId}`, {
+                method: 'DELETE'
+            });
+            const data = await res.json();
+            if (data.status === 'success') {
+                currentSteps = currentSteps.filter(s => s.id !== stepId);
+                renderActiveChecklist();
+                showToast('Langkah berhasil dihapus.', 'info');
+            }
+        } catch (e) {
+            alert('Gagal menghapus langkah.');
+        }
+    }
+
     function renderActiveChecklist() {
         const container = document.getElementById('active-checklist-container');
         const list = document.getElementById('active-steps-list');
         if (!container || !list) return;
 
+        container.classList.remove('hidden');
+
+        // State 1: Belum ada tugas yang dipilih -> Tampilkan Panduan Lengkap
         if (!currentTaskId) {
-            container.classList.add('hidden');
+            list.innerHTML = `
+                <div class="rounded-2xl border border-[#E7C8DB]/70 bg-gradient-to-br from-[#FAF6F0] via-white to-[#F4E7EF]/30 p-4 sm:p-5 shadow-2xs">
+                    <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div class="flex items-start gap-3">
+                            <div class="w-10 h-10 rounded-2xl bg-[#5B1744] text-white flex items-center justify-center shrink-0 shadow-xs">
+                                <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-xs sm:text-sm font-bold text-gray-900">Apa itu Langkah Belajar Step-by-Step?</h4>
+                                <p class="text-xs text-gray-600 mt-1 leading-relaxed">
+                                    Membantumu memecah tugas belajar (seperti PR, rangkuman, atau persiapan ujian) menjadi target-target mikro yang ringan. Tidak perlu merasa kewalahan—cukup selesaikan satu per satu sambil timer berjalan!
+                                </p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="openPomoTaskPicker()" class="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-bold transition shadow-xs shrink-0 cursor-pointer">
+                            <i class="fa-solid fa-list-check text-[11px]"></i>
+                            <span>Pilih Tugas Sekarang</span>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5 mt-4 pt-3.5 border-t border-[#E7C8DB]/50">
+                        <div class="flex items-center gap-2.5 text-[11px] text-gray-700 bg-white/80 p-2.5 rounded-xl border border-[#F4E7EF]">
+                            <span class="w-5 h-5 rounded-full bg-[#5B1744] text-white font-bold flex items-center justify-center text-[10px] shrink-0">1</span>
+                            <span>Pilih tugas yang ingin kamu kerjakan</span>
+                        </div>
+                        <div class="flex items-center gap-2.5 text-[11px] text-gray-700 bg-white/80 p-2.5 rounded-xl border border-[#F4E7EF]">
+                            <span class="w-5 h-5 rounded-full bg-[#5B1744] text-white font-bold flex items-center justify-center text-[10px] shrink-0">2</span>
+                            <span>Buat target kecil (misal: "Baca hal 1-5")</span>
+                        </div>
+                        <div class="flex items-center gap-2.5 text-[11px] text-gray-700 bg-white/80 p-2.5 rounded-xl border border-[#F4E7EF]">
+                            <span class="w-5 h-5 rounded-full bg-[#5B1744] text-white font-bold flex items-center justify-center text-[10px] shrink-0">3</span>
+                            <span>Centang tiap langkah saat timer jalan!</span>
+                        </div>
+                    </div>
+                </div>
+            `;
             return;
         }
-
-        container.classList.remove('hidden');
 
         list.innerHTML = '';
 
@@ -953,10 +1029,15 @@
                 const lineThrough = step.is_completed ? 'line-through text-gray-400' : 'text-gray-800';
 
                 stepsHtml += `
-                    <label class="flex items-center gap-3 p-3 bg-white rounded-xl border border-gray-100 hover:border-[#E7C8DB] cursor-pointer transition shadow-2xs">
-                        <input type="checkbox" ${checkedStr} onchange="toggleStep(${step.id}, this.checked)" class="w-4 h-4 text-[#5B1744] accent-[#5B1744] rounded border-gray-300 focus:ring-[#5B1744]">
-                        <span class="text-xs font-semibold ${lineThrough}">${step.title}</span>
-                    </label>
+                    <div class="flex items-center justify-between gap-3 p-3 bg-white rounded-xl border border-gray-100 hover:border-[#E7C8DB] transition shadow-2xs group">
+                        <label class="flex items-center gap-3 cursor-pointer flex-1 min-w-0">
+                            <input type="checkbox" ${checkedStr} onchange="toggleStep(${step.id}, this.checked)" class="w-4 h-4 text-[#5B1744] accent-[#5B1744] rounded border-gray-300 focus:ring-[#5B1744] cursor-pointer shrink-0">
+                            <span class="text-xs font-semibold ${lineThrough} truncate select-none">${step.title}</span>
+                        </label>
+                        <button type="button" onclick="deleteStep(${step.id}, event)" title="Hapus langkah" class="w-6 h-6 rounded-lg text-gray-300 hover:text-red-500 hover:bg-red-50 flex items-center justify-center transition opacity-0 group-hover:opacity-100 shrink-0 cursor-pointer">
+                            <i class="fa-solid fa-trash text-[10px]"></i>
+                        </button>
+                    </div>
                 `;
             });
 
@@ -977,21 +1058,33 @@
                 </div>
             `;
         } else {
-            list.innerHTML = `<p class="text-xs text-gray-400 italic mb-3">Belum ada langkah belajar untuk tugas ini. Tambah langkah di bawah.</p>`;
+            list.innerHTML = `
+                <div class="rounded-2xl border border-dashed border-[#E7C8DB] bg-[#FAF6F0]/60 p-4 text-center mb-3">
+                    <div class="w-8 h-8 rounded-xl bg-[#F4E7EF] text-[#5B1744] mx-auto flex items-center justify-center text-xs mb-2">
+                        <i class="fa-solid fa-list-check"></i>
+                    </div>
+                    <p class="text-xs font-bold text-gray-800">Tugas ini belum memiliki langkah belajar</p>
+                    <p class="text-[11px] text-gray-500 mt-0.5">Tulis langkah pertama di bawah (misal: <em>Buka catatan hal 12</em> atau <em>Kerjakan soal 1-5</em>) agar lebih bersemangat!</p>
+                </div>
+            `;
         }
 
         // Inline input to add steps directly
         list.innerHTML += `
             <div class="flex items-center gap-2 mt-3">
-                <input type="text" id="new-active-step-input" placeholder="Tambah langkah baru lalu tekan Enter..." 
+                <input type="text" id="new-active-step-input" placeholder="Tulis langkah belajar baru lalu tekan Enter..." 
                     class="flex-1 text-xs px-3.5 py-2.5 bg-[#FAF6F0]/60 border border-[#E7C8DB] rounded-xl outline-none focus:border-[#5B1744] focus:bg-white text-gray-800 transition placeholder:text-gray-400" 
                     onkeypress="if(event.key === 'Enter') addActiveStep()">
                 <button type="button" onclick="addActiveStep()" 
-                    class="h-9 px-4 rounded-xl bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 shrink-0">
+                    class="h-9 px-4 rounded-xl bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-bold transition shadow-xs flex items-center gap-1.5 shrink-0 cursor-pointer">
                     <i class="fa-solid fa-plus text-[10px]"></i>
                     <span>Tambah</span>
                 </button>
             </div>
+            <p class="text-[11px] text-gray-400 mt-2.5 flex items-center gap-1.5 justify-center sm:justify-start">
+                <i class="fa-regular fa-lightbulb text-amber-500"></i>
+                <span>Tips: Fokus selesaikan satu per satu langkah dalam setiap interval timer belajar.</span>
+            </p>
         `;
     }
 
@@ -1046,6 +1139,9 @@
         } else {
             // Restore ongoing session from previous page navigation
             loadPomoState();
+            if (!currentTaskId) {
+                renderActiveChecklist();
+            }
         }
     });
 
