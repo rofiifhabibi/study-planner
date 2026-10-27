@@ -55,27 +55,31 @@
             </div>
         </div>
 
-        <div id="note-list" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div id="note-list" class="space-y-3">
             @forelse ($notes as $note)
-                <div class="note-item group flex flex-col p-4 rounded-2xl bg-[#FAF6F0]/60 hover:bg-[#F4E7EF]/60 border border-gray-100 transition" data-note-id="{{ $note->id }}">
-                    <div class="flex items-start justify-between gap-3">
-                        <button onclick="editNote(this)" class="flex-1 min-w-0 text-left" data-title="{{ $note->title }}" data-content="{{ $note->content }}">
-                            <p class="font-semibold text-xs text-gray-900 line-clamp-1">{{ $note->title ?: 'Untitled' }}</p>
-                            <p class="text-[10px] text-gray-400 mt-0.5">{{ $note->updated_at->format('d M Y, H:i') }}</p>
-                        </button>
-                        <div class="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition">
-                            <button onclick="editNote(this)" class="text-gray-400 hover:text-[#5B1744] transition" data-title="{{ $note->title }}" data-content="{{ $note->content }}">
-                                <i class="fa-solid fa-pen text-[10px]"></i>
-                            </button>
-                            <button onclick="deleteNote({{ $note->id }})" class="text-gray-400 hover:text-red-500 transition">
-                                <i class="fa-solid fa-trash text-[10px]"></i>
-                            </button>
+                <div class="note-item group w-full p-4 sm:p-5 rounded-2xl bg-[#FAF6F0]/60 hover:bg-[#F4E7EF]/50 border border-gray-200 hover:border-[#E7C8DB] transition flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-6 shadow-2xs" data-note-id="{{ $note->id }}">
+                    <button type="button" onclick="editNote(this)" class="flex-1 min-w-0 text-left cursor-pointer" data-title="{{ $note->title }}" data-content="{{ $note->content }}">
+                        <div class="flex items-center gap-2.5 flex-wrap">
+                            <h3 class="font-bold text-sm text-gray-900 group-hover:text-[#5B1744] transition">{{ $note->title ?: 'Untitled' }}</h3>
+                            <span class="text-[10px] px-2.5 py-0.5 rounded-full bg-white border border-gray-200 text-gray-500 font-medium">
+                                {{ $note->updated_at->format('d M Y, H:i') }}
+                            </span>
                         </div>
+                        <p class="text-xs text-gray-600 leading-relaxed mt-1.5 line-clamp-2 whitespace-pre-line">{{ $note->content }}</p>
+                    </button>
+                    <div class="flex items-center gap-2 shrink-0 self-end sm:self-center">
+                        <button type="button" onclick="editNote(this)" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-[#E7C8DB] text-[#5B1744] hover:bg-[#5B1744] hover:text-white hover:border-[#5B1744] text-xs font-semibold shadow-2xs transition" data-title="{{ $note->title }}" data-content="{{ $note->content }}">
+                            <i class="fa-solid fa-pen text-[10px]"></i>
+                            <span>Edit</span>
+                        </button>
+                        <button type="button" onclick="deleteNote({{ $note->id }})" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-red-200 text-red-500 hover:bg-red-500 hover:text-white hover:border-red-500 text-xs font-semibold shadow-2xs transition">
+                            <i class="fa-solid fa-trash text-[10px]"></i>
+                            <span>Hapus</span>
+                        </button>
                     </div>
-                    <p class="text-[11px] text-gray-500 leading-relaxed mt-2 line-clamp-3 whitespace-pre-line">{{ $note->content }}</p>
                 </div>
             @empty
-                <div class="text-center py-10 text-gray-400 col-span-full">
+                <div class="text-center py-10 text-gray-400">
                     <i class="fa-regular fa-note-sticky text-3xl mb-3"></i>
                     <p class="text-sm">Belum ada catatan.</p>
                     <button onclick="openNoteModal()" class="mt-2 text-xs text-[#5B1744] font-semibold hover:underline">Tambah catatan baru</button>
@@ -84,37 +88,63 @@
         </div>
     </section>
 
-    {{-- ADD / EDIT NOTE MODAL --}}
-    <div id="noteModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
+    {{-- ADD / EDIT NOTE MODAL (Enlarged & Comfortable Reading) --}}
+    <div id="noteModal" class="fixed inset-0 z-50 hidden items-center justify-center p-3 sm:p-6">
         <div onclick="closeNoteModal()" class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
 
-        <div class="relative w-full max-w-lg bg-[#FAF6F0] rounded-3xl p-6 sm:p-7 shadow-2xl fade-up">
-            <div class="flex justify-between items-start mb-5">
-                <div>
-                    <p class="text-[9px] uppercase tracking-[.2em] text-[#5B1744] font-bold" id="noteModalLabel">NEW NOTE</p>
-                    <h2 class="text-xl font-bold text-gray-900 mt-0.5" id="noteModalTitle">Tulis catatanmu</h2>
+        <div class="relative w-full max-w-3xl sm:max-w-4xl bg-[#FAF6F0] rounded-[2rem] p-5 sm:p-7 shadow-[0_0_60px_rgba(0,0,0,0.35),0_15px_35px_rgba(91,23,68,0.2)] border-2 border-[#E7C8DB] fade-up max-h-[92vh] flex flex-col my-auto">
+            {{-- Header --}}
+            <div class="flex items-center justify-between pb-4 border-b border-[#E7C8DB]/60 mb-4 shrink-0">
+                <div class="flex items-center gap-3">
+                    <div class="w-11 h-11 rounded-2xl bg-[#F4E7EF] border border-[#E7C8DB] flex items-center justify-center shrink-0 text-[#5B1744] text-lg">
+                        <i class="fa-regular fa-note-sticky"></i>
+                    </div>
+                    <div>
+                        <span class="text-[10px] font-bold uppercase tracking-wider text-[#5B1744] bg-[#F4E7EF] px-2.5 py-0.5 rounded-full" id="noteModalLabel">NEW NOTE</span>
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-900 mt-1" id="noteModalTitle">Tulis Catatan Belajar</h2>
+                    </div>
                 </div>
-                <button onclick="closeNoteModal()" class="w-8 h-8 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-500 hover:bg-gray-50">
+                <button type="button" onclick="closeNoteModal()" class="w-8 h-8 rounded-full bg-white border border-[#E7C8DB] flex items-center justify-center text-gray-500 hover:bg-[#F4E7EF] hover:text-[#5B1744] transition">
                     <i class="fa-solid fa-xmark text-xs"></i>
                 </button>
             </div>
 
-            <form id="noteForm" class="space-y-4">
+            <form id="noteForm" class="flex-1 flex flex-col gap-3 min-h-0">
                 @csrf
                 <input type="hidden" name="id" id="noteId">
-                <div>
-                    <label class="text-xs font-bold text-gray-600">Judul (opsional)</label>
-                    <input type="text" name="title" id="noteTitle" placeholder="e.g. Ringkasan materi jaringan" class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744] transition">
+
+                {{-- Judul Catatan --}}
+                <div class="bg-white px-4 py-3 rounded-2xl border border-[#E7C8DB] shadow-2xs shrink-0">
+                    <label class="text-[10px] font-bold uppercase tracking-wider text-[#5B1744] block mb-1">
+                        Judul Catatan
+                    </label>
+                    <input type="text" name="title" id="noteTitle" placeholder="Contoh: Rangkuman Materi Fisika Kuantum / Rumus Trigonometri" 
+                        class="w-full text-sm sm:text-base font-bold text-gray-900 placeholder:text-gray-300 outline-none bg-transparent">
                 </div>
 
-                <div>
-                    <label class="text-xs font-bold text-gray-600">Isi catatan</label>
-                    <textarea name="content" id="noteContent" rows="6" required placeholder="Tulis catatanmu di sini..." class="w-full mt-1.5 px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#5B1744] transition"></textarea>
+                {{-- Isi Catatan --}}
+                <div class="bg-white p-4 sm:p-5 rounded-2xl border border-[#E7C8DB] shadow-2xs flex-1 flex flex-col min-h-0">
+                    <div class="flex items-center justify-between pb-2 mb-2 border-b border-gray-100 shrink-0">
+                        <label class="text-[10px] font-bold uppercase tracking-wider text-[#5B1744] block">
+                            Isi Catatan / Materi Lengkap
+                        </label>
+                        <span id="noteCharCount" class="text-[10px] text-gray-400 font-semibold">0 karakter</span>
+                    </div>
+                    <textarea name="content" id="noteContent" required placeholder="Tuliskan catatan, rumus penting, konsep kunci, atau rangkuman materi di sini... Lebih leluasa dan nyaman dibaca!" 
+                        class="w-full flex-1 min-h-[280px] sm:min-h-[380px] text-sm sm:text-base leading-relaxed text-gray-800 placeholder:text-gray-300 outline-none resize-none bg-transparent overflow-y-auto"
+                        oninput="updateNoteCharCount()"></textarea>
                 </div>
 
-                <button type="submit" class="w-full py-3 rounded-xl bg-[#5B1744] text-white text-xs font-bold hover:bg-[#481236] transition shadow-xs mt-2">
-                    Save Note
-                </button>
+                {{-- Action Footer --}}
+                <div class="flex items-center justify-end gap-2.5 pt-2 shrink-0">
+                    <button type="button" onclick="closeNoteModal()" class="px-5 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 text-xs font-bold hover:bg-gray-50 transition">
+                        Batal
+                    </button>
+                    <button type="submit" id="saveNoteBtn" class="px-6 py-2.5 rounded-xl bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-bold transition shadow-md shadow-[#5B1744]/20 flex items-center gap-2">
+                        <i class="fa-solid fa-floppy-disk text-xs"></i>
+                        <span id="saveNoteBtnText">Simpan Catatan</span>
+                    </button>
+                </div>
             </form>
         </div>
     </div>
@@ -123,7 +153,7 @@
     <div id="deleteNoteModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
         <div onclick="closeDeleteNoteModal()" class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
 
-        <div class="relative w-full max-w-sm bg-[#FAF6F0] rounded-3xl p-6 sm:p-7 shadow-2xl fade-up">
+        <div class="relative w-full max-w-sm bg-[#FAF6F0] rounded-3xl p-6 sm:p-7 shadow-[0_0_50px_rgba(0,0,0,0.35),0_15px_35px_rgba(91,23,68,0.2)] fade-up my-auto">
             <div class="flex justify-between items-start mb-4">
                 <div>
                     <p class="text-[9px] uppercase tracking-[.2em] text-[#B91C1C] font-bold">DELETE NOTE</p>
@@ -157,12 +187,22 @@
 
     const noteModal = document.getElementById('noteModal');
 
+    function updateNoteCharCount() {
+        const content = document.getElementById('noteContent')?.value || '';
+        const countEl = document.getElementById('noteCharCount');
+        if (countEl) {
+            countEl.textContent = `${content.length.toLocaleString('id-ID')} karakter`;
+        }
+    }
+
     function openNoteModal() {
         document.getElementById('noteModalLabel').textContent = 'NEW NOTE';
-        document.getElementById('noteModalTitle').textContent = 'Tulis catatanmu';
+        document.getElementById('noteModalTitle').textContent = 'Tulis Catatan Belajar';
+        document.getElementById('saveNoteBtnText').textContent = 'Simpan Catatan';
         document.getElementById('noteId').value = '';
         document.getElementById('noteTitle').value = '';
         document.getElementById('noteContent').value = '';
+        updateNoteCharCount();
         noteModal.classList.remove('hidden');
         noteModal.classList.add('flex');
         document.body.classList.add('overflow-hidden');
@@ -172,10 +212,12 @@
         const title = btn.getAttribute('data-title') || '';
         const content = btn.getAttribute('data-content') || '';
         document.getElementById('noteModalLabel').textContent = 'EDIT NOTE';
-        document.getElementById('noteModalTitle').textContent = 'Perbarui catatan';
+        document.getElementById('noteModalTitle').textContent = 'Perbarui Catatan Belajar';
+        document.getElementById('saveNoteBtnText').textContent = 'Simpan Perubahan';
         document.getElementById('noteId').value = btn.closest('.note-item').dataset.noteId;
         document.getElementById('noteTitle').value = title;
         document.getElementById('noteContent').value = content;
+        updateNoteCharCount();
         noteModal.classList.remove('hidden');
         noteModal.classList.add('flex');
         document.body.classList.add('overflow-hidden');

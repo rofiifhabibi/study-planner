@@ -28,26 +28,23 @@
         <div class="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-white/5 pointer-events-none"></div>
         <div class="absolute -right-2 -bottom-16 w-40 h-40 rounded-full bg-white/5 pointer-events-none"></div>
         <div class="relative z-10">
-            <div class="flex items-center gap-3 mb-4">
-                <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-amber-300">
-                    <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
+            <div class="flex items-center justify-between gap-3 mb-3">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-white/10 flex items-center justify-center text-amber-300 shrink-0">
+                        <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
+                    </div>
+                    <div>
+                        <p class="text-[9px] uppercase tracking-[.2em] text-white/60 font-bold">AI DAILY SUMMARY</p>
+                    </div>
                 </div>
-                <div>
-                    <p class="text-[9px] uppercase tracking-[.2em] text-white/50 font-bold">AI DAILY SUMMARY</p>
-                </div>
+                <button type="button" onclick="refreshDailySummary()" id="btn-refresh-summary" title="Perbarui ringkasan AI" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition text-[11px] font-medium">
+                    <i class="fa-solid fa-arrows-rotate text-[10px]" id="icon-refresh-summary"></i>
+                    <span class="hidden sm:inline">Refresh</span>
+                </button>
             </div>
 
-            <p class="text-base sm:text-lg font-medium leading-relaxed text-white/95">
-                @if ($todayTotal > 0)
-                    Kamu sudah menyelesaikan <span class="text-[#E9C9DA] font-bold">{{ $todayCompleted }} dari {{ $todayTotal }} tugas</span> hari ini.
-                    @if ($todayTotal - $todayCompleted > 0)
-                        Semangat belajar hari ini! Jangan lupa cek daftar tugasmu.
-                    @else
-                        Luar biasa! Semua tugas selesai dengan baik hari ini.
-                    @endif
-                @else
-                    Belum ada tugas untuk hari ini. Mulai tambahkan tugas baru untuk hari yang produktif!
-                @endif
+            <p id="ai-daily-summary-text" class="text-base sm:text-lg font-medium leading-relaxed text-white/95">
+                {{ $aiDailySummary }}
             </p>
         </div>
     </section>
@@ -316,3 +313,33 @@
     </section>
 
 @endsection
+
+@push('scripts')
+    async function refreshDailySummary() {
+        const btn = document.getElementById('btn-refresh-summary');
+        const icon = document.getElementById('icon-refresh-summary');
+        const textEl = document.getElementById('ai-daily-summary-text');
+        if (!textEl) return;
+
+        if (icon) icon.classList.add('fa-spin');
+        if (btn) btn.disabled = true;
+
+        try {
+            const res = await fetch('{{ route('dashboard.summary') }}?refresh=1', {
+                headers: {
+                    'Accept': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest'
+                }
+            });
+            const data = await res.json();
+            if (data && data.summary) {
+                textEl.textContent = data.summary;
+            }
+        } catch (e) {
+            console.error('Failed to refresh summary', e);
+        } finally {
+            if (icon) icon.classList.remove('fa-spin');
+            if (btn) btn.disabled = false;
+        }
+    }
+@endpush

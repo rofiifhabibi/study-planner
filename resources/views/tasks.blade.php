@@ -84,8 +84,8 @@
                     <span class="text-[10px] px-2.5 py-1 rounded-full shrink-0 {{ $task->priority === 'high' ? 'bg-red-50 text-red-600' : ($task->priority === 'medium' ? 'bg-amber-50 text-amber-600' : 'bg-gray-50 text-gray-500') }}">
                         {{ ucfirst($task->priority) }}
                     </span>
-                    <button onclick="deleteTask({{ $task->id }})" class="text-gray-400 hover:text-red-500 transition shrink-0">
-                        <i class="fa-solid fa-trash text-[10px]"></i>
+                    <button onclick="deleteTask({{ $task->id }})" title="Hapus tugas" class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 flex items-center justify-center transition shrink-0 shadow-2xs">
+                        <i class="fa-solid fa-trash text-xs"></i>
                     </button>
                 </div>
             @empty
@@ -102,7 +102,7 @@
     <div id="taskModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
         <div onclick="closeTaskModal()" class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
 
-        <div class="relative w-full max-w-lg bg-[#FAF6F0] rounded-[2rem] p-6 sm:p-7 shadow-2xl border-2 border-[#E7C8DB] fade-up max-h-[92vh] overflow-y-auto">
+        <div class="relative w-full max-w-lg bg-[#FAF6F0] rounded-[2rem] p-6 sm:p-7 shadow-[0_0_50px_rgba(0,0,0,0.35),0_15px_35px_rgba(91,23,68,0.2)] border-2 border-[#E7C8DB] fade-up max-h-[92vh] overflow-y-auto">
             
             {{-- Modal Header --}}
             <div class="flex items-center justify-between pb-4 border-b border-[#E7C8DB]/60 mb-5">
@@ -131,7 +131,7 @@
                 {{-- 1. Judul Tugas --}}
                 <div class="bg-white p-3.5 rounded-2xl border border-[#E7C8DB] shadow-2xs">
                     <label class="text-xs font-bold text-gray-800 flex items-center justify-between">
-                        <span class="flex items-center gap-1.5"><i class="fa-regular fa-pen-to-square text-[#5B1744]"></i> Judul Tugas</span>
+                        <span>Nama Tugas</span>
                         <span class="text-[10px] text-red-500 font-semibold">*Wajib</span>
                     </label>
                     <input type="text" name="title" required placeholder="Misal: Rangkuman Biologi Bab 3" 
@@ -141,7 +141,7 @@
                 {{-- 2. Kategori Visual --}}
                 <div class="bg-white p-3.5 rounded-2xl border border-[#E7C8DB] shadow-2xs">
                     <label class="text-xs font-bold text-gray-800 flex items-center justify-between">
-                        <span class="flex items-center gap-1.5"><i class="fa-solid fa-tag text-[#5B1744]"></i> Kategori</span>
+                        <span>Kategori</span>
                         <span id="categoryLabelText" class="text-[10px] text-[#5B1744] font-bold">Sekolah</span>
                     </label>
                     <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mt-2.5">
@@ -167,13 +167,13 @@
                 {{-- 3. Deadline / Waktu Selesai --}}
                 <div class="bg-white p-3.5 rounded-2xl border border-[#E7C8DB] shadow-2xs">
                     <label class="text-xs font-bold text-gray-800 flex items-center justify-between">
-                        <span class="flex items-center gap-1.5"><i class="fa-regular fa-calendar text-[#5B1744]"></i> Tenggat Waktu</span>
+                        <span>Tenggat Waktu</span>
                         <span class="text-[10px] text-gray-400">Pilihan cepat:</span>
                     </label>
-                    <div class="flex items-center gap-2 mt-2 mb-2.5">
-                        <button type="button" onclick="setQuickDate(0)" class="px-3 py-1 rounded-lg text-[10px] font-bold bg-[#F4E7EF] text-[#5B1744] border border-[#E7C8DB] hover:bg-[#E7C8DB] transition">Hari Ini</button>
-                        <button type="button" onclick="setQuickDate(1)" class="px-3 py-1 rounded-lg text-[10px] font-semibold bg-gray-50 text-gray-700 border border-gray-200 hover:bg-[#F4E7EF] transition">Besok</button>
-                        <button type="button" onclick="setQuickDate(3)" class="px-3 py-1 rounded-lg text-[10px] font-semibold bg-gray-50 text-gray-700 border border-gray-200 hover:bg-[#F4E7EF] transition">3 Hari</button>
+                    <div class="flex items-center gap-2 mt-2 mb-2.5" id="taskQuickDateGroup">
+                        <button type="button" onclick="setQuickDate(0, this)" class="task-quick-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-[#5B1744] text-white border border-[#5B1744] shadow-xs transition">Hari Ini</button>
+                        <button type="button" onclick="setQuickDate(1, this)" class="task-quick-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-gray-700 border border-gray-200 hover:border-[#E7C8DB] hover:bg-[#F4E7EF] transition">Besok</button>
+                        <button type="button" onclick="setQuickDate(3, this)" class="task-quick-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-gray-700 border border-gray-200 hover:border-[#E7C8DB] hover:bg-[#F4E7EF] transition">3 Hari</button>
                     </div>
                     <div class="grid grid-cols-2 gap-2">
                         <div>
@@ -220,7 +220,7 @@
                             </button>
                             <button type="button" onclick="selectPomoDuration(25, 5)" id="pomoChip-25" 
                                 class="pomo-chip py-1.5 rounded-xl text-[10px] font-bold border-2 transition text-center bg-[#5B1744] text-white border-[#5B1744]">
-                                25 Menit
+                            25 Menit
                             </button>
                             <button type="button" onclick="selectPomoDuration(50, 10)" id="pomoChip-50" 
                                 class="pomo-chip py-1.5 rounded-xl text-[10px] font-semibold border-2 transition text-center bg-white text-gray-700 border-gray-200">
@@ -233,7 +233,7 @@
                 {{-- 5. Catatan Tambahan (Opsional) --}}
                 <div class="bg-white p-3.5 rounded-2xl border border-[#E7C8DB] shadow-2xs">
                     <label class="text-xs font-bold text-gray-800 flex items-center justify-between">
-                        <span class="flex items-center gap-1.5"><i class="fa-regular fa-note-sticky text-[#5B1744]"></i> Catatan</span>
+                        <span>Catatan</span>
                         <span class="text-[10px] text-gray-400">Opsional</span>
                     </label>
                     <textarea name="description" rows="2" placeholder="Catat detail atau instruksi khusus pengerjaan..." 
@@ -253,7 +253,7 @@
     <div id="deleteTaskModal" class="fixed inset-0 z-50 hidden items-center justify-center p-4">
         <div onclick="closeDeleteTaskModal()" class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
 
-        <div class="relative w-full max-w-sm bg-[#FAF6F0] rounded-3xl p-6 sm:p-7 shadow-2xl fade-up">
+        <div class="relative w-full max-w-sm bg-[#FAF6F0] rounded-3xl p-6 sm:p-7 shadow-[0_0_50px_rgba(0,0,0,0.35),0_15px_35px_rgba(91,23,68,0.2)] fade-up">
             <div class="flex justify-between items-start mb-4">
                 <div>
                     <p class="text-[9px] uppercase tracking-[.2em] text-[#B91C1C] font-bold">DELETE TASK</p>
@@ -334,7 +334,7 @@
         }
     }
 
-    function setQuickDate(offsetDays) {
+    function setQuickDate(offsetDays, btn) {
         const d = new Date();
         d.setDate(d.getDate() + offsetDays);
         const yyyy = d.getFullYear();
@@ -342,9 +342,20 @@
         const dd = String(d.getDate()).padStart(2, '0');
         const inp = document.getElementById('inputDueDate');
         if (inp) inp.value = `${yyyy}-${mm}-${dd}`;
+
+        document.querySelectorAll('#taskQuickDateGroup .task-quick-btn').forEach(b => {
+            b.className = 'task-quick-btn px-3 py-1.5 rounded-xl text-xs font-semibold bg-white text-gray-700 border border-gray-200 hover:border-[#E7C8DB] hover:bg-[#F4E7EF] transition';
+        });
+        if (btn) {
+            btn.className = 'task-quick-btn px-3 py-1.5 rounded-xl text-xs font-bold bg-[#5B1744] text-white border border-[#5B1744] shadow-xs transition';
+        }
     }
 
     function openTaskModal() {
+        const todayBtn = document.querySelector('#taskQuickDateGroup .task-quick-btn:first-child');
+        if (todayBtn) {
+            setQuickDate(0, todayBtn);
+        }
         taskModal.classList.remove('hidden');
         taskModal.classList.add('flex');
         document.body.classList.add('overflow-hidden');

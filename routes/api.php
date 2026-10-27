@@ -56,4 +56,6 @@ Route::middleware('api')->group(function () {
     Route::get('/ai/tool/tasks', [AiIntegrationController::class, 'getTasks']);
     Route::get('/ai/tool/timetable', [AiIntegrationController::class, 'getTimetable']);
     Route::post('/ai/tool/tasks', [AiIntegrationController::class, 'createTask']);
+    Route::get('/ai/tool/notes', [AiIntegrationController::class, 'getNotes']);
+    Route::post('/ai/tool/notes', [AiIntegrationController::class, 'createNote']);
 });

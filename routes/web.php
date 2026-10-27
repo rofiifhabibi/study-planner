@@ -13,6 +13,7 @@ Route::get('/', function () {
 
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [ChatController::class, 'dashboard'])->name('dashboard');
+    Route::get('/dashboard/daily-summary', [ChatController::class, 'getDailySummary'])->name('dashboard.summary');
     Route::get('/chat', [ChatController::class, 'index'])->name('chat');
 
     Route::get('/tasks', [PlannerController::class, 'tasks'])->name('tasks');

@@ -252,6 +252,15 @@
 
                     {{-- Right Controls --}}
                     <div class="flex items-center gap-2.5">
+                        {{-- Global Pomodoro Live Pill (visible across all pages when running) --}}
+                        <a href="{{ url('/progress') }}" id="global-pomo-pill" title="Kembali ke Pomodoro Timer"
+                            class="hidden items-center gap-2 px-3 py-1.5 rounded-full bg-[#F4E7EF] border border-[#E7C8DB] text-[#5B1744] hover:bg-[#E7C8DB]/60 transition shadow-xs text-xs font-bold active:scale-95">
+                            <span class="w-2 h-2 rounded-full bg-[#5B1744] animate-ping"></span>
+                            <i class="fa-solid fa-stopwatch text-[#5B1744]"></i>
+                            <span id="global-pomo-time" class="font-mono">25:00</span>
+                            <span id="global-pomo-mode" class="text-[10px] uppercase font-bold text-[#5B1744]/75">Fokus</span>
+                        </a>
+
                         <button type="button" onclick="startFeatureTour()" title="Panduan Fitur Halaman Ini" 
                             class="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white border border-gray-200 text-[#5B1744] hover:bg-[#F4E7EF] hover:border-[#E7C8DB] transition shadow-xs text-xs font-bold active:scale-95">
                             <i class="fa-regular fa-circle-question text-sm text-[#5B1744]"></i>
@@ -538,6 +547,50 @@
                 document.getElementById('delete-account-password')?.focus();
             }
         }
+
+        // ==========================================
+        // GLOBAL RUNNING POMODORO LIVE INDICATOR
+        // ==========================================
+        function updateGlobalPomoPill() {
+            const pill = document.getElementById('global-pomo-pill');
+            const timeEl = document.getElementById('global-pomo-time');
+            const modeEl = document.getElementById('global-pomo-mode');
+            if (!pill || !timeEl) return;
+
+            const raw = localStorage.getItem('study_planner_pomo_state');
+            if (!raw) {
+                pill.classList.add('hidden');
+                pill.classList.remove('inline-flex');
+                return;
+            }
+
+            try {
+                const state = JSON.parse(raw);
+                if (!state || (!state.isRunning && !state.targetEndTime)) {
+                    pill.classList.add('hidden');
+                    pill.classList.remove('inline-flex');
+                    return;
+                }
+
+                if (state.isRunning && state.targetEndTime) {
+                    const remaining = Math.max(0, Math.round((state.targetEndTime - Date.now()) / 1000));
+                    const m = Math.floor(remaining / 60);
+                    const s = remaining % 60;
+                    timeEl.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                    if (modeEl) modeEl.textContent = state.mode === 'focus' ? 'Fokus' : 'Istirahat';
+                    pill.classList.remove('hidden');
+                    pill.classList.add('inline-flex');
+                } else {
+                    pill.classList.add('hidden');
+                    pill.classList.remove('inline-flex');
+                }
+            } catch (e) {
+                pill.classList.add('hidden');
+                pill.classList.remove('inline-flex');
+            }
+        }
+        setInterval(updateGlobalPomoPill, 1000);
+        updateGlobalPomoPill();
 
         // ==========================================
         // INTERACTIVE SPOTLIGHT FEATURE TOUR

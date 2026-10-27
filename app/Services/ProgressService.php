@@ -42,6 +42,17 @@ class ProgressService
 
         $streak = $this->calculateStreak();
 
+        $totalHours = intdiv((int) $totalStudySeconds, 3600);
+        $totalMinutes = intdiv(((int) $totalStudySeconds) % 3600, 60);
+
+        if ($totalHours > 0 && $totalMinutes > 0) {
+            $formattedStudyTime = "{$totalHours}h {$totalMinutes}m";
+        } elseif ($totalHours > 0) {
+            $formattedStudyTime = "{$totalHours}h";
+        } else {
+            $formattedStudyTime = "{$totalMinutes}m";
+        }
+
         return [
             'todayTasks' => $dashboardTasks,
             'todayCompleted' => $todayCompleted,
@@ -50,6 +61,8 @@ class ProgressService
             'totalCompleted' => $totalCompleted,
             'completionPercentage' => $totalTasks > 0 ? round(($totalCompleted / $totalTasks) * 100) : 0,
             'totalStudyHours' => round($totalStudySeconds / 3600, 1),
+            'totalStudySeconds' => (int) $totalStudySeconds,
+            'totalStudyTimeFormatted' => $formattedStudyTime,
             'todayStudyMinutes' => round($todayStudySeconds / 60),
             'streak' => $streak,
         ];

@@ -185,24 +185,44 @@
 
             <div class="flex-1 flex flex-col relative min-h-0" id="main">
                 <div class="messages-wrap flex-1 overflow-y-auto min-h-0" id="messages-wrap">
-                    <div class="messages max-w-3xl mx-auto p-6 pb-36" id="messages">
-                        <div class="text-center mt-20" id="welcome-state">
-                            <h2 class="text-3xl font-bold mb-3 text-gray-900">Mau belajar apa hari ini?</h2>
-                            <p class="text-gray-500">Ceritakan saja, kita kerjakan bareng-bareng sampai paham.</p>
+                    <div class="messages max-w-3xl mx-auto p-4 sm:p-6 pb-48 md:pb-52" id="messages">
+                        <div class="text-center mt-12 sm:mt-16 max-w-lg mx-auto" id="welcome-state">
+                            <div class="w-16 h-16 mx-auto mb-4 rounded-3xl bg-[#F4E7EF] border border-[#E7C8DB] text-[#5B1744] flex items-center justify-center text-2xl shadow-xs">
+                                <i class="fa-solid fa-wand-magic-sparkles"></i>
+                            </div>
+                            <h2 class="text-2xl sm:text-3xl font-bold mb-2 text-gray-900 tracking-tight">Mau belajar apa hari ini?</h2>
+                            <p class="text-sm text-gray-500 mb-6">Tanyakan apa saja seputar tugas, jadwal kelas, atau materi pelajaranmu.</p>
+
+                            <!-- Quick prompt pills -->
+                            <div class="flex flex-wrap items-center justify-center gap-2">
+                                <button type="button" onclick="setQuickPrompt('Ada tugas apa saja yang belum selesai dan kapan deadlinenya?')" 
+                                    class="px-3.5 py-2 rounded-2xl bg-white hover:bg-[#F4E7EF] border border-[#E7C8DB] text-xs font-semibold text-[#5B1744] transition shadow-2xs">
+                                    <i class="fa-regular fa-circle-check mr-1.5 text-[11px]"></i>Cek tugas & deadline
+                                </button>
+                                <button type="button" onclick="setQuickPrompt('Apa jadwal kelasku hari ini dan besok?')" 
+                                    class="px-3.5 py-2 rounded-2xl bg-white hover:bg-[#F4E7EF] border border-[#E7C8DB] text-xs font-semibold text-[#5B1744] transition shadow-2xs">
+                                    <i class="fa-solid fa-graduation-cap mr-1.5 text-[11px]"></i>Cek jadwal kelas
+                                </button>
+                                <button type="button" onclick="setQuickPrompt('Bantu buatkan jadwal belajar malam ini yang efektif')" 
+                                    class="px-3.5 py-2 rounded-2xl bg-white hover:bg-[#F4E7EF] border border-[#E7C8DB] text-xs font-semibold text-[#5B1744] transition shadow-2xs">
+                                    <i class="fa-regular fa-clock mr-1.5 text-[11px]"></i>Buat jadwal belajar
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
 
-                <div class="absolute bottom-10 inset-x-0 z-20 px-6 pointer-events-none">
+                {{-- Floating Input Bar (Elevated with larger comfortable touch targets) --}}
+                <div class="absolute bottom-8 sm:bottom-12 md:bottom-14 inset-x-0 z-20 px-4 sm:px-6 pointer-events-none">
                     <form id="chat-form" onsubmit="handleChatInput(event)" class="max-w-3xl mx-auto pointer-events-auto">
-                        <div id="editing-indicator" class="hidden mb-2 flex items-center justify-between bg-white text-[#5B1744] text-xs font-semibold px-4 py-2 rounded-xl shadow-md">
+                        <div id="editing-indicator" class="hidden mb-2 flex items-center justify-between bg-white text-[#5B1744] text-xs font-semibold px-4 py-2.5 rounded-2xl shadow-lg border border-[#E7C8DB]">
                             <span><i class="fa-solid fa-pen mr-2"></i>Mengedit pesan</span>
-                            <button type="button" onclick="stopEditing()" class="hover:underline">Batal edit</button>
+                            <button type="button" onclick="stopEditing()" class="hover:underline text-gray-500">Batal edit</button>
                         </div>
-                        <div id="input-shell" class="flex items-center gap-2 bg-white p-2 pl-4 rounded-full border border-[#5B1744]/10 shadow-xl shadow-[#5B1744]/15 focus-within:border-[#5B1744]/40 focus-within:shadow-2xl transition-shadow">
-                            <textarea id="chat-input" rows="1" placeholder="Ask anything..." oninput="autoResize(this);toggleSend()" class="flex-1 bg-transparent border-none focus:ring-0 p-1 resize-none outline-none text-sm max-h-40 [overflow-wrap:anywhere]"></textarea>
-                            <button type="submit" class="w-10 h-10 rounded-full bg-[#5B1744] text-white flex items-center justify-center disabled:opacity-50 shrink-0" id="btn-send" disabled>
-                                <span class="material-symbols-outlined text-sm">send</span>
+                        <div id="input-shell" class="flex items-end sm:items-center gap-3 bg-white p-2.5 sm:p-3 pl-4 sm:pl-5 rounded-3xl border-2 border-[#E7C8DB] shadow-2xl shadow-[#5B1744]/12 focus-within:border-[#5B1744] focus-within:ring-2 focus-within:ring-[#5B1744]/15 transition-all">
+                            <textarea id="chat-input" rows="1" placeholder="Tanyakan tugas, jadwal kelas, atau materi belajar..." oninput="autoResize(this);toggleSend()" class="flex-1 bg-transparent border-none focus:ring-0 py-1.5 px-1 resize-none outline-none text-sm sm:text-base leading-relaxed text-gray-800 placeholder:text-gray-400 max-h-48 [overflow-wrap:anywhere]"></textarea>
+                            <button type="submit" class="w-11 h-11 sm:w-12 sm:h-12 rounded-2xl bg-[#5B1744] hover:bg-[#481236] text-white flex items-center justify-center disabled:opacity-40 transition active:scale-95 shadow-md shadow-[#5B1744]/25 shrink-0" id="btn-send" disabled title="Kirim Pesan">
+                                <i class="fa-solid fa-paper-plane text-sm sm:text-base"></i>
                             </button>
                         </div>
                     </form>
@@ -250,13 +270,40 @@
         const messageContents = {};
         const expandedProjects = {};
 
+        function setQuickPrompt(text) {
+            const input = document.getElementById('chat-input');
+            if (!input) return;
+            input.value = text;
+            autoResize(input);
+            toggleSend();
+            input.focus();
+        }
+
         function showWelcomeState(hintText = null) {
             const c = document.getElementById('messages');
             c.innerHTML = `
-                <div class="text-center mt-20" id="welcome-state">
-                    <h2 class="text-3xl font-bold mb-3 text-gray-900">Mau belajar apa hari ini?</h2>
-                    ${hintText ? `<p class="text-sm text-[#5B1744]/70 font-semibold mb-2"><i class="fa-solid fa-folder mr-1"></i>${hintText}</p>` : ''}
-                    <p class="text-gray-500">Ceritakan saja, kita kerjakan bareng-bareng sampai paham.</p>
+                <div class="text-center mt-12 sm:mt-16 max-w-lg mx-auto" id="welcome-state">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-3xl bg-[#F4E7EF] border border-[#E7C8DB] text-[#5B1744] flex items-center justify-center text-2xl shadow-xs">
+                        <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-bold mb-2 text-gray-900 tracking-tight">Mau belajar apa hari ini?</h2>
+                    ${hintText ? `<p class="text-xs text-[#5B1744] font-semibold mb-3 inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#F4E7EF] border border-[#E7C8DB]"><i class="fa-solid fa-folder text-[11px]"></i>${hintText}</p>` : ''}
+                    <p class="text-sm text-gray-500 mb-6">Tanyakan apa saja seputar tugas, jadwal kelas, atau materi pelajaranmu.</p>
+
+                    <div class="flex flex-wrap items-center justify-center gap-2">
+                        <button type="button" onclick="setQuickPrompt('Ada tugas apa saja yang belum selesai dan kapan deadlinenya?')" 
+                            class="px-3.5 py-2 rounded-2xl bg-white hover:bg-[#F4E7EF] border border-[#E7C8DB] text-xs font-semibold text-[#5B1744] transition shadow-2xs">
+                            <i class="fa-regular fa-circle-check mr-1.5 text-[11px]"></i>Cek tugas & deadline
+                        </button>
+                        <button type="button" onclick="setQuickPrompt('Apa jadwal kelasku hari ini dan besok?')" 
+                            class="px-3.5 py-2 rounded-2xl bg-white hover:bg-[#F4E7EF] border border-[#E7C8DB] text-xs font-semibold text-[#5B1744] transition shadow-2xs">
+                            <i class="fa-solid fa-graduation-cap mr-1.5 text-[11px]"></i>Cek jadwal kelas
+                        </button>
+                        <button type="button" onclick="setQuickPrompt('Bantu buatkan jadwal belajar malam ini yang efektif')" 
+                            class="px-3.5 py-2 rounded-2xl bg-white hover:bg-[#F4E7EF] border border-[#E7C8DB] text-xs font-semibold text-[#5B1744] transition shadow-2xs">
+                            <i class="fa-regular fa-clock mr-1.5 text-[11px]"></i>Buat jadwal belajar
+                        </button>
+                    </div>
                 </div>
             `;
         }
@@ -421,8 +468,8 @@
                         <i class="fa-solid fa-message w-4 text-center shrink-0"></i>
                         <span class="truncate">${s.title}</span>
                     </span>
-                    <button type="button" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/20 rounded shrink-0" onclick="deleteSession('${s.id}', event)">
-                        <i class="fa-solid fa-trash text-[10px]"></i>
+                    <button type="button" title="Hapus sesi" class="opacity-100 sm:opacity-0 sm:group-hover:opacity-100 p-1.5 hover:bg-white/20 text-white/70 hover:text-red-400 rounded-lg shrink-0 transition" onclick="deleteSession('${s.id}', event)">
+                        <i class="fa-solid fa-trash text-xs"></i>
                     </button>
                 </div>
             `;
@@ -454,15 +501,15 @@
                                     <i class="fa-solid fa-folder w-4 text-center shrink-0"></i>
                                     <span class="truncate font-semibold">${s.title}</span>
                                 </span>
-                                <span class="flex items-center gap-1 shrink-0">
-                                    <button type="button" title="Ganti nama proyek" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/20 rounded" onclick="showProjectRenameModal('${s.id}', event)">
-                                        <i class="fa-solid fa-pen text-[10px]"></i>
+                                <span class="flex items-center gap-1 shrink-0 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition">
+                                    <button type="button" title="Ganti nama proyek" class="p-1.5 hover:bg-white/20 text-white/80 hover:text-white rounded-lg transition" onclick="showProjectRenameModal('${s.id}', event)">
+                                        <i class="fa-solid fa-pen text-xs"></i>
                                     </button>
-                                    <button type="button" title="Sesi baru dalam proyek ini" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/20 rounded" onclick="startNewDraft('${s.id}', event)">
-                                        <i class="fa-solid fa-plus text-[10px]"></i>
+                                    <button type="button" title="Sesi baru dalam proyek ini" class="p-1.5 hover:bg-white/20 text-white/80 hover:text-white rounded-lg transition" onclick="startNewDraft('${s.id}', event)">
+                                        <i class="fa-solid fa-plus text-xs"></i>
                                     </button>
-                                    <button type="button" class="opacity-0 group-hover:opacity-100 p-1 hover:bg-white/20 rounded" onclick="deleteSession('${s.id}', event)">
-                                        <i class="fa-solid fa-trash text-[10px]"></i>
+                                    <button type="button" title="Hapus proyek" class="p-1.5 hover:bg-white/20 text-white/70 hover:text-red-400 rounded-lg transition" onclick="deleteSession('${s.id}', event)">
+                                        <i class="fa-solid fa-trash text-xs"></i>
                                     </button>
                                 </span>
                             </div>
@@ -546,7 +593,7 @@
             const c = document.getElementById('messages');
             const div = document.createElement('div');
             if (id !== null && id !== undefined) div.id = `message-${id}`;
-            div.className = `msg-fade mb-[72px] ${role === 'user' ? 'text-right' : 'text-left'}`;
+            div.className = `msg-fade mb-5 sm:mb-6 ${role === 'user' ? 'text-right' : 'text-left'}`;
 
             let messageContent = content;
             let actionsHtml = '';
@@ -555,22 +602,22 @@
                 messageContent = 'Anda membatalkan pesan.';
             } else if (role === 'user' && isPending) {
                 actionsHtml = `
-                    <div class="message-actions mt-1">
-                        <button type="button" onclick="cancelPendingMessage('${id}')" class="text-xs text-red-500 hover:underline">Batalkan</button>
+                    <div class="message-actions mt-1.5 text-right">
+                        <button type="button" onclick="cancelPendingMessage('${id}')" class="text-xs text-red-500 hover:underline font-semibold">Batalkan</button>
                     </div>
                 `;
             } else if (role === 'user' && canEdit) {
                 if (id !== null && id !== undefined) messageContents[String(id)] = content;
                 actionsHtml = `
-                    <div class="message-actions mt-1">
-                        <button type="button" onclick="editMessage('${id}')" class="text-xs text-blue-500 hover:underline">Edit</button>
+                    <div class="message-actions mt-1.5 text-right">
+                        <button type="button" onclick="editMessage('${id}')" class="text-xs text-gray-400 hover:text-[#5B1744] hover:underline font-semibold inline-flex items-center gap-1"><i class="fa-solid fa-pen text-[10px]"></i>Edit</button>
                     </div>
                 `;
             }
 
             const rendered = role === 'assistant'
-                ? `<div class="ai-content leading-relaxed inline-block p-5 rounded-2xl bg-white border border-gray-100 shadow-sm text-[15px] text-left max-w-full break-words [overflow-wrap:anywhere]">${marked.parse(messageContent)}</div>`
-                : `<div class="inline-block p-4 rounded-2xl bg-[#5B1744] text-white text-sm text-left max-w-full break-words [overflow-wrap:anywhere]">${messageContent}</div>`;
+                ? `<div class="ai-content leading-relaxed inline-block p-5 sm:p-6 rounded-3xl rounded-tl-xs bg-white border border-[#E7C8DB]/60 shadow-sm text-sm sm:text-base text-left max-w-full break-words [overflow-wrap:anywhere] text-gray-800">${marked.parse(messageContent)}</div>`
+                : `<div class="inline-block px-5 py-3.5 rounded-3xl rounded-tr-xs bg-[#5B1744] text-white text-sm sm:text-base leading-relaxed text-left max-w-[85%] break-words [overflow-wrap:anywhere] shadow-xs">${messageContent}</div>`;
             div.innerHTML = rendered + actionsHtml;
             c.appendChild(div);
             scrollToBottom();
@@ -580,10 +627,10 @@
             const c = document.getElementById('messages');
             const div = document.createElement('div');
             div.id = 'loading-message';
-            div.className = 'mb-[72px] text-left';
+            div.className = 'mb-5 sm:mb-6 text-left';
             div.innerHTML = `
-                <div class="inline-block p-4 rounded-2xl bg-white border border-gray-100 shadow-sm">
-                    <div class="typing-dots flex items-center gap-0">
+                <div class="inline-block p-4 sm:p-5 rounded-3xl rounded-tl-xs bg-white border border-[#E7C8DB]/60 shadow-sm">
+                    <div class="typing-dots flex items-center gap-1">
                         <span></span><span></span><span></span>
                     </div>
                 </div>

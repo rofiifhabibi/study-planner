@@ -21,7 +21,7 @@
         @php
             $stats = [
                 ['label' => "Today's Tasks", 'value' => "$todayCompleted/$todayTotal", 'icon' => 'fa-regular fa-circle-check', 'description' => "$todayCompleted completed"],
-                ['label' => 'Study Time', 'value' => $totalStudyHours . 'h', 'icon' => 'fa-regular fa-clock', 'description' => "$todayStudyMinutes min today"],
+                ['label' => 'Study Time', 'value' => $totalStudyTimeFormatted ?? ($totalStudyHours.'h'), 'icon' => 'fa-regular fa-clock', 'description' => "$todayStudyMinutes min today"],
                 ['label' => 'Completed', 'value' => (string) $totalCompleted, 'icon' => 'fa-solid fa-chart-line', 'description' => 'All time'],
                 ['label' => 'Study Streak', 'value' => (string) $streak, 'icon' => 'fa-solid fa-fire text-amber-500', 'description' => 'days in a row'],
             ];
@@ -231,7 +231,7 @@
                 </div>
                 <div class="rounded-xl bg-[#FAF6F0] p-3 text-center">
                     <p class="text-[10px] text-gray-400 font-medium">Hours</p>
-                    <p class="font-bold text-xs mt-0.5 text-gray-800">{{ $totalStudyHours }}h</p>
+                    <p class="font-bold text-xs mt-0.5 text-gray-800">{{ $totalStudyTimeFormatted ?? ($totalStudyHours . 'h') }}</p>
                 </div>
             </div>
         </div>
@@ -472,16 +472,24 @@
     let pomoSelectedTaskId = null;
     let pomoTotalElapsedFocusSeconds = 0;
     const initialTodayStudyMin = {{ (int)($todayStudyMinutes ?? 0) }};
-    const initialTotalStudyHours = {{ (float)($totalStudyHours ?? 0) }};
+    const initialTotalStudySeconds = {{ (int)($totalStudySeconds ?? ((float)($totalStudyHours ?? 0) * 3600)) }};
+
+    function formatStudyDuration(sec) {
+        const h = Math.floor(sec / 3600);
+        const m = Math.floor((sec % 3600) / 60);
+        if (h > 0 && m > 0) return `${h}h ${m}m`;
+        if (h > 0) return `${h}h`;
+        return `${m}m`;
+    }
 
     function updateStudyTimeDisplay() {
         const addedMins = Math.floor(pomoTotalElapsedFocusSeconds / 60);
         const currentTodayMin = initialTodayStudyMin + addedMins;
-        const currentTotalHours = (initialTotalStudyHours + (pomoTotalElapsedFocusSeconds / 3600)).toFixed(1);
+        const currentTotalSec = initialTotalStudySeconds + pomoTotalElapsedFocusSeconds;
 
         const valEl = document.getElementById('stat-study-time-val');
         const minEl = document.getElementById('stat-study-time-min');
-        if (valEl) valEl.textContent = currentTotalHours + 'h';
+        if (valEl) valEl.textContent = formatStudyDuration(currentTotalSec);
         if (minEl) minEl.textContent = currentTodayMin;
     }
 
@@ -496,7 +504,99 @@
         if (el) el.textContent = formatPomoTime(pomoTimeLeft);
     }
 
-    function setPomoMode(mode) {
+    function savePomoState() {
+        const labelEl = document.getElementById('pomo-active-task-label');
+        const state = {
+            isRunning: pomoIsRunning,
+            mode: pomoMode,
+            focusMinutes: pomoFocusMinutes,
+            breakMinutes: pomoBreakMinutes,
+            secondsLeft: pomoTimeLeft,
+            targetEndTime: pomoIsRunning ? (Date.now() + (pomoTimeLeft * 1000)) : null,
+            selectedTaskId: pomoSelectedTaskId,
+            selectedTaskTitle: labelEl ? labelEl.textContent : 'Pilih Tugas',
+            totalElapsedFocusSeconds: pomoTotalElapsedFocusSeconds,
+            lastSavedAt: Date.now()
+        };
+        localStorage.setItem('study_planner_pomo_state', JSON.stringify(state));
+    }
+
+    function clearPomoState() {
+        localStorage.removeItem('study_planner_pomo_state');
+    }
+
+    function loadPomoState() {
+        const raw = localStorage.getItem('study_planner_pomo_state');
+        if (!raw) return false;
+        try {
+            const state = JSON.parse(raw);
+            if (!state) return false;
+
+            pomoFocusMinutes = state.focusMinutes || 25;
+            pomoBreakMinutes = state.breakMinutes || 5;
+            pomoMode = state.mode || 'focus';
+            pomoTotalElapsedFocusSeconds = state.totalElapsedFocusSeconds || 0;
+
+            // Highlight preset button
+            document.querySelectorAll('.pomo-preset-btn').forEach(btn => {
+                btn.className = 'pomo-preset-btn px-2.5 py-1 rounded-lg text-xs font-semibold text-gray-600 hover:text-[#5B1744] transition';
+            });
+            const activeBtn = document.getElementById(`preset-btn-${pomoFocusMinutes}`);
+            if (activeBtn) {
+                activeBtn.className = 'pomo-preset-btn px-2.5 py-1 rounded-lg text-xs font-bold bg-[#5B1744] text-white transition shadow-2xs';
+            }
+
+            // Restore selected task and steps
+            if (state.selectedTaskId) {
+                pomoSelectedTaskId = state.selectedTaskId;
+                currentTaskId = state.selectedTaskId;
+                const label = document.getElementById('pomo-active-task-label');
+                const subtitle = document.getElementById('active-task-subtitle');
+                const container = document.getElementById('active-checklist-container');
+                if (label) label.textContent = state.selectedTaskTitle || 'Tugas Terpilih';
+                if (subtitle) subtitle.textContent = 'Mengerjakan tugas: ' + (state.selectedTaskTitle || '');
+                if (container) container.classList.remove('hidden');
+
+                apiFetch(`${API_BASE}/tasks/${state.selectedTaskId}/steps`)
+                    .then(res => res.json())
+                    .then(data => {
+                        currentSteps = data.steps || [];
+                        renderActiveChecklist();
+                    })
+                    .catch(() => {});
+            }
+
+            setPomoMode(pomoMode, false);
+
+            if (state.isRunning && state.targetEndTime) {
+                const remaining = Math.round((state.targetEndTime - Date.now()) / 1000);
+                if (remaining > 0) {
+                    pomoTimeLeft = remaining;
+                    renderPomoDisplay();
+                    updateStudyTimeDisplay();
+                    startPomodoro(false);
+                    return true;
+                } else {
+                    pomoTimeLeft = 0;
+                    renderPomoDisplay();
+                    updateStudyTimeDisplay();
+                    handlePomodoroEnded();
+                    return true;
+                }
+            } else {
+                pomoTimeLeft = typeof state.secondsLeft === 'number' ? state.secondsLeft : (pomoMode === 'focus' ? pomoFocusMinutes : pomoBreakMinutes) * 60;
+                renderPomoDisplay();
+                updateStudyTimeDisplay();
+                pausePomodoro(false);
+                return true;
+            }
+        } catch(e) {
+            console.error('Failed to load pomo state', e);
+            return false;
+        }
+    }
+
+    function setPomoMode(mode, resetTime = true) {
         pomoMode = mode;
         const badge = document.getElementById('pomo-mode-badge');
         const icon = document.getElementById('pomo-mode-icon');
@@ -504,21 +604,47 @@
         const durLabel = document.getElementById('pomo-focus-tab-min');
 
         if (mode === 'focus') {
-            pomoTimeLeft = pomoFocusMinutes * 60;
+            if (resetTime) pomoTimeLeft = pomoFocusMinutes * 60;
             if (badge) badge.className = "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition bg-[#5B1744] text-white shadow-2xs";
             if (icon) icon.className = "fa-solid fa-bullseye text-[11px]";
             if (title) title.textContent = "Sesi Fokus";
             if (durLabel) durLabel.textContent = pomoFocusMinutes + "m";
         } else {
-            pomoTimeLeft = pomoBreakMinutes * 60;
+            if (resetTime) pomoTimeLeft = pomoBreakMinutes * 60;
             if (badge) badge.className = "inline-flex items-center gap-2 px-4 py-1.5 rounded-full text-xs font-bold transition bg-[#F4E7EF] text-[#5B1744] border border-[#E7C8DB]";
             if (icon) icon.className = "fa-solid fa-mug-hot text-[11px]";
             if (title) title.textContent = "Sesi Istirahat";
             if (durLabel) durLabel.textContent = pomoBreakMinutes + "m";
         }
         renderPomoDisplay();
+        savePomoState();
     }
 
+    function handlePomodoroEnded() {
+        pausePomodoro(false);
+        playAlarmChime();
+
+        if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('Waktu Belajar Selesai!', {
+                body: pomoMode === 'focus' 
+                    ? 'Sesi fokus telah selesai! Waktunya istirahat sejenak.' 
+                    : 'Sesi istirahat telah selesai! Siap untuk kembali fokus.'
+            });
+        } else if ('Notification' in window && Notification.permission !== 'denied') {
+            Notification.requestPermission();
+        }
+
+        if (pomoMode === 'focus') {
+            showToast("Alarm: Waktu fokus selesai! Otomatis beralih ke sesi istirahat.", "success");
+            setPomoMode('break', true);
+            startPomodoro(true); // Otomatis mulai istirahat
+        } else {
+            showToast("Alarm: Waktu istirahat selesai! Siap untuk kembali fokus.", "success");
+            setPomoMode('focus', true);
+        }
+    }
+
+    let pomoTickCounter = 0;
     function tickPomodoro() {
         if (pomoTimeLeft > 0) {
             pomoTimeLeft--;
@@ -528,47 +654,33 @@
             }
             renderPomoDisplay();
             document.title = `(${formatPomoTime(pomoTimeLeft)}) ${pomoMode === 'focus' ? 'Fokus' : 'Istirahat'} - Study Planner`;
+            pomoTickCounter++;
+            if (pomoTickCounter % 3 === 0) {
+                savePomoState();
+            }
         } else {
-            pausePomodoro();
-            playAlarmChime();
-
-            if ('Notification' in window && Notification.permission === 'granted') {
-                new Notification('Waktu Belajar Selesai!', {
-                    body: pomoMode === 'focus' 
-                        ? 'Sesi fokus telah selesai! Waktunya istirahat sejenak.' 
-                        : 'Sesi istirahat telah selesai! Siap untuk kembali fokus.'
-                });
-            } else if ('Notification' in window && Notification.permission !== 'denied') {
-                Notification.requestPermission();
-            }
-
-            if (pomoMode === 'focus') {
-                showToast("Alarm: Waktu fokus selesai! Otomatis beralih ke sesi istirahat.", "success");
-                setPomoMode('break');
-                startPomodoro(); // Otomatis mulai istirahat
-            } else {
-                showToast("Alarm: Waktu istirahat selesai! Siap untuk kembali fokus.", "success");
-                setPomoMode('focus');
-            }
+            handlePomodoroEnded();
         }
     }
 
     function togglePomodoroPlay() {
         if (pomoIsRunning) {
-            pausePomodoro();
+            pausePomodoro(true);
         } else {
-            startPomodoro();
+            startPomodoro(true);
         }
     }
 
-    function startPomodoro() {
+    function startPomodoro(save = true) {
         pomoIsRunning = true;
         const icon = document.getElementById('pomo-play-icon');
         if (icon) icon.className = 'fa-solid fa-pause';
+        if (pomoTimerInterval) clearInterval(pomoTimerInterval);
         pomoTimerInterval = setInterval(tickPomodoro, 1000);
+        if (save) savePomoState();
     }
 
-    function pausePomodoro() {
+    function pausePomodoro(save = true) {
         pomoIsRunning = false;
         if (pomoTimerInterval) {
             clearInterval(pomoTimerInterval);
@@ -576,20 +688,23 @@
         }
         const icon = document.getElementById('pomo-play-icon');
         if (icon) icon.className = 'fa-solid fa-play';
+        if (save) savePomoState();
     }
 
     function resetPomodoro() {
-        pausePomodoro();
+        pausePomodoro(false);
         pomoTimeLeft = (pomoMode === 'focus' ? pomoFocusMinutes : pomoBreakMinutes) * 60;
         renderPomoDisplay();
+        savePomoState();
     }
 
     function skipPomodoroMode() {
-        setPomoMode(pomoMode === 'focus' ? 'break' : 'focus');
+        setPomoMode(pomoMode === 'focus' ? 'break' : 'focus', true);
     }
 
     async function finishPomodoroSession() {
-        pausePomodoro();
+        pausePomodoro(false);
+        clearPomoState();
         const elapsedMinutes = Math.max(1, Math.round(pomoTotalElapsedFocusSeconds / 60));
         let sessionTitle = 'Sesi Pomodoro';
         if (pomoSelectedTaskId) {
@@ -684,6 +799,7 @@
             currentSteps = [];
             if (container) container.classList.add('hidden');
         }
+        savePomoState();
     }
 
     function applyPomoPreset(focus, breakMin) {
@@ -715,6 +831,7 @@
         if (durLabel) durLabel.textContent = (pomoMode === 'focus' ? focus : breakMin) + 'm';
         pomoTimeLeft = (pomoMode === 'focus' ? pomoFocusMinutes : pomoBreakMinutes) * 60;
         renderPomoDisplay();
+        savePomoState();
     }
 
     function playAlarmChime() {
@@ -906,7 +1023,7 @@
         }
     }
 
-    // Auto-detect task_id / start_task_id in query string
+    // Auto-detect task_id / start_task_id in query string, or restore running Pomodoro
     document.addEventListener('DOMContentLoaded', () => {
         const urlParams = new URLSearchParams(window.location.search);
         const taskId = urlParams.get('task_id') || urlParams.get('start_task_id');
@@ -926,6 +1043,9 @@
                     .catch(() => {});
             }
             window.history.replaceState({}, document.title, window.location.pathname);
+        } else {
+            // Restore ongoing session from previous page navigation
+            loadPomoState();
         }
     });
 

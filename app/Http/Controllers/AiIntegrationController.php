@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\ChatSession;
+use App\Models\Note;
 use App\Models\Schedule;
 use App\Models\SchoolTimetable;
 use App\Models\Task;
@@ -179,6 +180,42 @@ class AiIntegrationController extends Controller
         return response()->json([
             'status' => 'success',
             'data' => $timetables,
+        ]);
+    }
+
+    public function getNotes(Request $request)
+    {
+        $user = $this->authenticateAiRequest($request);
+
+        $notes = Note::where('user_id', $user->id)
+            ->latest('updated_at')
+            ->limit(20)
+            ->get();
+
+        return response()->json([
+            'status' => 'success',
+            'data' => $notes,
+        ]);
+    }
+
+    public function createNote(Request $request)
+    {
+        $user = $this->authenticateAiRequest($request);
+
+        $validated = $request->validate([
+            'title' => 'nullable|string|max:255',
+            'content' => 'required|string|max:10000',
+        ]);
+
+        $note = Note::create([
+            'user_id' => $user->id,
+            ...$validated,
+        ]);
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Note created successfully',
+            'data' => $note,
         ]);
     }
 }

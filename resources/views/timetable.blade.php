@@ -10,8 +10,12 @@
         2 => 'Selasa',
         3 => 'Rabu',
         4 => 'Kamis',
-        5 => 'Jumat'
+        5 => 'Jumat',
+        6 => 'Sabtu',
     ];
+    if (isset($grouped[0]) && count($grouped[0]) > 0) {
+        $days[0] = 'Minggu';
+    }
 @endphp
 
 @section('content')
@@ -19,7 +23,7 @@
     <section class="fade-up flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
         <div>
             <h1 class="text-2xl sm:text-3xl font-bold tracking-tight mt-1 text-gray-900">Class Schedule</h1>
-            <p class="text-sm text-gray-500 mt-1">Atur jadwal mingguanmu dari Senin sampai Jumat.</p>
+            <p class="text-sm text-gray-500 mt-1">Atur jadwal pelajaran dan kelas mingguanmu.</p>
         </div>
         <button onclick="openTimetableModal()" class="inline-flex items-center gap-2 bg-[#5B1744] text-white px-5 py-3 rounded-full text-xs font-bold hover:bg-[#481236] transition shadow-xs"
             data-tour-step="2" data-tour-title="Tambah Jadwal Kelas" data-tour-desc="Klik tombol ini untuk memasukkan mata pelajaran baru beserta hari dan jam pelajarannya.">
@@ -27,7 +31,7 @@
         </button>
     </section>
 
-    <div class="grid grid-cols-1 md:grid-cols-5 gap-4"
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4"
         data-tour-step="1" data-tour-title="Jadwal Mingguan Senin-Jumat" data-tour-desc="Lihat seluruh jadwal kelas rutinmu yang tersusun rapi dari hari Senin hingga Jumat.">
         @foreach($days as $val => $label)
             <div class="bg-white rounded-3xl border border-gray-100 p-4 soft-shadow h-full flex flex-col fade-up" style="animation-delay: {{ $loop->index * 0.1 }}s">
@@ -42,16 +46,16 @@
                     @if(isset($grouped[$val]) && count($grouped[$val]) > 0)
                         @foreach($grouped[$val] as $item)
                             <div class="relative group bg-[#FAF6F0]/60 hover:bg-[#FAF6F0] border border-[#E7C8DB]/50 rounded-2xl p-3 transition overflow-hidden">
-                                <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition">
+                                <div class="absolute top-2 right-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition">
                                     <form action="{{ route('timetable.destroy', $item) }}" method="POST">
                                         @csrf
                                         @method('DELETE')
-                                        <button type="submit" class="w-5 h-5 rounded-full bg-white text-red-500 hover:bg-red-50 flex items-center justify-center transition shadow-sm" onclick="return confirm('Hapus pelajaran ini?')">
-                                            <i class="fa-solid fa-trash text-[8px]"></i>
+                                        <button type="submit" title="Hapus jadwal kelas" class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-white border border-red-200 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition shadow-2xs" onclick="return confirm('Hapus pelajaran ini?')">
+                                            <i class="fa-solid fa-trash text-[10px]"></i>
                                         </button>
                                     </form>
                                 </div>
-                                <p class="font-bold text-xs text-[#5B1744] pr-4">{{ $item->subject }}</p>
+                                <p class="font-bold text-xs text-[#5B1744] pr-7">{{ $item->subject }}</p>
                                 <div class="flex items-center gap-1.5 mt-1.5 text-gray-500 text-[10px] font-medium">
                                     <i class="fa-regular fa-clock"></i>
                                     {{ \Carbon\Carbon::parse($item->start_time)->format('H:i') }} 
@@ -74,7 +78,7 @@
 
     {{-- MODAL TAMBAH PELAJARAN (Friendly Cartoonish Redesign) --}}
     <div id="timetableModal" class="fixed inset-0 z-50 hidden bg-gray-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-        <div class="bg-[#FAF6F0] w-full max-w-lg rounded-[2rem] border-2 border-[#E7C8DB] shadow-2xl overflow-hidden transform transition-all scale-95 opacity-0 duration-300" id="timetableModalInner">
+        <div class="bg-[#FAF6F0] w-full max-w-lg rounded-[2rem] border-2 border-[#E7C8DB] shadow-[0_0_50px_rgba(0,0,0,0.35),0_15px_35px_rgba(91,23,68,0.2)] overflow-hidden transform transition-all scale-95 opacity-0 duration-300 my-auto" id="timetableModalInner">
             {{-- Modal Header --}}
             <div class="px-6 py-5 border-b border-[#E7C8DB]/60 flex items-center justify-between bg-white">
                 <div class="flex items-center gap-3">
@@ -98,10 +102,10 @@
                     {{-- 1. Pilih Hari --}}
                     <div class="bg-white p-3.5 rounded-2xl border border-[#E7C8DB] shadow-2xs">
                         <label class="text-xs font-bold text-gray-800 flex items-center justify-between mb-2">
-                            <span class="flex items-center gap-1.5"><i class="fa-regular fa-calendar-check text-[#5B1744]"></i> Hari</span>
+                            <span>Hari</span>
                             <span id="selectedDayLabel" class="text-[10px] text-[#5B1744] font-bold">Senin</span>
                         </label>
-                        <div class="grid grid-cols-5 gap-1.5">
+                        <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
                             @foreach($days as $val => $label)
                                 <button type="button" onclick="selectTimetableDay({{ $val }}, '{{ $label }}')" id="dayChip-{{ $val }}" 
                                     class="day-chip py-2 rounded-xl text-[11px] font-bold border-2 transition text-center {{ $val === 1 ? 'bg-[#5B1744] text-white border-[#5B1744] shadow-xs' : 'bg-white text-gray-700 border-gray-200 hover:border-[#E7C8DB]' }}">
@@ -114,7 +118,7 @@
                     {{-- 2. Mata Pelajaran --}}
                     <div class="bg-white p-3.5 rounded-2xl border border-[#E7C8DB] shadow-2xs">
                         <label class="text-xs font-bold text-gray-800 flex items-center justify-between">
-                            <span class="flex items-center gap-1.5"><i class="fa-solid fa-book-open text-[#5B1744]"></i> Mata Pelajaran</span>
+                            <span>Mata Pelajaran</span>
                             <span class="text-[10px] text-red-500 font-semibold">*Wajib</span>
                         </label>
                         <input type="text" name="subject" required placeholder="Contoh: Matematika, Bahasa Inggris, Fisika" 
@@ -123,8 +127,8 @@
 
                     {{-- 3. Jam Mulai & Selesai --}}
                     <div class="bg-white p-3.5 rounded-2xl border border-[#E7C8DB] shadow-2xs">
-                        <label class="text-xs font-bold text-gray-800 flex items-center gap-1.5 mb-2">
-                            <i class="fa-regular fa-clock text-[#5B1744]"></i> <span>Jam Pelajaran</span>
+                        <label class="text-xs font-bold text-gray-800 block mb-2">
+                            Jam Pelajaran
                         </label>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
