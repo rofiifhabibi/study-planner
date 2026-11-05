@@ -153,7 +153,7 @@
                         <div class="font-bold text-base tracking-tight">
                             Study Planner
                         </div>
-                        <div class="text-[9px] text-white/50 tracking-[.2em] font-semibold">
+                        <div class="text-[10px] text-white/75 tracking-[.2em] font-semibold">
                             PLAN · STUDY · GROW
                         </div>
                     </div>
@@ -164,62 +164,62 @@
             <div class="px-4 flex-1 overflow-y-auto space-y-6 overscroll-contain">
 
                 <div>
-                    <p class="px-3 mb-2 text-[10px] uppercase tracking-[.2em] text-white/40 font-bold">
-                        Workspace
+                    <p class="px-3 mb-2 text-[11px] uppercase tracking-[.2em] text-white/75 font-bold">
+                        Menu Utama
                     </p>
 
                     <nav class="space-y-1">
-                        <a href="{{ route('dashboard') }}" class="sidebar-item {{ ($activeNav ?? '') === 'overview' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs">
+                        <a href="{{ route('dashboard') }}" class="sidebar-item {{ ($activeNav ?? '') === 'overview' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium">
                             <i class="fa-solid fa-border-all w-4 text-center"></i>
-                            Overview
+                            Beranda
                         </a>
 
-                        <a href="{{ url('/tasks') }}" class="sidebar-item {{ ($activeNav ?? '') === 'tasks' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs">
+                        <a href="{{ url('/tasks') }}" class="sidebar-item {{ ($activeNav ?? '') === 'tasks' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium">
                             <i class="fa-regular fa-circle-check w-4 text-center"></i>
-                            My Tasks
+                            Tugas Saya
                         </a>
 
-                                                <a href="{{ url('/schedule') }}" class="sidebar-item {{ ($activeNav ?? '') === 'schedule' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs">
+                        <a href="{{ url('/schedule') }}" class="sidebar-item {{ ($activeNav ?? '') === 'schedule' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium">
                             <i class="fa-regular fa-calendar-check w-4 text-center"></i>
-                            Schedule
+                            Agenda Belajar
                         </a>
 
-                        <a href="{{ route('timetable.index') }}" class="sidebar-item {{ ($activeNav ?? '') === 'timetable' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs">
+                        <a href="{{ route('timetable.index') }}" class="sidebar-item {{ ($activeNav ?? '') === 'timetable' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium">
                             <i class="fa-solid fa-graduation-cap w-4 text-center"></i>
-                            Class Schedule
+                            Jadwal Pelajaran
                         </a>
 
-                        <a href="{{ url('/notes') }}" class="sidebar-item {{ ($activeNav ?? '') === 'notes' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs">
+                        <a href="{{ url('/notes') }}" class="sidebar-item {{ ($activeNav ?? '') === 'notes' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium">
                             <i class="fa-regular fa-note-sticky w-4 text-center"></i>
-                            Notes
+                            Catatan
                         </a>
 
-                        <a href="{{ route('chat') }}" class="sidebar-item {{ ($activeNav ?? '') === 'chat' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs">
+                        <a href="{{ route('chat') }}" class="sidebar-item {{ ($activeNav ?? '') === 'chat' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium">
                             <i class="fa-solid fa-wand-magic-sparkles w-4 text-center"></i>
                             AI Study
                         </a>
 
-                        <a href="{{ url('/progress') }}" class="sidebar-item {{ ($activeNav ?? '') === 'progress' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs">
+                        <a href="{{ url('/progress') }}" class="sidebar-item {{ ($activeNav ?? '') === 'progress' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium">
                             <i class="fa-solid fa-chart-simple w-4 text-center"></i>
-                            Progress
+                            Timer & Progres
                         </a>
                     </nav>
                 </div>
 
                 <div>
-                    <p class="px-3 mb-2 text-[10px] uppercase tracking-[.2em] text-white/40 font-bold">
-                        Personal
+                    <p class="px-3 mb-2 text-[11px] uppercase tracking-[.2em] text-white/75 font-bold">
+                        Lainnya
                     </p>
 
                     <nav class="space-y-1">
-                        <a href="{{ url('/integrations') }}" class="sidebar-item {{ ($activeNav ?? '') === 'integrations' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs">
+                        <a href="{{ url('/integrations') }}" class="sidebar-item {{ ($activeNav ?? '') === 'integrations' ? 'active' : '' }} flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium">
                             <i class="fa-solid fa-link w-4 text-center"></i>
-                            Integrations
+                            Integrasi
                         </a>
 
-                        <a href="/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs">
+                        <a href="/" class="sidebar-item flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-medium">
                             <i class="fa-solid fa-house w-4 text-center"></i>
-                            Back to Home
+                            Halaman Utama
                         </a>
                     </nav>
                 </div>
@@ -361,28 +361,36 @@
         </main>
 
         {{-- MOBILE BOTTOM NAVIGATION (Hanya Muncul di Mobile/Layar < 768px) --}}
-        <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-100 py-2 px-6 flex justify-around items-center z-40 shadow-lg">
-            <a href="{{ route('dashboard') }}" class="flex flex-col items-center gap-1 {{ ($activeNav ?? '') === 'overview' ? 'text-[#5B1744]' : 'text-gray-400' }}">
-                <div class="{{ ($activeNav ?? '') === 'overview' ? 'bg-[#5B1744] text-white' : '' }} px-3 py-1 rounded-full text-xs">
+        <nav class="md:hidden fixed bottom-0 left-0 right-0 bg-white/95 backdrop-blur-md border-t border-gray-100 py-1.5 px-4 flex justify-around items-end z-40 shadow-lg">
+            <a href="{{ route('dashboard') }}" class="flex flex-col items-center gap-0.5 {{ ($activeNav ?? '') === 'overview' ? 'text-[#5B1744] font-bold' : 'text-gray-400 font-medium' }} transition-colors">
+                <div class="{{ ($activeNav ?? '') === 'overview' ? 'bg-[#F4E7EF] text-[#5B1744]' : '' }} px-2.5 py-1 rounded-full text-xs">
                     <i class="fa-solid fa-border-all"></i>
                 </div>
-                <span class="text-[9px] {{ ($activeNav ?? '') === 'overview' ? 'font-bold' : 'font-medium' }}">Overview</span>
+                <span class="text-[9px]">Beranda</span>
             </a>
-            <a href="{{ url('/schedule') }}" class="flex flex-col items-center gap-1 {{ ($activeNav ?? '') === 'schedule' ? 'text-[#5B1744]' : 'text-gray-400' }}">
-                <i class="fa-regular fa-calendar-check text-sm"></i>
-                <span class="text-[9px] font-medium">Schedule</span>
+            <a href="{{ url('/tasks') }}" class="flex flex-col items-center gap-0.5 {{ ($activeNav ?? '') === 'tasks' ? 'text-[#5B1744] font-bold' : 'text-gray-400 font-medium' }} transition-colors">
+                <div class="{{ ($activeNav ?? '') === 'tasks' ? 'bg-[#F4E7EF] text-[#5B1744]' : '' }} px-2.5 py-1 rounded-full text-xs">
+                    <i class="fa-regular fa-circle-check"></i>
+                </div>
+                <span class="text-[9px]">Tugas</span>
             </a>
-            <a href="{{ url('/notes') }}" class="flex flex-col items-center gap-1 {{ ($activeNav ?? '') === 'notes' ? 'text-[#5B1744]' : 'text-gray-400' }}">
-                <i class="fa-regular fa-note-sticky text-sm"></i>
-                <span class="text-[9px] font-medium">Notes</span>
+            <a href="{{ url('/progress') }}" class="flex flex-col items-center -mt-4 group">
+                <div class="w-11 h-11 rounded-full {{ ($activeNav ?? '') === 'progress' ? 'bg-[#5B1744] ring-4 ring-[#FAF6F0]' : 'bg-[#5B1744]' }} text-white flex items-center justify-center shadow-lg shadow-[#5B1744]/30 active:scale-95 transition-transform">
+                    <i class="fa-solid fa-stopwatch text-base"></i>
+                </div>
+                <span class="text-[9px] font-bold text-[#5B1744] mt-0.5">Timer</span>
             </a>
-            <a href="{{ url('/tasks') }}" class="flex flex-col items-center gap-1 {{ ($activeNav ?? '') === 'tasks' ? 'text-[#5B1744]' : 'text-gray-400' }}">
-                <i class="fa-regular fa-circle-check text-sm"></i>
-                <span class="text-[9px] font-medium">Tasks</span>
+            <a href="{{ url('/schedule') }}" class="flex flex-col items-center gap-0.5 {{ ($activeNav ?? '') === 'schedule' ? 'text-[#5B1744] font-bold' : 'text-gray-400 font-medium' }} transition-colors">
+                <div class="{{ ($activeNav ?? '') === 'schedule' ? 'bg-[#F4E7EF] text-[#5B1744]' : '' }} px-2.5 py-1 rounded-full text-xs">
+                    <i class="fa-regular fa-calendar-check"></i>
+                </div>
+                <span class="text-[9px]">Agenda</span>
             </a>
-            <a href="{{ route('chat') }}" class="flex flex-col items-center gap-1 {{ ($activeNav ?? '') === 'chat' ? 'text-[#5B1744]' : 'text-gray-400' }}">
-                <i class="fa-solid fa-wand-magic-sparkles text-sm"></i>
-                <span class="text-[9px] font-medium">AI Study</span>
+            <a href="{{ route('chat') }}" class="flex flex-col items-center gap-0.5 {{ ($activeNav ?? '') === 'chat' ? 'text-[#5B1744] font-bold' : 'text-gray-400 font-medium' }} transition-colors">
+                <div class="{{ ($activeNav ?? '') === 'chat' ? 'bg-[#F4E7EF] text-[#5B1744]' : '' }} px-2.5 py-1 rounded-full text-xs">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                </div>
+                <span class="text-[9px]">AI Study</span>
             </a>
         </nav>
 

@@ -19,7 +19,7 @@
         </div>
         <a href="{{ route('chat') }}" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-semibold transition shadow-md shadow-[#5B1744]/20 shrink-0">
             <i class="fa-solid fa-wand-magic-sparkles text-[10px]"></i>
-            <span>Ask AI</span>
+            <span>Tanya AI</span>
         </a>
     </section>
 
@@ -40,7 +40,7 @@
                 </div>
                 <button type="button" onclick="refreshDailySummary()" id="btn-refresh-summary" title="Perbarui ringkasan AI" class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 hover:bg-white/20 text-white/80 hover:text-white transition text-[11px] font-medium">
                     <i class="fa-solid fa-arrows-rotate text-[10px]" id="icon-refresh-summary"></i>
-                    <span class="hidden sm:inline">Refresh</span>
+                    <span class="hidden sm:inline">Perbarui</span>
                 </button>
             </div>
 
@@ -55,10 +55,10 @@
         data-tour-step="2" data-tour-title="Ringkasan Statistik Belajar" data-tour-desc="Pantau tugas hari ini, total jam belajar, tugas selesai, dan rentetan streak harianmu secara instan.">
         @php
             $stats = [
-                ['label' => "Today's Tasks", 'value' => "$todayCompleted/$todayTotal", 'icon' => 'fa-regular fa-circle-check', 'description' => "$todayCompleted completed"],
-                ['label' => 'Study Time', 'value' => $totalStudyTimeFormatted ?? '0d', 'icon' => 'fa-regular fa-clock', 'description' => ($todayStudyTimeFormatted ?? '0d').' hari ini'],
-                ['label' => 'Completed', 'value' => (string) $totalCompleted, 'icon' => 'fa-solid fa-chart-line', 'description' => 'All time'],
-                ['label' => 'Study Streak', 'value' => (string) $streak, 'icon' => 'fa-solid fa-fire text-amber-500', 'description' => 'days in a row'],
+                ['label' => "Tugas Hari Ini", 'value' => "$todayCompleted/$todayTotal", 'icon' => 'fa-regular fa-circle-check', 'description' => "$todayCompleted selesai"],
+                ['label' => 'Waktu Belajar', 'value' => $totalStudyTimeFormatted ?? '0d', 'icon' => 'fa-regular fa-clock', 'description' => ($todayStudyTimeFormatted ?? '0d').' hari ini'],
+                ['label' => 'Tugas Selesai', 'value' => (string) $totalCompleted, 'icon' => 'fa-solid fa-chart-line', 'description' => 'Sepanjang waktu'],
+                ['label' => 'Streak Belajar', 'value' => (string) $streak, 'icon' => 'fa-solid fa-fire text-amber-500', 'description' => 'hari berturut-turut'],
             ];
         @endphp
         @foreach ($stats as $stat)
@@ -249,8 +249,8 @@
                                 <p class="text-xs font-bold text-gray-800">{{ $task->title }}</p>
                                 <p class="text-[10px] text-gray-400 mt-0.5">Bertahap selesaikan tugas</p>
                             </div>
-                            <a href="{{ route('progress') . '?start_task_id=' . $task->id }}" class="px-3 py-1.5 bg-[#5B1744] text-white text-[10px] font-bold rounded-lg hover:bg-[#481236] transition shadow-sm whitespace-nowrap">
-                                <i class="fa-solid fa-play mr-1"></i> Start
+                            <a href="{{ route('progress', ['task_id' => $task->id]) }}" class="px-3 py-1.5 bg-[#5B1744] text-white text-[10px] font-bold rounded-lg hover:bg-[#481236] transition shadow-sm whitespace-nowrap">
+                                <i class="fa-solid fa-play mr-1"></i> Mulai
                             </a>
                         </div>
                     </div>
@@ -263,7 +263,7 @@
             </div>
 
             <a href="{{ route('progress') }}" class="w-full mt-4 py-2.5 rounded-xl bg-[#FAF6F0] text-[#5B1744] border border-[#E7C8DB]/50 text-xs font-bold text-center hover:bg-[#F4E7EF] transition shadow-xs">
-                Ke Halaman Track Progress
+                Ke Halaman Timer & Progres
             </a>
         </div>
 
@@ -271,7 +271,7 @@
 
     {{-- Quick actions --}}
     <section class="bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow fade-up"
-        data-tour-step="7" data-tour-title="Aksi Cepat (Quick Actions)" data-tour-desc="Akses pintasan instan ke semua modul utama: My Tasks, Schedule, Track Progress, dan Integrasi Akun Google.">
+        data-tour-step="7" data-tour-title="Aksi Cepat (Quick Actions)" data-tour-desc="Akses pintasan instan ke semua modul utama: Tugas Saya, Agenda Belajar, Timer & Progres, dan Integrasi Akun Google.">
         <div class="mb-5">
             <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">QUICK ACTIONS</p>
             <h2 class="text-lg font-bold text-gray-900 mt-0.5">Kelola ruang belajarmu</h2>
@@ -282,7 +282,7 @@
                     <i class="fa-regular fa-circle-check"></i>
                 </div>
                 <div>
-                    <p class="text-xs font-semibold text-gray-900">My Tasks</p>
+                    <p class="text-xs font-semibold text-gray-900">Tugas Saya</p>
                     <p class="text-[10px] text-gray-400 mt-0.5">Kelola semua tugas</p>
                 </div>
             </a>
@@ -291,7 +291,7 @@
                     <i class="fa-regular fa-calendar-check"></i>
                 </div>
                 <div>
-                    <p class="text-xs font-semibold text-gray-900">Schedule</p>
+                    <p class="text-xs font-semibold text-gray-900">Agenda Belajar</p>
                     <p class="text-[10px] text-gray-400 mt-0.5">Atur jadwal belajar</p>
                 </div>
             </a>
@@ -300,7 +300,7 @@
                     <i class="fa-solid fa-chart-simple"></i>
                 </div>
                 <div>
-                    <p class="text-xs font-semibold text-gray-900">Progress</p>
+                    <p class="text-xs font-semibold text-gray-900">Timer & Progres</p>
                     <p class="text-[10px] text-gray-400 mt-0.5">Sesi & statistik belajar</p>
                 </div>
             </a>
@@ -309,7 +309,7 @@
                     <i class="fa-solid fa-link"></i>
                 </div>
                 <div>
-                    <p class="text-xs font-semibold text-gray-900">Integrations</p>
+                    <p class="text-xs font-semibold text-gray-900">Integrasi</p>
                     <p class="text-[10px] text-gray-400 mt-0.5">Google Calendar & Tasks</p>
                 </div>
             </a>

@@ -1,7 +1,7 @@
 @extends('layouts.study')
 
-@section('title', 'Schedule — Study Planner')
-@section('page-label', 'MY SCHEDULE')
+@section('title', 'Agenda Belajar — Study Planner')
+@section('page-label', 'AGENDA BELAJAR')
 
 @php
     $activeNav = 'schedule';
@@ -121,13 +121,13 @@
 
     <section class="fade-up flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-6">
         <div>
-            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight mt-1 text-gray-900">Your schedule</h1>
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight mt-1 text-gray-900">Agenda Belajar</h1>
             <p class="text-sm text-gray-500 mt-1">Atur jadwal belajarmu dalam tampilan kalender.</p>
         </div>
         <button onclick="openScheduleModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-semibold transition shadow-md shadow-[#5B1744]/20 shrink-0"
             data-tour-step="1" data-tour-title="Tambah Agenda Belajar" data-tour-desc="Jadwalkan sesi belajar, ulangan, atau target belajar tertentu ke kalendermu.">
             <i class="fa-solid fa-plus text-[10px]"></i>
-            <span>Add Schedule</span>
+            <span>Tambah Agenda</span>
         </button>
     </section>
 

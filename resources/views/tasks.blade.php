@@ -1,7 +1,7 @@
 @extends('layouts.study')
 
-@section('title', 'My Tasks — Study Planner')
-@section('page-label', 'MY TASKS')
+@section('title', 'Tugas Saya — Study Planner')
+@section('page-label', 'TUGAS SAYA')
 
 @php
     $activeNav = 'tasks';
@@ -11,13 +11,13 @@
 
     <section class="fade-up flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight mt-1 text-gray-900">My Tasks</h1>
+            <h1 class="text-2xl sm:text-3xl font-bold tracking-tight mt-1 text-gray-900">Tugas Saya</h1>
             <p class="text-sm text-gray-500 mt-1">Kelola semua tugasmu dalam satu tempat.</p>
         </div>
         <button onclick="openTaskModal()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-full bg-[#5B1744] hover:bg-[#481236] text-white text-xs font-semibold transition shadow-md shadow-[#5B1744]/20 shrink-0"
             data-tour-step="1" data-tour-title="Tambah Tugas Baru" data-tour-desc="Buat tugas baru, tentukan kategori, tenggat waktu, serta durasi fokus Pomodoro khusus untuk tugas tersebut.">
             <i class="fa-solid fa-plus text-[10px]"></i>
-            <span>Add Task</span>
+            <span>Tambah Tugas</span>
         </button>
     </section>
 
@@ -26,10 +26,10 @@
         data-tour-step="2" data-tour-title="Statistik & Status Tugas" data-tour-desc="Pantau jumlah total tugas, tugas yang belum selesai, serta persentase keberhasilan belajarmu.">
         @php
             $statBoxes = [
-                ['label' => 'Total Tasks', 'value' => (string) $totalTasks, 'icon' => 'fa-regular fa-circle-check'],
-                ['label' => 'Pending', 'value' => (string) ($totalTasks - $totalCompleted), 'icon' => 'fa-regular fa-clock'],
-                ['label' => 'Completed', 'value' => (string) $totalCompleted, 'icon' => 'fa-solid fa-check-double'],
-                ['label' => 'Completion', 'value' => $completionPercentage . '%', 'icon' => 'fa-solid fa-chart-line'],
+                ['id' => 'stat-total-tasks', 'label' => 'Total Tugas', 'value' => (string) $totalTasks, 'icon' => 'fa-regular fa-circle-check'],
+                ['id' => 'stat-pending-tasks', 'label' => 'Belum Selesai', 'value' => (string) ($totalTasks - $totalCompleted), 'icon' => 'fa-regular fa-clock'],
+                ['id' => 'stat-completed-tasks', 'label' => 'Selesai', 'value' => (string) $totalCompleted, 'icon' => 'fa-solid fa-check-double'],
+                ['id' => 'stat-completion-rate', 'label' => 'Persentase', 'value' => $completionPercentage . '%', 'icon' => 'fa-solid fa-chart-line'],
             ];
         @endphp
         @foreach ($statBoxes as $stat)
@@ -37,7 +37,7 @@
                 <div class="flex justify-between items-start">
                     <div>
                         <p class="text-[11px] text-gray-400 font-medium">{{ $stat['label'] }}</p>
-                        <p class="text-2xl sm:text-3xl font-bold mt-1 text-[#5B1744]">{{ $stat['value'] }}</p>
+                        <p id="{{ $stat['id'] }}" class="text-2xl sm:text-3xl font-bold mt-1 text-[#5B1744]">{{ $stat['value'] }}</p>
                     </div>
                     <div class="w-8 h-8 rounded-xl bg-[#F4E7EF] text-[#5B1744] flex items-center justify-center text-xs">
                         <i class="{{ $stat['icon'] }}"></i>
@@ -52,8 +52,8 @@
         data-tour-step="3" data-tour-title="Daftar Tugas & Checklist" data-tour-desc="Kelola tugasmu, centang jika selesai, buat sub-langkah belajar bertahap, atau mulai timer fokus Pomodoro langsung dari sini.">
         <div class="flex justify-between items-center mb-5">
             <div>
-                <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">ALL TASKS</p>
-                <h2 class="text-lg font-bold text-gray-900 mt-0.5">Task list</h2>
+                <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">DAFTAR TUGAS</p>
+                <h2 class="text-lg font-bold text-gray-900 mt-0.5">Semua Tugas</h2>
             </div>
         </div>
 
@@ -89,7 +89,7 @@
                     </button>
                 </div>
             @empty
-                <div class="text-center py-10 text-gray-400">
+                <div id="task-empty-state" class="text-center py-10 text-gray-400">
                     <i class="fa-regular fa-circle-check text-3xl mb-3"></i>
                     <p class="text-sm">Belum ada tugas.</p>
                     <button onclick="openTaskModal()" class="mt-2 text-xs text-[#5B1744] font-semibold hover:underline">Tambah tugas baru</button>
@@ -399,13 +399,104 @@
         document.body.classList.remove('overflow-hidden');
     }
 
+    function updateTaskStats(deltaTotal = 0, deltaCompleted = 0) {
+        const totalEl = document.getElementById('stat-total-tasks');
+        const pendingEl = document.getElementById('stat-pending-tasks');
+        const completedEl = document.getElementById('stat-completed-tasks');
+        const rateEl = document.getElementById('stat-completion-rate');
+
+        if (!totalEl || !pendingEl || !completedEl || !rateEl) return;
+
+        let total = Math.max(0, parseInt(totalEl.textContent) + deltaTotal);
+        let completed = Math.max(0, parseInt(completedEl.textContent) + deltaCompleted);
+        let pending = Math.max(0, total - completed);
+        let rate = total > 0 ? Math.round((completed / total) * 100) : 0;
+
+        totalEl.textContent = total;
+        pendingEl.textContent = pending;
+        completedEl.textContent = completed;
+        rateEl.textContent = rate + '%';
+    }
+
+    function formatTaskDate(task) {
+        if (!task.due_date) return 'No deadline';
+        const rawDate = String(task.due_date).substring(0, 10);
+        const parts = rawDate.split('-');
+        if (parts.length === 3) {
+            const year = parts[0];
+            const monthIndex = parseInt(parts[1], 10) - 1;
+            const day = parts[2];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            let res = `${day} ${months[monthIndex] || parts[1]} ${year}`;
+            if (task.due_time) {
+                res += ' at ' + task.due_time.substring(0, 5);
+            }
+            return res;
+        }
+        return task.due_date;
+    }
+
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str)
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;');
+    }
+
+    function renderTaskCard(task) {
+        const priorityClasses = {
+            high: 'bg-red-50 text-red-600',
+            medium: 'bg-amber-50 text-amber-600',
+            low: 'bg-gray-50 text-gray-500'
+        }[task.priority] || 'bg-gray-50 text-gray-500';
+
+        const priorityLabel = (task.priority || 'medium').charAt(0).toUpperCase() + (task.priority || 'medium').slice(1);
+        const categoryLabel = (task.category || 'general').charAt(0).toUpperCase() + (task.category || 'general').slice(1);
+        const dateStr = formatTaskDate(task);
+
+        const descHtml = task.description 
+            ? `<p class="text-[11px] text-gray-500 mt-1 leading-relaxed">${escapeHtml(task.description)}</p>` 
+            : '';
+
+        const div = document.createElement('div');
+        div.className = 'task-item flex items-center gap-3 p-3.5 rounded-2xl hover:bg-[#FAF6F0]/60 transition';
+        div.setAttribute('data-task-id', task.id);
+        div.innerHTML = `
+            <button onclick="toggleTask(${task.id})" class="w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center shrink-0 transition"></button>
+            <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap">
+                    <p class="font-semibold text-xs text-gray-900">${escapeHtml(task.title)}</p>
+                    <span class="text-[10px] px-2 py-0.5 rounded-full bg-[#F4E7EF] text-[#5B1744] border border-[#E7C8DB]/60 font-semibold">
+                        <i class="fa-solid fa-stopwatch text-[9px] mr-1"></i>${task.pomodoro_duration || 25}m
+                    </span>
+                </div>
+                <p class="text-[11px] text-gray-400 mt-0.5">${categoryLabel} · ${dateStr}</p>
+                ${descHtml}
+            </div>
+            <a href="/progress?task_id=${task.id}" title="Mulai Pomodoro untuk tugas ini" class="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-[#F4E7EF] hover:bg-[#E7C8DB] text-[#5B1744] text-[11px] font-semibold border border-[#E7C8DB] transition shrink-0">
+                <i class="fa-solid fa-play text-[9px]"></i>
+                <span>Fokus</span>
+            </a>
+            <span class="text-[10px] px-2.5 py-1 rounded-full shrink-0 ${priorityClasses}">
+                ${priorityLabel}
+            </span>
+            <button onclick="deleteTask(${task.id})" title="Hapus tugas" class="w-7 h-7 sm:w-8 sm:h-8 rounded-xl bg-white border border-gray-200 text-gray-400 hover:text-red-500 hover:border-red-200 hover:bg-red-50 flex items-center justify-center transition shrink-0 shadow-2xs">
+                <i class="fa-solid fa-trash text-xs"></i>
+            </button>
+        `;
+        return div;
+    }
+
     document.getElementById('taskForm')?.addEventListener('submit', async (e) => {
         e.preventDefault();
         const form = e.target;
         const btn = form.querySelector('button[type="submit"]');
         const originalText = btn.textContent;
         btn.disabled = true;
-        btn.textContent = 'Adding...';
+        btn.textContent = 'Menyimpan...';
 
         try {
             const formData = new FormData(form);
@@ -418,15 +509,26 @@
             });
             const result = await res.json();
 
-            if (result.status === 'success') {
+            if (result.status === 'success' && result.task) {
                 closeTaskModal();
                 form.reset();
-                window.location.reload();
+                showToast('Tugas berhasil ditambahkan.', 'success');
+
+                const taskList = document.getElementById('task-list');
+                const emptyState = document.getElementById('task-empty-state');
+                if (emptyState) {
+                    emptyState.remove();
+                }
+                const newCard = renderTaskCard(result.task);
+                if (taskList) {
+                    taskList.prepend(newCard);
+                }
+                updateTaskStats(1, 0);
             } else {
-                alert(result.message || 'Gagal menambahkan tugas.');
+                showToast(result.message || 'Gagal menambahkan tugas.', 'error');
             }
         } catch (err) {
-            alert('Terjadi kesalahan saat menambahkan tugas.');
+            showToast('Terjadi kesalahan saat menambahkan tugas.', 'error');
         } finally {
             btn.disabled = false;
             btn.textContent = originalText;
@@ -438,17 +540,36 @@
         if (!item) return;
 
         const btn = item.querySelector('button');
-        const isCompleted = btn.classList.contains('bg-[#5B1744]');
+        const titleEl = item.querySelector('.task-title, p.font-semibold');
+        const wasCompleted = btn.classList.contains('bg-[#5B1744]');
+        const newStatus = wasCompleted ? 'pending' : 'completed';
+
+        // Optimistic UI update
+        if (newStatus === 'completed') {
+            btn.className = 'w-5 h-5 rounded-full border-2 bg-[#5B1744] border-[#5B1744] flex items-center justify-center shrink-0 transition';
+            btn.innerHTML = '<i class="fa-solid fa-check text-[8px] text-white"></i>';
+            if (titleEl) {
+                titleEl.classList.add('line-through', 'text-gray-400');
+            }
+            updateTaskStats(0, 1);
+        } else {
+            btn.className = 'w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center shrink-0 transition';
+            btn.innerHTML = '';
+            if (titleEl) {
+                titleEl.classList.remove('line-through', 'text-gray-400');
+            }
+            updateTaskStats(0, -1);
+        }
 
         try {
             const res = await apiFetch(`${API_BASE}/tasks/${id}`, {
                 method: 'PUT',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ status: isCompleted ? 'pending' : 'completed' }),
+                body: JSON.stringify({ status: newStatus }),
             });
             const result = await res.json();
             if (result.status === 'success') {
-                if (!isCompleted) { // Becoming completed
+                if (newStatus === 'completed') {
                     try {
                         const rawPomo = localStorage.getItem('study_planner_pomo_state');
                         if (rawPomo) {
@@ -461,10 +582,28 @@
                         }
                     } catch (e) {}
                 }
-                window.location.reload();
+                showToast('Status tugas diperbarui.', 'success');
+            } else {
+                revertToggle();
+                showToast(result.message || 'Gagal mengubah status tugas.', 'error');
             }
         } catch (err) {
-            alert('Gagal mengubah status tugas.');
+            revertToggle();
+            showToast('Gagal mengubah status tugas.', 'error');
+        }
+
+        function revertToggle() {
+            if (wasCompleted) {
+                btn.className = 'w-5 h-5 rounded-full border-2 bg-[#5B1744] border-[#5B1744] flex items-center justify-center shrink-0 transition';
+                btn.innerHTML = '<i class="fa-solid fa-check text-[8px] text-white"></i>';
+                if (titleEl) titleEl.classList.add('line-through', 'text-gray-400');
+                updateTaskStats(0, 1);
+            } else {
+                btn.className = 'w-5 h-5 rounded-full border-2 border-gray-300 flex items-center justify-center shrink-0 transition';
+                btn.innerHTML = '';
+                if (titleEl) titleEl.classList.remove('line-through', 'text-gray-400');
+                updateTaskStats(0, -1);
+            }
         }
     }
 
@@ -494,13 +633,36 @@
         btn.disabled = true;
         btn.textContent = 'Menghapus...';
 
+        const item = document.querySelector(`[data-task-id="${id}"]`);
+        const wasCompleted = item?.querySelector('button')?.classList.contains('bg-[#5B1744]');
+
         try {
             const res = await apiFetch(`${API_BASE}/tasks/${id}`, { method: 'DELETE' });
             const result = await res.json().catch(() => ({ status: 'error', message: 'Hapus tugas gagal.' }));
             if (result.status === 'success') {
                 closeDeleteTaskModal();
                 showToast(result.message || 'Tugas berhasil dihapus.', 'success');
-                setTimeout(() => window.location.reload(), 600);
+
+                if (item) {
+                    item.style.transition = 'all 0.3s ease';
+                    item.style.opacity = '0';
+                    item.style.transform = 'scale(0.95)';
+                    setTimeout(() => {
+                        item.remove();
+                        updateTaskStats(-1, wasCompleted ? -1 : 0);
+
+                        const taskList = document.getElementById('task-list');
+                        if (taskList && taskList.querySelectorAll('.task-item').length === 0) {
+                            taskList.innerHTML = `
+                                <div id="task-empty-state" class="text-center py-10 text-gray-400">
+                                    <i class="fa-regular fa-circle-check text-3xl mb-3"></i>
+                                    <p class="text-sm">Belum ada tugas.</p>
+                                    <button onclick="openTaskModal()" class="mt-2 text-xs text-[#5B1744] font-semibold hover:underline">Tambah tugas baru</button>
+                                </div>
+                            `;
+                        }
+                    }, 300);
+                }
                 return;
             }
             closeDeleteTaskModal();
