@@ -218,4 +218,72 @@ class AiIntegrationController extends Controller
             'data' => $note,
         ]);
     }
+
+    public function deleteCalendarEvent(Request $request, $id)
+    {
+        $user = $this->authenticateAiRequest($request);
+
+        $schedule = Schedule::where('user_id', $user->id)->findOrFail($id);
+
+        try {
+            $service = app(GoogleCalendarService::class, ['user' => $user]);
+            $service->deleteEvent($schedule);
+        } catch (\Exception $e) {
+            Log::error('AI Failed to delete Schedule in Google', ['id' => $id, 'error' => $e->getMessage()]);
+        }
+
+        $schedule->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Schedule event deleted successfully',
+        ]);
+    }
+
+    public function deleteTask(Request $request, $id)
+    {
+        $user = $this->authenticateAiRequest($request);
+
+        $task = Task::where('user_id', $user->id)->findOrFail($id);
+        $task->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Task deleted successfully',
+        ]);
+    }
+
+    public function deleteTimetable(Request $request, $id)
+    {
+        $user = $this->authenticateAiRequest($request);
+
+        $timetable = SchoolTimetable::where('user_id', $user->id)->findOrFail($id);
+
+        try {
+            $service = app(GoogleCalendarService::class, ['user' => $user]);
+            $service->deleteSchoolTimetableEvent($timetable);
+        } catch (\Exception $e) {
+            Log::error('AI Failed to delete Timetable in Google', ['id' => $id, 'error' => $e->getMessage()]);
+        }
+
+        $timetable->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Timetable deleted successfully',
+        ]);
+    }
+
+    public function deleteNote(Request $request, $id)
+    {
+        $user = $this->authenticateAiRequest($request);
+
+        $note = Note::where('user_id', $user->id)->findOrFail($id);
+        $note->delete();
+
+        return response()->json([
+            'status' => 'success',
+            'message' => 'Note deleted successfully',
+        ]);
+    }
 }

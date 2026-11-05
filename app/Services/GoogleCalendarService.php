@@ -26,7 +26,8 @@ class GoogleCalendarService
         $this->client = new Client;
         $this->client->setClientId(config('services.google.client_id'));
         $this->client->setClientSecret(config('services.google.client_secret'));
-        $this->client->setRedirectUri(route('google.calendar.callback'));
+        $redirectUri = config('services.google.calendar_redirect') ?: route('google.calendar.callback');
+        $this->client->setRedirectUri($redirectUri);
         $this->client->setScopes([
             GoogleCalendar::CALENDAR,
             GoogleCalendar::CALENDAR_EVENTS,

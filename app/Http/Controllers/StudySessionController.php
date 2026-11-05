@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\StudySession;
+use App\Models\Task;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -36,6 +37,26 @@ class StudySessionController extends Controller
 
     public function store(Request $request): JsonResponse
     {
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'task_id' => 'nullable|exists:tasks,id',
+            'duration_seconds' => 'nullable|integer|min:0',
+            'status' => 'nullable|in:running,completed,paused',
+        ]);
+
+        if (! empty($validated['task_id'])) {
+            $task = Task::where('id', $validated['task_id'])
+                ->where('user_id', auth()->id())
+                ->first();
+
+            if (! $task) {
+                return response()->json([
+                    'status' => 'error',
+                    'message' => 'Tugas tidak ditemukan.',
+                ], 422);
+            }
+        }
+
         $active = StudySession::where('user_id', auth()->id())
             ->where('status', 'running')
             ->first();
@@ -48,16 +69,17 @@ class StudySessionController extends Controller
             ]);
         }
 
-        $validated = $request->validate([
-            'title' => 'required|string|max:255',
-            'task_id' => 'nullable|exists:tasks,id',
-        ]);
+        $status = $validated['status'] ?? 'running';
+        $durationSeconds = isset($validated['duration_seconds']) ? (int) $validated['duration_seconds'] : 0;
 
         $session = StudySession::create([
             'user_id' => auth()->id(),
-            ...$validated,
-            'started_at' => now(),
-            'status' => 'running',
+            'title' => $validated['title'],
+            'task_id' => $validated['task_id'] ?? null,
+            'duration_seconds' => $durationSeconds,
+            'started_at' => $durationSeconds > 0 ? now()->subSeconds($durationSeconds) : now(),
+            'ended_at' => $status === 'completed' ? now() : null,
+            'status' => $status,
         ]);
 
         return response()->json([
@@ -66,7 +88,7 @@ class StudySessionController extends Controller
         ], 201);
     }
 
-    public function stop(StudySession $session): JsonResponse
+    public function stop(Request $request, StudySession $session): JsonResponse
     {
         if ($session->user_id !== auth()->id()) {
             return response()->json([
@@ -75,16 +97,23 @@ class StudySessionController extends Controller
             ], 403);
         }
 
-        if ($session->status !== 'running') {
+        if ($session->status !== 'running' && $session->status !== 'paused') {
             return response()->json([
                 'status' => 'error',
                 'message' => 'Sesi ini sudah tidak aktif.',
             ], 400);
         }
 
+        $requestedDuration = $request->input('duration_seconds');
+        if ($requestedDuration !== null && (int) $requestedDuration > 0) {
+            $durationSeconds = (int) $requestedDuration;
+        } else {
+            $durationSeconds = $session->duration_seconds + $session->started_at->diffInSeconds(now());
+        }
+
         $session->update([
             'ended_at' => now(),
-            'duration_seconds' => $session->started_at->diffInSeconds(now()),
+            'duration_seconds' => max($durationSeconds, 1),
             'status' => 'completed',
         ]);
 

@@ -11,11 +11,7 @@
         3 => 'Rabu',
         4 => 'Kamis',
         5 => 'Jumat',
-        6 => 'Sabtu',
     ];
-    if (isset($grouped[0]) && count($grouped[0]) > 0) {
-        $days[0] = 'Minggu';
-    }
 @endphp
 
 @section('content')
@@ -25,20 +21,25 @@
             <h1 class="text-2xl sm:text-3xl font-bold tracking-tight mt-1 text-gray-900">Class Schedule</h1>
             <p class="text-sm text-gray-500 mt-1">Atur jadwal pelajaran dan kelas mingguanmu.</p>
         </div>
-        <button onclick="openTimetableModal()" class="inline-flex items-center gap-2 bg-[#5B1744] text-white px-5 py-3 rounded-full text-xs font-bold hover:bg-[#481236] transition shadow-xs"
+        <button type="button" onclick="openTimetableModal()" class="inline-flex items-center gap-2 bg-[#5B1744] text-white px-5 py-3 rounded-full text-xs font-bold hover:bg-[#481236] transition shadow-xs cursor-pointer"
             data-tour-step="2" data-tour-title="Tambah Jadwal Kelas" data-tour-desc="Klik tombol ini untuk memasukkan mata pelajaran baru beserta hari dan jam pelajarannya.">
             <i class="fa-solid fa-plus w-4 text-center"></i> Tambah Kelas
         </button>
     </section>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4"
-        data-tour-step="1" data-tour-title="Jadwal Mingguan Senin-Jumat" data-tour-desc="Lihat seluruh jadwal kelas rutinmu yang tersusun rapi dari hari Senin hingga Jumat.">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4"
+        data-tour-step="1" data-tour-title="Jadwal Mingguan" data-tour-desc="Lihat seluruh jadwal kelas rutinmu yang tersusun rapi dari hari Senin hingga Jumat.">
         @foreach($days as $val => $label)
             <div class="bg-white rounded-3xl border border-gray-100 p-4 soft-shadow h-full flex flex-col fade-up" style="animation-delay: {{ $loop->index * 0.1 }}s">
                 <div class="mb-4 pb-3 border-b border-gray-100 flex items-center justify-between">
                     <h3 class="font-bold text-gray-900">{{ $label }}</h3>
-                    <div class="w-6 h-6 rounded-full bg-[#FAF6F0] flex items-center justify-center text-[10px] font-bold text-[#5B1744]">
-                        {{ isset($grouped[$val]) ? count($grouped[$val]) : 0 }}
+                    <div class="flex items-center gap-1.5">
+                        <button type="button" onclick="openTimetableModal({{ $val }}, '{{ $label }}')" title="Tambah pelajaran ke hari {{ $label }}" class="w-6 h-6 rounded-full bg-[#FAF6F0] hover:bg-[#5B1744] text-[#5B1744] hover:text-white flex items-center justify-center text-[10px] transition cursor-pointer">
+                            <i class="fa-solid fa-plus"></i>
+                        </button>
+                        <div class="w-6 h-6 rounded-full bg-[#FAF6F0] flex items-center justify-center text-[10px] font-bold text-[#5B1744]">
+                            {{ isset($grouped[$val]) ? count($grouped[$val]) : 0 }}
+                        </div>
                     </div>
                 </div>
                 
@@ -47,13 +48,11 @@
                         @foreach($grouped[$val] as $item)
                             <div class="relative group bg-[#FAF6F0]/60 hover:bg-[#FAF6F0] border border-[#E7C8DB]/50 rounded-2xl p-3 transition overflow-hidden">
                                 <div class="absolute top-2 right-2 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition">
-                                    <form action="{{ route('timetable.destroy', $item) }}" method="POST">
-                                        @csrf
-                                        @method('DELETE')
-                                        <button type="submit" title="Hapus jadwal kelas" class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-white border border-red-200 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition shadow-2xs" onclick="return confirm('Hapus pelajaran ini?')">
-                                            <i class="fa-solid fa-trash text-[10px]"></i>
-                                        </button>
-                                    </form>
+                                    <button type="button" title="Hapus jadwal kelas" 
+                                        onclick="openDeleteTimetableModal({{ $item->id }}, '{{ addslashes($item->subject) }}', '{{ \Carbon\Carbon::parse($item->start_time)->format('H:i') }}{{ $item->end_time ? ' - ' . \Carbon\Carbon::parse($item->end_time)->format('H:i') : '' }}', '{{ $label }}')"
+                                        class="w-6 h-6 sm:w-7 sm:h-7 rounded-lg bg-white border border-red-200 text-red-500 hover:bg-red-500 hover:text-white flex items-center justify-center transition shadow-2xs cursor-pointer">
+                                        <i class="fa-solid fa-trash text-[10px]"></i>
+                                    </button>
                                 </div>
                                 <p class="font-bold text-xs text-[#5B1744] pr-7">{{ $item->subject }}</p>
                                 <div class="flex items-center gap-1.5 mt-1.5 text-gray-500 text-[10px] font-medium">
@@ -95,7 +94,7 @@
                         <h3 class="text-base sm:text-lg font-bold text-gray-900 mt-1">Tambah Jadwal Kelas</h3>
                     </div>
                 </div>
-                <button type="button" onclick="closeTimetableModal()" class="w-8 h-8 rounded-full bg-white border border-[#E7C8DB] flex items-center justify-center text-gray-500 hover:bg-[#F4E7EF] hover:text-[#5B1744] transition">
+                <button type="button" onclick="closeTimetableModal()" class="w-8 h-8 rounded-full bg-white border border-[#E7C8DB] flex items-center justify-center text-gray-500 hover:bg-[#F4E7EF] hover:text-[#5B1744] transition cursor-pointer">
                     <i class="fa-solid fa-xmark text-xs"></i>
                 </button>
             </div>
@@ -110,10 +109,10 @@
                         <span>Hari</span>
                         <span id="selectedDayLabel" class="text-[10px] text-[#5B1744] font-bold">Senin</span>
                     </label>
-                    <div class="grid grid-cols-3 sm:grid-cols-6 gap-1.5">
+                    <div class="grid grid-cols-5 gap-1.5">
                         @foreach($days as $val => $label)
                             <button type="button" onclick="selectTimetableDay({{ $val }}, '{{ $label }}')" id="dayChip-{{ $val }}" 
-                                class="day-chip py-2 rounded-xl text-[11px] font-bold border-2 transition text-center {{ $val === 1 ? 'bg-[#5B1744] text-white border-[#5B1744] shadow-xs' : 'bg-white text-gray-700 border-gray-200 hover:border-[#E7C8DB]' }}">
+                                class="day-chip py-2 rounded-xl text-[11px] font-bold border-2 transition text-center cursor-pointer {{ $val === 1 ? 'bg-[#5B1744] text-white border-[#5B1744] shadow-xs' : 'bg-white text-gray-700 border-gray-200 hover:border-[#E7C8DB]' }}">
                                 {{ $label }}
                             </button>
                         @endforeach
@@ -150,33 +149,84 @@
                 </div>
 
                 <button type="submit" 
-                    class="w-full mt-2 py-3.5 rounded-2xl bg-[#5B1744] text-white text-xs sm:text-sm font-bold hover:bg-[#481236] transition shadow-lg shadow-[#5B1744]/20 flex items-center justify-center gap-2 transform active:scale-98">
+                    class="w-full mt-2 py-3.5 rounded-2xl bg-[#5B1744] text-white text-xs sm:text-sm font-bold hover:bg-[#481236] transition shadow-lg shadow-[#5B1744]/20 flex items-center justify-center gap-2 transform active:scale-98 cursor-pointer">
                     <i class="fa-solid fa-check text-xs"></i> <span>Simpan Pelajaran</span>
                 </button>
+            </form>
+        </div>
+    </div>
+
+    {{-- MODAL HAPUS PELAJARAN --}}
+    <div id="deleteTimetableModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-3 sm:p-4">
+        <div onclick="closeDeleteTimetableModal()" class="absolute inset-0 bg-black/50 backdrop-blur-xs"></div>
+
+        <div class="relative w-full max-w-sm bg-[#FAF6F0] rounded-[2rem] p-6 sm:p-7 border-2 border-[#E7C8DB] shadow-[0_0_60px_rgba(0,0,0,0.4),0_20px_40px_rgba(91,23,68,0.25)] my-auto transform transition-all scale-95 opacity-0 duration-300" id="deleteTimetableModalInner">
+            <div class="flex items-center justify-between pb-3 border-b border-[#E7C8DB]/60 mb-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-9 h-9 rounded-xl bg-red-50 border border-red-200 flex items-center justify-center shrink-0 text-red-600 text-sm">
+                        <i class="fa-solid fa-trash"></i>
+                    </div>
+                    <div>
+                        <span class="text-[9px] font-bold uppercase tracking-wider text-red-600 font-bold">HAPUS JADWAL</span>
+                        <h3 class="text-sm sm:text-base font-bold text-gray-900">Konfirmasi Hapus</h3>
+                    </div>
+                </div>
+                <button type="button" onclick="closeDeleteTimetableModal()" class="w-7 h-7 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-400 hover:text-gray-700 hover:bg-gray-50 transition cursor-pointer">
+                    <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+            </div>
+
+            <p class="text-xs text-gray-600 mb-3">Apakah kamu yakin ingin menghapus jadwal pelajaran ini?</p>
+
+            <div class="p-3.5 rounded-2xl bg-white border border-[#E7C8DB] mb-5 shadow-2xs">
+                <p class="text-xs font-bold text-[#5B1744]" id="deleteTimetableSubject">-</p>
+                <p class="text-[11px] text-gray-500 font-medium mt-1 flex items-center gap-1.5" id="deleteTimetableTime">
+                    <i class="fa-regular fa-clock text-[10px]"></i> <span>-</span>
+                </p>
+            </div>
+
+            <form id="deleteTimetableForm" method="POST" action="">
+                @csrf
+                @method('DELETE')
+                <div class="flex gap-2.5">
+                    <button type="button" onclick="closeDeleteTimetableModal()"
+                        class="flex-1 py-2.5 rounded-xl bg-white border border-gray-200 text-gray-700 text-xs font-bold hover:bg-gray-50 transition cursor-pointer">
+                        Batal
+                    </button>
+                    <button type="submit" id="confirmDeleteTimetableBtn"
+                        class="flex-1 py-2.5 rounded-xl bg-[#B91C1C] hover:bg-[#991B1B] text-white text-xs font-bold transition shadow-xs flex items-center justify-center gap-1.5 cursor-pointer">
+                        <i class="fa-solid fa-trash text-[10px]"></i> <span>Hapus</span>
+                    </button>
+                </div>
             </form>
         </div>
     </div>
 @endpush
 
 @push('scripts')
-    const modal = document.getElementById('timetableModal');
-    const modalInner = document.getElementById('timetableModalInner');
-
     function selectTimetableDay(dayVal, dayName) {
-        document.getElementById('inputDayOfWeek').value = dayVal;
+        const inp = document.getElementById('inputDayOfWeek');
+        if (inp) inp.value = dayVal;
         const lbl = document.getElementById('selectedDayLabel');
         if (lbl) lbl.textContent = dayName;
 
         document.querySelectorAll('.day-chip').forEach(btn => {
-            btn.className = "day-chip py-2 rounded-xl text-[11px] font-semibold border-2 transition text-center bg-white text-gray-700 border-gray-200 hover:border-[#E7C8DB]";
+            btn.className = "day-chip py-2 rounded-xl text-[11px] font-semibold border-2 transition text-center bg-white text-gray-700 border-gray-200 hover:border-[#E7C8DB] cursor-pointer";
         });
         const activeBtn = document.getElementById('dayChip-' + dayVal);
         if (activeBtn) {
-            activeBtn.className = "day-chip py-2 rounded-xl text-[11px] font-bold border-2 transition text-center bg-[#5B1744] text-white border-[#5B1744] shadow-xs";
+            activeBtn.className = "day-chip py-2 rounded-xl text-[11px] font-bold border-2 transition text-center bg-[#5B1744] text-white border-[#5B1744] shadow-xs cursor-pointer";
         }
     }
 
-    function openTimetableModal() {
+    function openTimetableModal(dayVal = null, dayName = null) {
+        if (dayVal !== null && dayName !== null) {
+            selectTimetableDay(dayVal, dayName);
+        }
+        const modal = document.getElementById('timetableModal');
+        const modalInner = document.getElementById('timetableModalInner');
+        if (!modal || !modalInner) return;
+
         modal.classList.remove('hidden');
         modal.classList.add('flex');
         document.body.classList.add('overflow-hidden');
@@ -187,6 +237,10 @@
     }
 
     function closeTimetableModal() {
+        const modal = document.getElementById('timetableModal');
+        const modalInner = document.getElementById('timetableModalInner');
+        if (!modal || !modalInner) return;
+
         modalInner.classList.remove('scale-100', 'opacity-100');
         modalInner.classList.add('scale-95', 'opacity-0');
         document.body.classList.remove('overflow-hidden');
@@ -195,4 +249,51 @@
             modal.classList.remove('flex');
         }, 300);
     }
+
+    function openDeleteTimetableModal(id, subject, time, day) {
+        const form = document.getElementById('deleteTimetableForm');
+        if (form) {
+            form.action = `/timetable/${id}`;
+        }
+        const subjEl = document.getElementById('deleteTimetableSubject');
+        if (subjEl) subjEl.textContent = subject;
+
+        const timeEl = document.getElementById('deleteTimetableTime');
+        if (timeEl) {
+            timeEl.innerHTML = `<i class="fa-regular fa-clock text-[10px]"></i> <span>${day ? day + ', ' : ''}${time}</span>`;
+        }
+
+        const modal = document.getElementById('deleteTimetableModal');
+        const modalInner = document.getElementById('deleteTimetableModalInner');
+        if (!modal || !modalInner) return;
+
+        modal.classList.remove('hidden');
+        modal.classList.add('flex');
+        document.body.classList.add('overflow-hidden');
+        setTimeout(() => {
+            modalInner.classList.remove('scale-95', 'opacity-0');
+            modalInner.classList.add('scale-100', 'opacity-100');
+        }, 10);
+    }
+
+    function closeDeleteTimetableModal() {
+        const modal = document.getElementById('deleteTimetableModal');
+        const modalInner = document.getElementById('deleteTimetableModalInner');
+        if (!modal || !modalInner) return;
+
+        modalInner.classList.remove('scale-100', 'opacity-100');
+        modalInner.classList.add('scale-95', 'opacity-0');
+        document.body.classList.remove('overflow-hidden');
+        setTimeout(() => {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }, 300);
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            closeTimetableModal();
+            closeDeleteTimetableModal();
+        }
+    });
 @endpush

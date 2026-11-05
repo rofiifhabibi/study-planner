@@ -128,8 +128,6 @@
                 {{-- Hidden Inputs for interactive pill choices --}}
                 <input type="hidden" name="category" id="inputTaskCategory" value="school">
                 <input type="hidden" name="priority" id="inputTaskPriority" value="medium">
-                <input type="hidden" name="pomodoro_duration" id="taskPomodoroFocus" value="25">
-                <input type="hidden" name="break_duration" id="taskPomodoroBreak" value="5">
 
                 {{-- 1. Judul Tugas --}}
                 <div class="bg-white p-3.5 rounded-2xl border border-[#E7C8DB] shadow-2xs">
@@ -215,20 +213,37 @@
 
                     {{-- Mode Pomodoro --}}
                     <div class="bg-white p-3 rounded-2xl border border-[#E7C8DB] shadow-2xs">
-                        <label class="text-[11px] font-bold text-gray-800 block mb-2">Target Sesi Fokus:</label>
-                        <div class="grid grid-cols-3 gap-1.5">
+                        <div class="flex items-center justify-between mb-2">
+                            <label class="text-[11px] font-bold text-gray-800">Target Sesi Fokus:</label>
+                            <span class="text-[10px] text-[#5B1744] font-bold" id="pomoSummaryLabel">25m Fokus / 5m Istirahat</span>
+                        </div>
+                        <div class="grid grid-cols-3 gap-1.5 mb-2.5">
                             <button type="button" onclick="selectPomoDuration(15, 3)" id="pomoChip-15" 
-                                class="pomo-chip py-1.5 rounded-xl text-[10px] font-semibold border-2 transition text-center bg-white text-gray-700 border-gray-200">
+                                class="pomo-chip py-1.5 rounded-xl text-[10px] font-semibold border-2 transition text-center bg-white text-gray-700 border-gray-200 hover:border-[#E7C8DB] cursor-pointer">
                                 15 Menit
                             </button>
                             <button type="button" onclick="selectPomoDuration(25, 5)" id="pomoChip-25" 
-                                class="pomo-chip py-1.5 rounded-xl text-[10px] font-bold border-2 transition text-center bg-[#5B1744] text-white border-[#5B1744]">
-                            25 Menit
+                                class="pomo-chip py-1.5 rounded-xl text-[10px] font-bold border-2 transition text-center bg-[#5B1744] text-white border-[#5B1744] cursor-pointer">
+                                25 Menit
                             </button>
                             <button type="button" onclick="selectPomoDuration(50, 10)" id="pomoChip-50" 
-                                class="pomo-chip py-1.5 rounded-xl text-[10px] font-semibold border-2 transition text-center bg-white text-gray-700 border-gray-200">
+                                class="pomo-chip py-1.5 rounded-xl text-[10px] font-semibold border-2 transition text-center bg-white text-gray-700 border-gray-200 hover:border-[#E7C8DB] cursor-pointer">
                                 50 Menit
                             </button>
+                        </div>
+                        <div class="grid grid-cols-2 gap-2 pt-2 border-t border-gray-100">
+                            <div>
+                                <span class="text-[9px] text-gray-500 font-semibold block mb-1">Fokus (Menit):</span>
+                                <input type="number" name="pomodoro_duration" id="taskPomodoroFocus" value="25" min="1" max="180" oninput="updateCustomPomo()"
+                                    class="w-full px-2.5 py-1.5 rounded-lg bg-[#FAF6F0]/60 border border-gray-200 text-xs font-bold text-gray-800 outline-none focus:border-[#5B1744] focus:bg-white transition"
+                                    placeholder="25">
+                            </div>
+                            <div>
+                                <span class="text-[9px] text-gray-500 font-semibold block mb-1">Istirahat (Menit):</span>
+                                <input type="number" name="break_duration" id="taskPomodoroBreak" value="5" min="1" max="60" oninput="updateCustomPomo()"
+                                    class="w-full px-2.5 py-1.5 rounded-lg bg-[#FAF6F0]/60 border border-gray-200 text-xs font-bold text-gray-800 outline-none focus:border-[#5B1744] focus:bg-white transition"
+                                    placeholder="5">
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -326,12 +341,28 @@
         const bInp = document.getElementById('taskPomodoroBreak');
         if (fInp) fInp.value = focus;
         if (bInp) bInp.value = breakMin;
+        updatePomoUI(focus, breakMin);
+    }
+
+    function updateCustomPomo() {
+        const fInp = document.getElementById('taskPomodoroFocus');
+        const bInp = document.getElementById('taskPomodoroBreak');
+        const focus = fInp ? parseInt(fInp.value) || 0 : 0;
+        const breakMin = bInp ? parseInt(bInp.value) || 0 : 0;
+        updatePomoUI(focus, breakMin);
+    }
+
+    function updatePomoUI(focus, breakMin) {
+        const lbl = document.getElementById('pomoSummaryLabel');
+        if (lbl) {
+            lbl.textContent = `${focus}m Fokus / ${breakMin}m Istirahat`;
+        }
         document.querySelectorAll('.pomo-chip').forEach(btn => {
-            btn.className = "pomo-chip py-1.5 rounded-xl text-[10px] font-semibold border-2 transition text-center bg-white text-gray-700 border-gray-200";
+            btn.className = "pomo-chip py-1.5 rounded-xl text-[10px] font-semibold border-2 transition text-center bg-white text-gray-700 border-gray-200 hover:border-[#E7C8DB] cursor-pointer";
         });
         const activeBtn = document.getElementById('pomoChip-' + focus);
         if (activeBtn) {
-            activeBtn.className = "pomo-chip py-1.5 rounded-xl text-[10px] font-bold border-2 transition text-center bg-[#5B1744] text-white border-[#5B1744]";
+            activeBtn.className = "pomo-chip py-1.5 rounded-xl text-[10px] font-bold border-2 transition text-center bg-[#5B1744] text-white border-[#5B1744] cursor-pointer";
         }
     }
 
@@ -417,6 +448,19 @@
             });
             const result = await res.json();
             if (result.status === 'success') {
+                if (!isCompleted) { // Becoming completed
+                    try {
+                        const rawPomo = localStorage.getItem('study_planner_pomo_state');
+                        if (rawPomo) {
+                            const pState = JSON.parse(rawPomo);
+                            if (pState && Number(pState.selectedTaskId) === Number(id)) {
+                                pState.selectedTaskId = null;
+                                pState.selectedTaskTitle = 'Pilih Tugas';
+                                localStorage.setItem('study_planner_pomo_state', JSON.stringify(pState));
+                            }
+                        }
+                    } catch (e) {}
+                }
                 window.location.reload();
             }
         } catch (err) {

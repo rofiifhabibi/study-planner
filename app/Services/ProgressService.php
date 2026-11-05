@@ -15,6 +15,30 @@ class ProgressService
         $this->userId = $userId;
     }
 
+    public static function formatDuration(int $seconds): string
+    {
+        if ($seconds <= 0) {
+            return '0d';
+        }
+
+        $hours = intdiv($seconds, 3600);
+        $minutes = intdiv($seconds % 3600, 60);
+        $secs = $seconds % 60;
+
+        $parts = [];
+        if ($hours > 0) {
+            $parts[] = "{$hours}j";
+        }
+        if ($minutes > 0) {
+            $parts[] = "{$minutes}m";
+        }
+        if ($secs > 0 || empty($parts)) {
+            $parts[] = "{$secs}d";
+        }
+
+        return implode(' ', $parts);
+    }
+
     public function getDashboardStats(): array
     {
         // Get active tasks (pending or in_progress) ordered by due date
@@ -27,31 +51,38 @@ class ProgressService
         $totalTasks = Task::where('user_id', $this->userId)->count();
         $totalCompleted = Task::where('user_id', $this->userId)->where('status', 'completed')->count();
 
-        // Calculate today's stats explicitly
-        $todayTotal = Task::where('user_id', $this->userId)->whereDate('due_date', today())->count();
-        $todayCompleted = Task::where('user_id', $this->userId)->whereDate('due_date', today())->where('status', 'completed')->count();
+        // Calculate today's tasks:
+        // Completed today (updated today or due today)
+        $todayCompleted = Task::where('user_id', $this->userId)
+            ->where('status', 'completed')
+            ->where(function ($q) {
+                $q->whereDate('updated_at', today())
+                    ->orWhereDate('due_date', today());
+            })
+            ->count();
 
-        $totalStudySeconds = StudySession::where('user_id', $this->userId)
+        // Tasks still pending/in-progress scheduled on or before today
+        $todayPendingDue = Task::where('user_id', $this->userId)
+            ->whereIn('status', ['pending', 'in_progress'])
+            ->whereDate('due_date', '<=', today())
+            ->count();
+
+        // Total target tasks for today (at least equals completed count)
+        $todayTotal = max($todayCompleted, $todayCompleted + $todayPendingDue);
+
+        $totalStudySeconds = (int) StudySession::where('user_id', $this->userId)
             ->where('status', 'completed')
             ->sum('duration_seconds');
 
-        $todayStudySeconds = StudySession::where('user_id', $this->userId)
+        $todayStudySeconds = (int) StudySession::where('user_id', $this->userId)
             ->where('status', 'completed')
             ->whereDate('ended_at', today())
             ->sum('duration_seconds');
 
         $streak = $this->calculateStreak();
 
-        $totalHours = intdiv((int) $totalStudySeconds, 3600);
-        $totalMinutes = intdiv(((int) $totalStudySeconds) % 3600, 60);
-
-        if ($totalHours > 0 && $totalMinutes > 0) {
-            $formattedStudyTime = "{$totalHours}h {$totalMinutes}m";
-        } elseif ($totalHours > 0) {
-            $formattedStudyTime = "{$totalHours}h";
-        } else {
-            $formattedStudyTime = "{$totalMinutes}m";
-        }
+        $formattedStudyTime = self::formatDuration($totalStudySeconds);
+        $todayStudyTimeFormatted = self::formatDuration($todayStudySeconds);
 
         return [
             'todayTasks' => $dashboardTasks,
@@ -61,9 +92,11 @@ class ProgressService
             'totalCompleted' => $totalCompleted,
             'completionPercentage' => $totalTasks > 0 ? round(($totalCompleted / $totalTasks) * 100) : 0,
             'totalStudyHours' => round($totalStudySeconds / 3600, 1),
-            'totalStudySeconds' => (int) $totalStudySeconds,
+            'totalStudySeconds' => $totalStudySeconds,
             'totalStudyTimeFormatted' => $formattedStudyTime,
+            'todayStudySeconds' => $todayStudySeconds,
             'todayStudyMinutes' => round($todayStudySeconds / 60),
+            'todayStudyTimeFormatted' => $todayStudyTimeFormatted,
             'streak' => $streak,
         ];
     }

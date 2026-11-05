@@ -7,6 +7,10 @@
 
     <title>@yield('title', 'Study Planner')</title>
 
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon.png') }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
 
     <!-- CDN Tailwind CSS Fallback (Jaga-jaga jika Vite belum di-build) -->
@@ -109,6 +113,13 @@
             color: #5B1744 !important;
             border-color: #5B1744 !important;
         }
+
+        @media print {
+            #sidebar {
+                position: absolute !important;
+                height: 100% !important;
+            }
+        }
     </style>
 
     @yield('styles')
@@ -118,16 +129,19 @@
 
     <div class="min-h-screen flex flex-row">
 
+        {{-- Desktop Column Spacer & Full-Height Screenshot Background Track --}}
+        <div class="hidden md:block w-[260px] shrink-0 bg-[#5B1744] self-stretch" aria-hidden="true"></div>
+
         {{-- ========================================================= --}}
         {{-- SIDEBAR --}}
         {{-- ========================================================= --}}
 
         <aside
             id="sidebar"
-            class="fixed md:sticky top-0 left-0 z-50 h-screen w-[260px]
+            class="fixed top-0 left-0 z-50 md:z-30 h-screen h-[100dvh] w-[260px]
                    bg-[#5B1744] text-white flex flex-col
                    -translate-x-full md:translate-x-0
-                   transition-transform duration-300 ease-in-out shrink-0">
+                   transition-transform duration-300 ease-in-out shrink-0 overscroll-contain">
 
             {{-- Logo --}}
             <div class="p-6 pb-8">
@@ -147,7 +161,7 @@
             </div>
 
             {{-- Navigation --}}
-            <div class="px-4 flex-1 overflow-y-auto space-y-6">
+            <div class="px-4 flex-1 overflow-y-auto space-y-6 overscroll-contain">
 
                 <div>
                     <p class="px-3 mb-2 text-[10px] uppercase tracking-[.2em] text-white/40 font-bold">
@@ -294,9 +308,10 @@
                             <span>Panduan</span>
                         </button>
 
-                        <button type="button" class="relative w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:border-[#5B1744]/30 transition shadow-xs">
-                            <i class="fa-regular fa-bell text-xs"></i>
-                            <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#5B1744]"></span>
+                        <button type="button" id="header-notif-btn" onclick="toggleTimerNotificationMode()" title="Pengaturan Notifikasi & Nada Dering Timer"
+                            class="relative w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:border-[#5B1744]/30 transition shadow-xs cursor-pointer active:scale-95">
+                            <i id="header-notif-icon" class="fa-solid fa-bell text-xs"></i>
+                            <span id="header-notif-dot" class="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#5B1744]"></span>
                         </button>
                     </div>
 
@@ -323,6 +338,20 @@
                             <span>{{ session('error') }}</span>
                         </div>
                     @endif
+                    @if ($errors->any())
+                        <div class="bg-red-50 border border-red-200 text-red-700 text-xs rounded-xl px-4 py-3 space-y-1">
+                            <div class="flex items-center gap-2 font-bold">
+                                <i class="fa-solid fa-circle-xmark"></i>
+                                <span>Terjadi kesalahan:</span>
+                            </div>
+                            <ul class="list-disc list-inside pl-4 text-[11px] space-y-0.5">
+                                @foreach ($errors->all() as $error)
+                                    <li>{{ $error }}</li>
+                                @endforeach
+                            </ul>
+                        </div>
+                    @endif
+
 
                     @yield('content')
 
@@ -360,7 +389,7 @@
     </div>
 
     {{-- PROFILE MODAL --}}
-    <div id="profileModal" class="fixed inset-0 z-[100] hidden items-center justify-center p-4">
+    <div id="profileModal" class="fixed inset-0 z-[100] {{ $errors->hasBag('userDeletion') || $errors->has('name') || $errors->has('email') ? 'flex' : 'hidden' }} items-center justify-center p-4">
         <div onclick="closeProfileModal()" class="absolute inset-0 bg-black/40 backdrop-blur-xs"></div>
 
         <div class="relative w-full max-w-md bg-[#FAF6F0] rounded-3xl p-6 sm:p-7 shadow-2xl fade-up max-h-[92vh] overflow-y-auto">
@@ -421,6 +450,11 @@
                     Akun beserta seluruh riwayat chat dan data planner akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.
                 </p>
 
+                @php
+                    $isSocialUser = ! empty(auth()->user()->google_id) || ! empty(auth()->user()->telegram_id);
+                    $socialProvider = ! empty(auth()->user()->google_id) ? 'Google' : 'Telegram';
+                @endphp
+
                 <form method="POST" action="{{ route('profile.destroy') }}">
                     @csrf
                     @method('DELETE')
@@ -430,19 +464,34 @@
                         <i class="fa-regular fa-trash-can mr-1.5"></i>Hapus Akun Permanen
                     </button>
 
-                    <div id="deleteConfirm" class="hidden space-y-3 mt-3">
-                        <label for="delete-account-password" class="sr-only">Konfirmasi password</label>
-                        <input id="delete-account-password" type="password" name="password" required autocomplete="current-password"
-                            placeholder="Masukkan password untuk konfirmasi"
-                            class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#B91C1C] transition">
+                    <div id="deleteConfirm" class="{{ $errors->hasBag('userDeletion') ? '' : 'hidden' }} space-y-3 mt-3">
+                        @if (! $isSocialUser)
+                            <div>
+                                <label for="delete-account-password" class="sr-only">Konfirmasi password</label>
+                                <input id="delete-account-password" type="password" name="password" required autocomplete="current-password"
+                                    placeholder="Masukkan password untuk konfirmasi"
+                                    class="w-full px-3.5 py-2.5 rounded-xl border border-gray-200 bg-white text-xs outline-none focus:border-[#B91C1C] transition">
 
-                        @error('password', 'userDeletion')
-                            <p class="text-[10px] text-red-500">{{ $message }}</p>
-                        @enderror
+                                @error('password', 'userDeletion')
+                                    <p class="text-[10px] text-red-500 mt-1.5">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        @else
+                            <div class="p-3 bg-red-50 border border-red-200/80 rounded-xl text-xs text-red-800 leading-relaxed flex items-start gap-2.5">
+                                <i class="fa-solid fa-triangle-exclamation mt-0.5 shrink-0 text-red-500"></i>
+                                <div>
+                                    <span class="font-bold">Konfirmasi Penghapusan</span>
+                                    <p class="text-[11px] text-red-700 mt-0.5">
+                                        Karena Anda login melalui <strong>{{ $socialProvider }}</strong>, konfirmasi password tidak diperlukan. Tindakan ini akan menghapus semua jadwal, tugas, dan riwayat belajar Anda secara permanen.
+                                    </p>
+                                </div>
+                            </div>
+                        @endif
 
                         <button type="submit"
-                            class="w-full py-2.5 rounded-xl bg-[#B91C1C] text-white text-xs font-bold hover:bg-[#991B1B] transition shadow-xs">
-                            Ya, Saya Yakin Hapus Akun
+                            class="w-full py-2.5 rounded-xl bg-[#B91C1C] text-white text-xs font-bold hover:bg-[#991B1B] transition shadow-xs flex items-center justify-center gap-1.5">
+                            <i class="fa-solid fa-trash-can"></i>
+                            <span>Ya, Saya Yakin Hapus Akun</span>
                         </button>
                     </div>
                 </form>
@@ -538,6 +587,7 @@
         menuButton?.addEventListener('click', () => {
             sidebar.classList.remove('-translate-x-full');
             overlay.classList.remove('hidden');
+            document.body.classList.add('overflow-hidden');
         });
 
         overlay?.addEventListener('click', closeSidebar);
@@ -545,6 +595,7 @@
         function closeSidebar() {
             sidebar.classList.add('-translate-x-full');
             overlay.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
         }
 
         document.addEventListener('keydown', (event) => {
@@ -607,6 +658,15 @@
                     if (modeEl) modeEl.textContent = state.mode === 'focus' ? 'Fokus' : 'Istirahat';
                     pill.classList.remove('hidden');
                     pill.classList.add('inline-flex');
+
+                    if (remaining === 0 && state.isRunning) {
+                        state.isRunning = false;
+                        localStorage.setItem('study_planner_pomo_state', JSON.stringify(state));
+                        if (!window.location.pathname.includes('/progress')) {
+                            playGlobalPomoAlarm();
+                            showToast('⏰ Waktu belajar selesai! Sesi fokus selesai.', 'success');
+                        }
+                    }
                 } else {
                     pill.classList.add('hidden');
                     pill.classList.remove('inline-flex');
@@ -616,8 +676,245 @@
                 pill.classList.remove('inline-flex');
             }
         }
+
+        // ==========================================
+        // ROBUST WEB AUDIO API SOUND ENGINE & ALARMS
+        // ==========================================
+        function withStudyAudioContext(callback) {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                if (!window.__studyAudioCtx) {
+                    window.__studyAudioCtx = new AudioCtx();
+                }
+                const ctx = window.__studyAudioCtx;
+                if (ctx.state === 'suspended') {
+                    ctx.resume().then(() => {
+                        if (callback) callback(ctx);
+                    }).catch(() => {
+                        if (callback) callback(ctx);
+                    });
+                } else {
+                    if (callback) callback(ctx);
+                }
+            } catch (e) {
+                console.warn('AudioContext error:', e);
+            }
+        }
+
+        // Global unlock on first user gesture anywhere
+        const _unlockAudioOnInteraction = () => {
+            withStudyAudioContext(ctx => {
+                try {
+                    const buf = ctx.createBuffer(1, 1, 22050);
+                    const src = ctx.createBufferSource();
+                    src.buffer = buf;
+                    src.connect(ctx.destination);
+                    src.start(0);
+                } catch (e) {}
+            });
+            window.removeEventListener('pointerdown', _unlockAudioOnInteraction);
+            window.removeEventListener('keydown', _unlockAudioOnInteraction);
+        };
+        window.addEventListener('pointerdown', _unlockAudioOnInteraction, { passive: true, once: true });
+        window.addEventListener('keydown', _unlockAudioOnInteraction, { passive: true, once: true });
+
+        // 1. Timer Alarm Ringtone Chime (Harmonic Bell Chime)
+        function playTimerAlarmChime() {
+            withStudyAudioContext(ctx => {
+                const burstOffsets = [0.0, 0.85, 1.7];
+                const melody = [
+                    { f: 659.25, time: 0.00, dur: 0.22 }, // E5
+                    { f: 830.61, time: 0.12, dur: 0.22 }, // G#5
+                    { f: 987.77, time: 0.24, dur: 0.25 }, // B5
+                    { f: 1318.51, time: 0.38, dur: 0.50 } // E6
+                ];
+                burstOffsets.forEach(burstTime => {
+                    melody.forEach(note => {
+                        const start = ctx.currentTime + burstTime + note.time;
+                        const stop = start + note.dur;
+                        const osc1 = ctx.createOscillator();
+                        const osc2 = ctx.createOscillator();
+                        const gain = ctx.createGain();
+
+                        osc1.type = 'sine';
+                        osc1.frequency.setValueAtTime(note.f, start);
+
+                        osc2.type = 'triangle';
+                        osc2.frequency.setValueAtTime(note.f * 2, start);
+
+                        gain.gain.setValueAtTime(0.001, start);
+                        gain.gain.exponentialRampToValueAtTime(0.75, start + 0.02);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, stop);
+
+                        osc1.connect(gain);
+                        osc2.connect(gain);
+                        gain.connect(ctx.destination);
+
+                        osc1.start(start);
+                        osc2.start(start);
+                        osc1.stop(stop);
+                        osc2.stop(stop);
+                    });
+                });
+            });
+        }
+        window.playTimerAlarmChime = playTimerAlarmChime;
+        const playGlobalPomoAlarm = playTimerAlarmChime;
+
+        // 2. Panduan Open Chime (Soft Sparkle Arpeggio)
+        function playTourOpenSound() {
+            withStudyAudioContext(ctx => {
+                const notes = [
+                    { f: 523.25, time: 0.00, dur: 0.18 }, // C5
+                    { f: 659.25, time: 0.07, dur: 0.20 }, // E5
+                    { f: 783.99, time: 0.14, dur: 0.22 }, // G5
+                    { f: 1046.50, time: 0.21, dur: 0.35 } // C6
+                ];
+                notes.forEach(n => {
+                    const start = ctx.currentTime + n.time;
+                    const stop = start + n.dur;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(n.f, start);
+                    gain.gain.setValueAtTime(0.001, start);
+                    gain.gain.exponentialRampToValueAtTime(0.45, start + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, stop);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(start);
+                    osc.stop(stop);
+                });
+            });
+        }
+        window.playTourOpenSound = playTourOpenSound;
+
+        // 3. Panduan Step Sound (Crisp Subtle UI Pop)
+        function playTourStepSound() {
+            withStudyAudioContext(ctx => {
+                const start = ctx.currentTime;
+                const stop = start + 0.08;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(580, start);
+                osc.frequency.exponentialRampToValueAtTime(950, stop);
+                gain.gain.setValueAtTime(0.001, start);
+                gain.gain.exponentialRampToValueAtTime(0.35, start + 0.01);
+                gain.gain.exponentialRampToValueAtTime(0.0001, stop);
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                osc.start(start);
+                osc.stop(stop);
+            });
+        }
+        window.playTourStepSound = playTourStepSound;
+
+        // 4. Panduan Complete Sound (Warm Success Chord)
+        function playTourCompleteSound() {
+            withStudyAudioContext(ctx => {
+                const notes = [
+                    { f: 783.99, time: 0.00, dur: 0.22 }, // G5
+                    { f: 1046.50, time: 0.09, dur: 0.25 }, // C6
+                    { f: 1318.51, time: 0.18, dur: 0.40 }  // E6
+                ];
+                notes.forEach(n => {
+                    const start = ctx.currentTime + n.time;
+                    const stop = start + n.dur;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(n.f, start);
+                    gain.gain.setValueAtTime(0.001, start);
+                    gain.gain.exponentialRampToValueAtTime(0.55, start + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, stop);
+                    osc.connect(gain);
+                    gain.connect(ctx.destination);
+                    osc.start(start);
+                    osc.stop(stop);
+                });
+            });
+        }
+        window.playTourCompleteSound = playTourCompleteSound;
+
+        // ==========================================
+        // NOTIFICATION & TIMER RINGTONE MODE TOGGLE
+        // ==========================================
+        function getTimerSoundMode() {
+            return localStorage.getItem('study_planner_sound_mode') || 'sound';
+        }
+
+        function updateNotificationButtonUI() {
+            const btn = document.getElementById('header-notif-btn');
+            const icon = document.getElementById('header-notif-icon');
+            const dot = document.getElementById('header-notif-dot');
+            if (!btn || !icon) return;
+
+            const mode = getTimerSoundMode();
+            if (mode === 'sound') {
+                icon.className = 'fa-solid fa-bell text-xs text-[#5B1744]';
+                if (dot) dot.classList.remove('hidden');
+                btn.title = 'Nada Dering Timer Aktif (Klik untuk ubah ke mode Notifikasi Browser)';
+                btn.classList.add('border-[#E7C8DB]', 'bg-[#F4E7EF]');
+                btn.classList.remove('border-gray-200', 'bg-white');
+            } else {
+                icon.className = 'fa-regular fa-bell-slash text-xs text-gray-400';
+                if (dot) dot.classList.add('hidden');
+                btn.title = 'Hanya Notifikasi Browser (Klik untuk aktifkan Nada Dering)';
+                btn.classList.remove('border-[#E7C8DB]', 'bg-[#F4E7EF]');
+                btn.classList.add('border-gray-200', 'bg-white');
+            }
+        }
+
+        function toggleTimerNotificationMode() {
+            const currentMode = getTimerSoundMode();
+            if (currentMode === 'sound') {
+                // Nonaktifkan nada dering -> Beralih ke Notifikasi Browser
+                localStorage.setItem('study_planner_sound_mode', 'browser');
+                updateNotificationButtonUI();
+
+                if ('Notification' in window) {
+                    if (Notification.permission === 'granted') {
+                        try {
+                            new Notification('🔔 Study Planner - Notifikasi Browser Aktif', {
+                                body: 'Nada dering dimatikan. Saat timer selesai, notifikasi browser ini yang akan muncul!',
+                                icon: '{{ asset('logo-chatgpt.png') }}'
+                            });
+                        } catch (e) {}
+                        showToast('🔕 Nada dering dinonaktifkan. Mode notifikasi browser aktif!', 'info');
+                    } else if (Notification.permission !== 'denied') {
+                        Notification.requestPermission().then(permission => {
+                            if (permission === 'granted') {
+                                try {
+                                    new Notification('🔔 Study Planner - Notifikasi Browser Aktif', {
+                                        body: 'Izin diberikan! Notifikasi browser ini akan muncul saat timer selesai.',
+                                        icon: '{{ asset('logo-chatgpt.png') }}'
+                                    });
+                                } catch (e) {}
+                                showToast('🔕 Izin diberikan! Mode notifikasi browser aktif.', 'success');
+                            } else {
+                                showToast('⚠️ Izin notifikasi browser belum diizinkan.', 'info');
+                            }
+                        });
+                    } else {
+                        showToast('⚠️ Izin notifikasi browser diblokir di pengaturan browser Anda.', 'error');
+                    }
+                } else {
+                    showToast('⚠️ Browser Anda tidak mendukung Web Notification.', 'info');
+                }
+            } else {
+                // Aktifkan nada dering -> Bunyikan nada dering preview
+                localStorage.setItem('study_planner_sound_mode', 'sound');
+                updateNotificationButtonUI();
+                playTimerAlarmChime();
+                showToast('🔔 Nada dering timer aktif! Memutar contoh suara alarm...', 'success');
+            }
+        }
+
         setInterval(updateGlobalPomoPill, 1000);
         updateGlobalPomoPill();
+        updateNotificationButtonUI();
 
         // ==========================================
         // INTERACTIVE SPOTLIGHT FEATURE TOUR & IDLE PULSE
@@ -657,11 +954,12 @@
                 return;
             }
 
+            playTourOpenSound();
+
             currentTourIndex = 0;
             const container = document.getElementById('tour-overlay-container');
             if (container) {
                 container.classList.remove('hidden');
-                document.body.classList.add('overflow-hidden');
             }
             renderTourStep();
         }
@@ -775,14 +1073,16 @@
             }
 
             positionTourSpotlight(el);
-            syncTourPositionContinuously(650);
+            syncTourPositionContinuously(850);
         }
 
         function nextFeatureTourStep() {
             if (currentTourIndex < tourSteps.length - 1) {
                 currentTourIndex++;
+                playTourStepSound();
                 renderTourStep();
             } else {
+                playTourCompleteSound();
                 endFeatureTour();
             }
         }
@@ -790,6 +1090,7 @@
         function prevFeatureTourStep() {
             if (currentTourIndex > 0) {
                 currentTourIndex--;
+                playTourStepSound();
                 renderTourStep();
             }
         }
@@ -797,7 +1098,6 @@
         function endFeatureTour() {
             const container = document.getElementById('tour-overlay-container');
             if (container) container.classList.add('hidden');
-            document.body.classList.remove('overflow-hidden');
             if (tourRafId) cancelAnimationFrame(tourRafId);
             resetIdleTimer();
         }

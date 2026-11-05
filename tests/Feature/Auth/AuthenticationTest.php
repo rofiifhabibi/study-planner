@@ -119,3 +119,27 @@ test('account cannot be deleted with the wrong password', function () {
     $this->assertModelExists($user);
     $this->assertAuthenticatedAs($user);
 });
+
+test('google user can delete account without entering password', function () {
+    $user = User::factory()->create([
+        'google_id' => '1234567890',
+    ]);
+
+    $response = $this->actingAs($user)->delete('/profile');
+
+    $this->assertGuest();
+    $response->assertRedirect('/');
+    $this->assertDatabaseMissing('users', ['id' => $user->id]);
+});
+
+test('telegram user can delete account without entering password', function () {
+    $user = User::factory()->create([
+        'telegram_id' => '987654321',
+    ]);
+
+    $response = $this->actingAs($user)->delete('/profile');
+
+    $this->assertGuest();
+    $response->assertRedirect('/');
+    $this->assertDatabaseMissing('users', ['id' => $user->id]);
+});

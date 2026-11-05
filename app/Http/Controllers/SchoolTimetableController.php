@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\SchoolTimetable;
 use App\Services\GoogleCalendarService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\View\View;
 
 class SchoolTimetableController extends Controller
@@ -26,6 +27,13 @@ class SchoolTimetableController extends Controller
 
     public function store(Request $request)
     {
+        if ($request->has('start_time') && is_string($request->start_time)) {
+            $request->merge(['start_time' => substr(trim($request->start_time), 0, 5)]);
+        }
+        if ($request->filled('end_time') && is_string($request->end_time)) {
+            $request->merge(['end_time' => substr(trim($request->end_time), 0, 5)]);
+        }
+
         $validated = $request->validate([
             'day_of_week' => 'required|integer|min:0|max:6',
             'subject' => 'required|string|max:255',
@@ -38,8 +46,12 @@ class SchoolTimetableController extends Controller
             ...$validated,
         ]);
 
-        $service = app(GoogleCalendarService::class, ['user' => auth()->user()]);
-        $service->syncSchoolTimetable($timetable);
+        try {
+            $service = app(GoogleCalendarService::class, ['user' => auth()->user()]);
+            $service->syncSchoolTimetable($timetable);
+        } catch (\Throwable $e) {
+            Log::info('Google Calendar timetable sync skipped: '.$e->getMessage());
+        }
 
         return redirect()->back()->with('success', 'Jadwal pelajaran berhasil ditambahkan.');
     }
@@ -50,8 +62,12 @@ class SchoolTimetableController extends Controller
             abort(403);
         }
 
-        $service = app(GoogleCalendarService::class, ['user' => auth()->user()]);
-        $service->deleteSchoolTimetableEvent($timetable);
+        try {
+            $service = app(GoogleCalendarService::class, ['user' => auth()->user()]);
+            $service->deleteSchoolTimetableEvent($timetable);
+        } catch (\Throwable $e) {
+            Log::info('Google Calendar timetable delete event skipped: '.$e->getMessage());
+        }
 
         $timetable->delete();
 

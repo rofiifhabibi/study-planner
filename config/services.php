@@ -39,7 +39,7 @@ return [
         'api_key' => env('GROQ_API_KEY'),
         'model' => env('GROQ_MODEL', 'qwen/qwen3.8-27b'),
         'timeout' => env('GROQ_TIMEOUT', 60),
-        'max_tokens' => env('GROQ_MAX_TOKENS', 1024),
+        'max_tokens' => env('GROQ_MAX_TOKENS', 4096),
     ],
 
     'ai' => [
@@ -50,6 +50,7 @@ return [
         'client_id' => env('GOOGLE_CLIENT_ID'),
         'client_secret' => env('GOOGLE_CLIENT_SECRET'),
         'redirect' => env('GOOGLE_REDIRECT_URI', rtrim((string) env('APP_URL'), '/').'/auth/google/callback'),
+        'calendar_redirect' => env('GOOGLE_CALENDAR_REDIRECT_URI', rtrim((string) env('APP_URL'), '/').'/google/calendar/callback'),
         'calendar_timezone' => env('GOOGLE_CALENDAR_TIMEZONE', 'Asia/Jakarta'),
         'tasks_task_list' => env('GOOGLE_TASKS_TASK_LIST', '@default'),
     ],

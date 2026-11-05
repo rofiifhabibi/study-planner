@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - StudyPlan</title>
+    <title>Register - Study Planner</title>
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon.png') }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -15,9 +18,17 @@
 
     <div class="w-full max-w-[420px] bg-white rounded-[32px] border border-[#F0EAE1] p-8 shadow-sm">
         
+        <!-- Logo Header -->
+        <div class="flex justify-center mb-6">
+            <div class="w-16 h-16 bg-[#4A1B36] rounded-full flex items-center justify-center overflow-hidden">
+                <img src="{{ asset('logo-chatgpt.png') }}" alt="Study Planner"
+                    class="w-12 h-12 object-contain">
+            </div>
+        </div>
+
         <!-- Header Title -->
         <div class="text-center mb-6">
-            <h1 class="text-2xl font-bold text-[#4A1B36] mb-1">Join StudyPlan</h1>
+            <h1 class="text-2xl font-bold text-[#4A1B36] mb-1">Join Study Planner</h1>
             <p class="text-xs text-gray-500 leading-relaxed">Create an account to start organizing your studies.</p>
         </div>
 
@@ -83,7 +94,7 @@
             <div class="flex items-start gap-2.5 pt-1">
                 <input type="checkbox" id="terms" required class="mt-0.5 w-4 h-4 rounded border-gray-300 text-[#4A1B36] focus:ring-[#4A1B36] cursor-pointer">
                 <label for="terms" class="text-[11px] text-gray-600 leading-snug cursor-pointer">
-                    I agree to the <a href="#" class="text-[#4A1B36] font-semibold hover:underline">Terms of Service</a> and <a href="#" class="text-[#4A1B36] font-semibold hover:underline">Privacy Policy</a>.
+                    I agree to the <a href="{{ route('terms') }}" target="_blank" class="text-[#4A1B36] font-semibold hover:underline">Terms of Service</a> and <a href="{{ route('privacy') }}" target="_blank" class="text-[#4A1B36] font-semibold hover:underline">Privacy Policy</a>.
                 </label>
             </div>
 

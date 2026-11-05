@@ -53,9 +53,13 @@ Route::middleware(['web', 'auth'])->group(function () {
 Route::middleware('api')->group(function () {
     Route::get('/ai/tool/calendar', [AiIntegrationController::class, 'getCalendar']);
     Route::post('/ai/tool/calendar', [AiIntegrationController::class, 'createCalendarEvent']);
+    Route::delete('/ai/tool/calendar/{id}', [AiIntegrationController::class, 'deleteCalendarEvent']);
     Route::get('/ai/tool/tasks', [AiIntegrationController::class, 'getTasks']);
-    Route::get('/ai/tool/timetable', [AiIntegrationController::class, 'getTimetable']);
     Route::post('/ai/tool/tasks', [AiIntegrationController::class, 'createTask']);
+    Route::delete('/ai/tool/tasks/{id}', [AiIntegrationController::class, 'deleteTask']);
+    Route::get('/ai/tool/timetable', [AiIntegrationController::class, 'getTimetable']);
+    Route::delete('/ai/tool/timetable/{id}', [AiIntegrationController::class, 'deleteTimetable']);
     Route::get('/ai/tool/notes', [AiIntegrationController::class, 'getNotes']);
     Route::post('/ai/tool/notes', [AiIntegrationController::class, 'createNote']);
+    Route::delete('/ai/tool/notes/{id}', [AiIntegrationController::class, 'deleteNote']);
 });

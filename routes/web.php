@@ -11,6 +11,15 @@ Route::get('/', function () {
     return view('welcome');
 });
 
+Route::view('/privacy-policy', 'privacy')->name('privacy');
+Route::view('/terms-of-service', 'terms')->name('terms');
+Route::permanentRedirect('/privacy', '/privacy-policy');
+Route::permanentRedirect('/terms', '/terms-of-service');
+
+Route::get('/demo', function () {
+    return view('demo');
+})->name('demo');
+
 Route::middleware(['auth'])->group(function () {
     Route::get('/dashboard', [ChatController::class, 'dashboard'])->name('dashboard');
     Route::get('/dashboard/daily-summary', [ChatController::class, 'getDailySummary'])->name('dashboard.summary');

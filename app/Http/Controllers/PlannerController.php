@@ -62,18 +62,16 @@ class PlannerController extends Controller
 
         $progressService = new ProgressService($user->id);
         $progress = $progressService->getDashboardStats();
-        $contributionHeatmap = $progressService->getContributionHeatmap();
 
         $recentSessions = StudySession::where('user_id', $user->id)
-            ->latest('started_at')
-            ->limit(10)
+            ->latest('id')
+            ->limit(15)
             ->get();
 
         return view('progress', [
             ...$progress,
             'activeTasks' => Task::where('user_id', $user->id)->whereIn('status', ['pending', 'in_progress'])->orderBy('due_date')->get(),
             'recentSessions' => $recentSessions,
-            'contributionHeatmap' => $contributionHeatmap,
         ]);
     }
 

@@ -6,6 +6,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Study — Study Planner</title>
 
+    <link rel="icon" type="image/png" sizes="32x32" href="{{ asset('favicon.png') }}">
+    <link rel="icon" type="image/x-icon" href="{{ asset('favicon.ico') }}">
+    <link rel="apple-touch-icon" sizes="180x180" href="{{ asset('apple-touch-icon.png') }}">
+
     @vite(['resources/css/app.css', 'resources/js/app.js'])
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -61,6 +65,21 @@
         @keyframes msgFade {
             from { opacity: 0; transform: translateY(5px); }
             to { opacity: 1; transform: translateY(0); }
+        }
+
+        .ai-stream-cursor {
+            display: inline-block;
+            width: 2.5px;
+            height: 1.15em;
+            background-color: #5B1744;
+            margin-left: 2px;
+            vertical-align: -0.12em;
+            border-radius: 1px;
+            animation: streamBlink 0.7s infinite ease-in-out;
+        }
+        @keyframes streamBlink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
         }
 
         .ai-content p { margin: 0 0 0.85rem 0; line-height: 1.75; }
@@ -185,6 +204,14 @@
             </div>
 
             <div class="flex items-center gap-2 sm:gap-2.5">
+                {{-- Global Pomodoro Live Pill --}}
+                <a href="{{ url('/progress') }}" id="global-pomo-pill" title="Kembali ke Pomodoro Timer"
+                    class="hidden items-center gap-2 px-3 py-1.5 rounded-full bg-[#F4E7EF] border border-[#E7C8DB] text-[#5B1744] hover:bg-[#E7C8DB]/60 transition shadow-xs text-xs font-bold active:scale-95">
+                    <span class="w-2 h-2 rounded-full bg-[#5B1744] animate-ping"></span>
+                    <span id="global-pomo-time" class="font-mono font-bold text-xs">25:00</span>
+                    <span id="global-pomo-mode" class="text-[10px] uppercase tracking-wider text-[#5B1744]/70 font-semibold hidden sm:inline">Fokus</span>
+                </a>
+
                 {{-- Panduan Button with Idle Pulse --}}
                 <button type="button" onclick="startFeatureTour()" id="tour-guide-btn" title="Panduan Fitur AI Study"
                     class="relative flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-full bg-white border border-gray-200 text-[#5B1744] hover:bg-[#F4E7EF] hover:border-[#E7C8DB] transition shadow-xs text-xs font-bold active:scale-95 cursor-pointer">
@@ -192,6 +219,12 @@
                     <span id="tour-guide-dot" class="absolute -top-1 -right-1 w-2.5 h-2.5 rounded-full bg-[#5B1744] ring-2 ring-white hidden"></span>
                     <i class="fa-regular fa-circle-question text-sm text-[#5B1744]"></i>
                     <span>Panduan</span>
+                </button>
+
+                <button type="button" id="header-notif-btn" onclick="toggleTimerNotificationMode()" title="Pengaturan Notifikasi & Nada Dering Timer"
+                    class="relative w-9 h-9 rounded-full bg-white border border-gray-200 flex items-center justify-center text-gray-600 hover:border-[#5B1744]/30 transition shadow-xs cursor-pointer active:scale-95">
+                    <i id="header-notif-icon" class="fa-solid fa-bell text-xs"></i>
+                    <span id="header-notif-dot" class="absolute top-2 right-2 w-2 h-2 rounded-full bg-[#5B1744]"></span>
                 </button>
 
                 <a href="{{ route('dashboard') }}" title="Kembali ke Dashboard"
@@ -211,14 +244,14 @@
 
         <div class="flex-1 flex flex-col relative min-h-0" id="main">
             <div class="messages-wrap flex-1 overflow-y-auto min-h-0" id="messages-wrap">
-                <div class="messages max-w-3xl mx-auto p-4 sm:p-6 pb-36 sm:pb-44 md:pb-48" id="messages">
+                <div class="messages max-w-3xl mx-auto p-4 sm:p-6 pb-48 sm:pb-56 md:pb-64" id="messages">
                     <div class="text-center mt-8 sm:mt-12 max-w-lg mx-auto" id="welcome-state"
                         data-tour-step="2" data-tour-title="Template Pertanyaan Instan" data-tour-desc="Klik template pertanyaan ini untuk langsung menanyakan tugas deadline, jadwal kelas, atau rencana belajar harian secara otomatis tanpa repot mengetik.">
                         <div class="w-14 h-14 sm:w-16 sm:h-16 mx-auto mb-3.5 rounded-3xl bg-[#F4E7EF] border border-[#E7C8DB] text-[#5B1744] flex items-center justify-center text-xl sm:text-2xl shadow-xs">
                             <i class="fa-solid fa-wand-magic-sparkles"></i>
                         </div>
                         <h2 class="text-xl sm:text-3xl font-bold mb-1.5 text-gray-900 tracking-tight">Mau belajar apa hari ini?</h2>
-                        <p class="text-xs sm:text-sm text-gray-500 mb-5 sm:mb-6">Tanyakan apa saja seputar tugas, jadwal kelas, atau materi pelajaranmu.</p>
+                        <p class="text-xs sm:text-sm text-gray-500 mb-5 sm:mb-6">Tanyakan tugas, buat atau hapus jadwal kelas, kelola catatan materi belajarmu.</p>
 
                         <!-- Quick prompt pills -->
                         <div class="flex flex-wrap items-center justify-center gap-2">
@@ -239,17 +272,17 @@
                 </div>
             </div>
 
-            {{-- Floating Input Bar (Responsive bottom margin & shadow) --}}
-            <div class="absolute bottom-3 sm:bottom-6 md:bottom-8 inset-x-0 z-20 px-3 sm:px-6 pointer-events-none">
+            {{-- Floating Input Bar (Elevated with comfortable breathing room from bottom) --}}
+            <div class="absolute bottom-8 sm:bottom-10 md:bottom-12 inset-x-0 z-20 px-4 sm:px-6 pointer-events-none pb-[max(0.5rem,env(safe-area-inset-bottom,0px))]">
                 <form id="chat-form" onsubmit="handleChatInput(event)" class="max-w-3xl mx-auto pointer-events-auto">
                     <div id="editing-indicator" class="hidden mb-2 flex items-center justify-between bg-white text-[#5B1744] text-xs font-semibold px-4 py-2.5 rounded-2xl shadow-lg border border-[#E7C8DB]">
                         <span><i class="fa-solid fa-pen mr-2"></i>Mengedit pesan</span>
                         <button type="button" onclick="stopEditing()" class="hover:underline text-gray-500 cursor-pointer">Batal edit</button>
                     </div>
                     <div id="input-shell" 
-                        data-tour-step="3" data-tour-title="Tanya AI Seputar Belajar" data-tour-desc="Ketik pertanyaan atau materi sulitmu di sini. AI Study terhubung langsung ke jadwal kelas, tugas sekolah, dan catatan pribadimu!"
+                        data-tour-step="3" data-tour-title="Tanya AI Seputar Belajar" data-tour-desc="Ketik pertanyaan atau perintah di sini. AI Study terhubung langsung ke jadwal kelas, tugas sekolah, dan catatan pribadimu! Kamu bisa minta AI membuat ataupun menghapus tugas, jadwal, dan catatan secara otomatis."
                         class="flex items-end sm:items-center gap-2.5 sm:gap-3 bg-white p-2 sm:p-2.5 pl-3.5 sm:pl-4 rounded-3xl border-2 border-[#E7C8DB] shadow-xl shadow-[#5B1744]/10 focus-within:border-[#5B1744] focus-within:ring-2 focus-within:ring-[#5B1744]/15 transition-all">
-                        <textarea id="chat-input" rows="1" placeholder="Tanyakan tugas, jadwal kelas, atau materi belajar..." oninput="autoResize(this);toggleSend()" class="flex-1 bg-transparent border-none focus:ring-0 py-1.5 px-1 resize-none outline-none text-xs sm:text-sm md:text-base leading-relaxed text-gray-800 placeholder:text-gray-400 max-h-40 [overflow-wrap:anywhere]"></textarea>
+                        <textarea id="chat-input" rows="1" placeholder="Tanyakan tugas, buat/hapus jadwal kelas, kelola catatan..." oninput="autoResize(this);toggleSend()" class="flex-1 bg-transparent border-none focus:ring-0 py-1.5 px-1 resize-none outline-none text-xs sm:text-sm md:text-base leading-relaxed text-gray-800 placeholder:text-gray-400 max-h-40 [overflow-wrap:anywhere]"></textarea>
                         <button type="submit" class="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl bg-[#5B1744] hover:bg-[#481236] text-white flex items-center justify-center disabled:opacity-40 transition active:scale-95 shadow-md shadow-[#5B1744]/25 shrink-0 cursor-pointer" id="btn-send" disabled title="Kirim Pesan">
                             <i class="fa-solid fa-paper-plane text-xs sm:text-sm"></i>
                         </button>
@@ -620,6 +653,116 @@
             scrollToBottom();
         }
 
+        function scrollToMessageTop(element) {
+            const wrap = document.getElementById('messages-wrap');
+            if (!element || !wrap) return;
+
+            // Anchor so the user question or top of AI message is nicely visible near top
+            const prevEl = element.previousElementSibling;
+            const targetEl = (prevEl && prevEl.id && prevEl.id.startsWith('message-')) ? prevEl : element;
+
+            const wrapRect = wrap.getBoundingClientRect();
+            const elRect = targetEl.getBoundingClientRect();
+            const targetScroll = wrap.scrollTop + (elRect.top - wrapRect.top) - 24;
+
+            wrap.scrollTo({
+                top: Math.max(0, targetScroll),
+                behavior: 'smooth'
+            });
+        }
+
+        function streamAssistantMessage(div, content, actionsHtml) {
+            const c = document.getElementById('messages');
+            const wrap = document.getElementById('messages-wrap');
+
+            div.innerHTML = `
+                <div class="ai-content leading-relaxed inline-block p-5 sm:p-6 rounded-3xl rounded-tl-xs bg-white border border-[#E7C8DB]/60 shadow-sm text-sm sm:text-base text-left max-w-full break-words [overflow-wrap:anywhere] text-gray-800 transition-all cursor-pointer" title="Klik untuk menampilkan seluruh pesan langsung">
+                    <div class="ai-rendered-body"></div>
+                </div>
+                ${actionsHtml}
+            `;
+            c.appendChild(div);
+
+            const bodyContainer = div.querySelector('.ai-rendered-body');
+            const aiBubble = div.querySelector('.ai-content');
+
+            // 1. Immediately position viewport to the START of this new response so user can read from line 1!
+            scrollToMessageTop(div);
+
+            const tokens = content.split(/(\s+)/);
+            const totalTokens = tokens.length;
+            let index = 0;
+            let accumulated = '';
+            let isFinished = false;
+            let userScrolledManually = false;
+
+            // Detect if user scrolls up away from bottom so we don't yank their reading view
+            const onScroll = () => {
+                const threshold = 160;
+                const distanceToBottom = wrap.scrollHeight - wrap.scrollTop - wrap.clientHeight;
+                if (distanceToBottom > threshold) {
+                    userScrolledManually = true;
+                } else {
+                    userScrolledManually = false;
+                }
+            };
+            wrap.addEventListener('scroll', onScroll, { passive: true });
+
+            // Dynamically pace the streaming so it feels natural, smooth and comfortable to read
+            let chunkSize = 1;
+            let intervalMs = 28;
+
+            if (totalTokens > 300) {
+                chunkSize = 3;
+                intervalMs = 20;
+            } else if (totalTokens > 120) {
+                chunkSize = 2;
+                intervalMs = 24;
+            }
+
+            const finish = () => {
+                if (isFinished) return;
+                isFinished = true;
+                clearInterval(streamTimer);
+                wrap.removeEventListener('scroll', onScroll);
+                bodyContainer.innerHTML = marked.parse(content);
+                if (aiBubble) {
+                    aiBubble.classList.remove('cursor-pointer');
+                    aiBubble.removeAttribute('title');
+                    aiBubble.onclick = null;
+                }
+            };
+
+            // Allow instant skip on click
+            if (aiBubble) {
+                aiBubble.onclick = finish;
+            }
+
+            const streamTimer = setInterval(() => {
+                if (index >= totalTokens) {
+                    finish();
+                    return;
+                }
+
+                for (let i = 0; i < chunkSize && index < totalTokens; i++) {
+                    accumulated += tokens[index++];
+                }
+
+                bodyContainer.innerHTML = marked.parse(accumulated) + '<span class="ai-stream-cursor"></span>';
+
+                // If message expands beyond viewport, gently follow down WITHOUT jumping past unread text
+                if (!userScrolledManually) {
+                    const wrapRect = wrap.getBoundingClientRect();
+                    const divRect = div.getBoundingClientRect();
+                    const safeBottomMargin = 140; // buffer above floating input bar
+                    if (divRect.bottom > wrapRect.bottom - safeBottomMargin) {
+                        const overflow = divRect.bottom - (wrapRect.bottom - safeBottomMargin);
+                        wrap.scrollBy({ top: overflow, behavior: 'smooth' });
+                    }
+                }
+            }, intervalMs);
+        }
+
         function appendMessage(id, content, role, canEdit = false, isCanceled = false, isPending = false, animate = false) {
             const c = document.getElementById('messages');
             const div = document.createElement('div');
@@ -646,12 +789,16 @@
                 `;
             }
 
-            const rendered = role === 'assistant'
-                ? `<div class="ai-content leading-relaxed inline-block p-5 sm:p-6 rounded-3xl rounded-tl-xs bg-white border border-[#E7C8DB]/60 shadow-sm text-sm sm:text-base text-left max-w-full break-words [overflow-wrap:anywhere] text-gray-800">${marked.parse(messageContent)}</div>`
-                : `<div class="inline-block px-5 py-3.5 rounded-3xl rounded-tr-xs bg-[#5B1744] text-white text-sm sm:text-base leading-relaxed text-left max-w-[85%] break-words [overflow-wrap:anywhere] shadow-xs">${messageContent}</div>`;
-            div.innerHTML = rendered + actionsHtml;
-            c.appendChild(div);
-            scrollToBottom();
+            if (role === 'assistant' && animate) {
+                streamAssistantMessage(div, messageContent, actionsHtml);
+            } else {
+                const rendered = role === 'assistant'
+                    ? `<div class="ai-content leading-relaxed inline-block p-5 sm:p-6 rounded-3xl rounded-tl-xs bg-white border border-[#E7C8DB]/60 shadow-sm text-sm sm:text-base text-left max-w-full break-words [overflow-wrap:anywhere] text-gray-800">${marked.parse(messageContent)}</div>`
+                    : `<div class="inline-block px-5 py-3.5 rounded-3xl rounded-tr-xs bg-[#5B1744] text-white text-sm sm:text-base leading-relaxed text-left max-w-[85%] break-words [overflow-wrap:anywhere] shadow-xs">${messageContent}</div>`;
+                div.innerHTML = rendered + actionsHtml;
+                c.appendChild(div);
+                scrollToBottom();
+            }
         }
 
         function appendLoadingMessage() {
@@ -817,6 +964,16 @@
                 removeLoadingMessage();
 
                 if (data.status === 'success') {
+                    if (data.pomo_state) {
+                        if (data.pomo_state.action === 'start') {
+                            localStorage.setItem('study_planner_pomo_state', JSON.stringify(data.pomo_state.state));
+                        } else if (data.pomo_state.action === 'stop') {
+                            localStorage.removeItem('study_planner_pomo_state');
+                        }
+                        if (typeof updateGlobalPomoPill === 'function') {
+                            updateGlobalPomoPill();
+                        }
+                    }
                     removeMessageElement(userMessageId);
                     appendMessage(data.message_id || userMessageId, userMsg, 'user', true);
                     appendMessage(`reply-${Date.now()}`, data.reply, 'assistant', false, false, false, true);
@@ -871,6 +1028,217 @@
         }
 
         // ==========================================
+        // ROBUST WEB AUDIO API SOUND ENGINE & ALARMS
+        // ==========================================
+        function withStudyAudioContext(callback) {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                if (!window.__studyAudioCtx) {
+                    window.__studyAudioCtx = new AudioCtx();
+                }
+                const ctx = window.__studyAudioCtx;
+                if (ctx.state === 'suspended') {
+                    ctx.resume().then(() => {
+                        if (callback) callback(ctx);
+                    }).catch(() => {
+                        if (callback) callback(ctx);
+                    });
+                } else {
+                    if (callback) callback(ctx);
+                }
+            } catch (e) {
+                console.warn('AudioContext error:', e);
+            }
+        }
+
+        // Global unlock on first user gesture anywhere
+        const _unlockChatAudioOnInteraction = () => {
+            withStudyAudioContext(ctx => {
+                try {
+                    const buf = ctx.createBuffer(1, 1, 22050);
+                    const src = ctx.createBufferSource();
+                    src.buffer = buf;
+                    src.connect(ctx.destination);
+                    src.start(0);
+                } catch (e) {}
+            });
+            window.removeEventListener('pointerdown', _unlockChatAudioOnInteraction);
+            window.removeEventListener('keydown', _unlockChatAudioOnInteraction);
+        };
+        window.addEventListener('pointerdown', _unlockChatAudioOnInteraction, { passive: true, once: true });
+        window.addEventListener('keydown', _unlockChatAudioOnInteraction, { passive: true, once: true });
+
+        function playTimerAlarmChime() {
+            withStudyAudioContext(ctx => {
+                const burstOffsets = [0.0, 0.85, 1.7];
+                const melody = [
+                    { f: 659.25, time: 0.00, dur: 0.22 },
+                    { f: 830.61, time: 0.12, dur: 0.22 },
+                    { f: 987.77, time: 0.24, dur: 0.25 },
+                    { f: 1318.51, time: 0.38, dur: 0.50 }
+                ];
+                burstOffsets.forEach(burstTime => {
+                    melody.forEach(note => {
+                        const start = ctx.currentTime + burstTime + note.time;
+                        const stop = start + note.dur;
+                        const osc1 = ctx.createOscillator();
+                        const osc2 = ctx.createOscillator();
+                        const gain = ctx.createGain();
+
+                        osc1.type = 'sine'; osc1.frequency.setValueAtTime(note.f, start);
+                        osc2.type = 'triangle'; osc2.frequency.setValueAtTime(note.f * 2, start);
+
+                        gain.gain.setValueAtTime(0.001, start);
+                        gain.gain.exponentialRampToValueAtTime(0.75, start + 0.02);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, stop);
+
+                        osc1.connect(gain); osc2.connect(gain); gain.connect(ctx.destination);
+                        osc1.start(start); osc2.start(start);
+                        osc1.stop(stop); osc2.stop(stop);
+                    });
+                });
+            });
+        }
+        window.playTimerAlarmChime = playTimerAlarmChime;
+
+        function playTourOpenSound() {
+            withStudyAudioContext(ctx => {
+                const notes = [
+                    { f: 523.25, time: 0.00, dur: 0.18 },
+                    { f: 659.25, time: 0.07, dur: 0.20 },
+                    { f: 783.99, time: 0.14, dur: 0.22 },
+                    { f: 1046.50, time: 0.21, dur: 0.35 }
+                ];
+                notes.forEach(n => {
+                    const start = ctx.currentTime + n.time;
+                    const stop = start + n.dur;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'sine'; osc.frequency.setValueAtTime(n.f, start);
+                    gain.gain.setValueAtTime(0.001, start);
+                    gain.gain.exponentialRampToValueAtTime(0.45, start + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, stop);
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.start(start); osc.stop(stop);
+                });
+            });
+        }
+        window.playTourOpenSound = playTourOpenSound;
+
+        function playTourStepSound() {
+            withStudyAudioContext(ctx => {
+                const start = ctx.currentTime;
+                const stop = start + 0.08;
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(580, start);
+                osc.frequency.exponentialRampToValueAtTime(950, stop);
+                gain.gain.setValueAtTime(0.001, start);
+                gain.gain.exponentialRampToValueAtTime(0.35, start + 0.01);
+                gain.gain.exponentialRampToValueAtTime(0.0001, stop);
+                osc.connect(gain); gain.connect(ctx.destination);
+                osc.start(start); osc.stop(stop);
+            });
+        }
+        window.playTourStepSound = playTourStepSound;
+
+        function playTourCompleteSound() {
+            withStudyAudioContext(ctx => {
+                const notes = [
+                    { f: 783.99, time: 0.00, dur: 0.22 },
+                    { f: 1046.50, time: 0.09, dur: 0.25 },
+                    { f: 1318.51, time: 0.18, dur: 0.40 }
+                ];
+                notes.forEach(n => {
+                    const start = ctx.currentTime + n.time;
+                    const stop = start + n.dur;
+                    const osc = ctx.createOscillator();
+                    const gain = ctx.createGain();
+                    osc.type = 'triangle'; osc.frequency.setValueAtTime(n.f, start);
+                    gain.gain.setValueAtTime(0.001, start);
+                    gain.gain.exponentialRampToValueAtTime(0.55, start + 0.02);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, stop);
+                    osc.connect(gain); gain.connect(ctx.destination);
+                    osc.start(start); osc.stop(stop);
+                });
+            });
+        }
+        window.playTourCompleteSound = playTourCompleteSound;
+
+        function getTimerSoundMode() {
+            return localStorage.getItem('study_planner_sound_mode') || 'sound';
+        }
+
+        function updateNotificationButtonUI() {
+            const btn = document.getElementById('header-notif-btn');
+            const icon = document.getElementById('header-notif-icon');
+            const dot = document.getElementById('header-notif-dot');
+            if (!btn || !icon) return;
+
+            const mode = getTimerSoundMode();
+            if (mode === 'sound') {
+                icon.className = 'fa-solid fa-bell text-xs text-[#5B1744]';
+                if (dot) dot.classList.remove('hidden');
+                btn.title = 'Nada Dering Timer Aktif (Klik untuk ubah ke mode Notifikasi Browser)';
+                btn.classList.add('border-[#E7C8DB]', 'bg-[#F4E7EF]');
+                btn.classList.remove('border-gray-200', 'bg-white');
+            } else {
+                icon.className = 'fa-regular fa-bell-slash text-xs text-gray-400';
+                if (dot) dot.classList.add('hidden');
+                btn.title = 'Hanya Notifikasi Browser (Klik untuk aktifkan Nada Dering)';
+                btn.classList.remove('border-[#E7C8DB]', 'bg-[#F4E7EF]');
+                btn.classList.add('border-gray-200', 'bg-white');
+            }
+        }
+
+        function toggleTimerNotificationMode() {
+            const currentMode = getTimerSoundMode();
+            if (currentMode === 'sound') {
+                localStorage.setItem('study_planner_sound_mode', 'browser');
+                updateNotificationButtonUI();
+
+                if ('Notification' in window) {
+                    if (Notification.permission === 'granted') {
+                        try {
+                            new Notification('🔔 Study Planner - Notifikasi Browser Aktif', {
+                                body: 'Nada dering dimatikan. Saat timer selesai, notifikasi browser ini yang akan muncul!',
+                                icon: '{{ asset('logo-chatgpt.png') }}'
+                            });
+                        } catch (e) {}
+                        showToast('🔕 Nada dering dinonaktifkan. Mode notifikasi browser aktif!', 'info');
+                    } else if (Notification.permission !== 'denied') {
+                        Notification.requestPermission().then(permission => {
+                            if (permission === 'granted') {
+                                try {
+                                    new Notification('🔔 Study Planner - Notifikasi Browser Aktif', {
+                                        body: 'Izin diberikan! Notifikasi browser ini akan muncul saat timer selesai.',
+                                        icon: '{{ asset('logo-chatgpt.png') }}'
+                                    });
+                                } catch (e) {}
+                                showToast('🔕 Izin diberikan! Mode notifikasi browser aktif.', 'success');
+                            } else {
+                                showToast('⚠️ Izin notifikasi browser belum diizinkan.', 'info');
+                            }
+                        });
+                    } else {
+                        showToast('⚠️ Izin notifikasi browser diblokir di pengaturan browser Anda.', 'error');
+                    }
+                } else {
+                    showToast('⚠️ Browser Anda tidak mendukung Web Notification.', 'info');
+                }
+            } else {
+                localStorage.setItem('study_planner_sound_mode', 'sound');
+                updateNotificationButtonUI();
+                playTimerAlarmChime();
+                showToast('🔔 Nada dering timer aktif! Memutar contoh suara alarm...', 'success');
+            }
+        }
+
+        updateNotificationButtonUI();
+
+        // ==========================================
         // INTERACTIVE SPOTLIGHT FEATURE TOUR & IDLE PULSE
         // ==========================================
         let tourSteps = [];
@@ -906,6 +1274,8 @@
             if (tourSteps.length === 0) {
                 return;
             }
+
+            playTourOpenSound();
 
             currentTourIndex = 0;
             const container = document.getElementById('tour-overlay-container');
@@ -1031,8 +1401,10 @@
         function nextFeatureTourStep() {
             if (currentTourIndex < tourSteps.length - 1) {
                 currentTourIndex++;
+                playTourStepSound();
                 renderTourStep();
             } else {
+                playTourCompleteSound();
                 endFeatureTour();
             }
         }
@@ -1040,6 +1412,7 @@
         function prevFeatureTourStep() {
             if (currentTourIndex > 0) {
                 currentTourIndex--;
+                playTourStepSound();
                 renderTourStep();
             }
         }
@@ -1119,8 +1492,90 @@
             window.addEventListener(evt, resetIdleTimer, { passive: true });
         });
 
+        function updateGlobalPomoPill() {
+            const pill = document.getElementById('global-pomo-pill');
+            const timeEl = document.getElementById('global-pomo-time');
+            const modeEl = document.getElementById('global-pomo-mode');
+            if (!pill || !timeEl) return;
+
+            const raw = localStorage.getItem('study_planner_pomo_state');
+            if (!raw) {
+                pill.classList.add('hidden');
+                pill.classList.remove('inline-flex');
+                return;
+            }
+
+            try {
+                const state = JSON.parse(raw);
+                if (!state || (!state.isRunning && !state.targetEndTime)) {
+                    pill.classList.add('hidden');
+                    pill.classList.remove('inline-flex');
+                    return;
+                }
+
+                if (state.isRunning && state.targetEndTime) {
+                    const remaining = Math.max(0, Math.round((state.targetEndTime - Date.now()) / 1000));
+                    const m = Math.floor(remaining / 60);
+                    const s = remaining % 60;
+                    timeEl.textContent = `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+                    if (modeEl) modeEl.textContent = state.mode === 'focus' ? 'Fokus' : 'Istirahat';
+                    pill.classList.remove('hidden');
+                    pill.classList.add('inline-flex');
+
+                    if (remaining === 0 && state.isRunning) {
+                        state.isRunning = false;
+                        localStorage.setItem('study_planner_pomo_state', JSON.stringify(state));
+                        playGlobalPomoAlarm();
+                        alert('⏰ Waktu belajar selesai!');
+                    }
+                } else {
+                    pill.classList.add('hidden');
+                    pill.classList.remove('inline-flex');
+                }
+            } catch (e) {
+                pill.classList.add('hidden');
+                pill.classList.remove('inline-flex');
+            }
+        }
+
+        function playGlobalPomoAlarm() {
+            try {
+                const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                if (!AudioCtx) return;
+                const ctx = new AudioCtx();
+                if (ctx.state === 'suspended') ctx.resume();
+                const burstOffsets = [0.0, 0.95, 1.9];
+                const melody = [
+                    { f: 659.25, time: 0.00, dur: 0.22 },
+                    { f: 830.61, time: 0.12, dur: 0.22 },
+                    { f: 987.77, time: 0.24, dur: 0.25 },
+                    { f: 1318.51, time: 0.38, dur: 0.45 }
+                ];
+                burstOffsets.forEach(burstTime => {
+                    melody.forEach(note => {
+                        const start = ctx.currentTime + burstTime + note.time;
+                        const stop = start + note.dur;
+                        const osc1 = ctx.createOscillator();
+                        const osc2 = ctx.createOscillator();
+                        const gain = ctx.createGain();
+                        osc1.type = 'sine'; osc1.frequency.setValueAtTime(note.f, start);
+                        osc2.type = 'triangle'; osc2.frequency.setValueAtTime(note.f * 2, start);
+                        gain.gain.setValueAtTime(0.001, start);
+                        gain.gain.exponentialRampToValueAtTime(0.35, start + 0.02);
+                        gain.gain.exponentialRampToValueAtTime(0.0001, stop);
+                        osc1.connect(gain); osc2.connect(gain); gain.connect(ctx.destination);
+                        osc1.start(start); osc2.start(start);
+                        osc1.stop(stop); osc2.stop(stop);
+                    });
+                });
+            } catch (e) {}
+        }
+
+        setInterval(updateGlobalPomoPill, 1000);
+
         document.addEventListener('DOMContentLoaded', () => {
             resetIdleTimer();
+            updateGlobalPomoPill();
         });
     </script>
 

@@ -24,7 +24,8 @@
     </section>
 
     {{-- AI Daily Summary Band --}}
-    <section class="relative overflow-hidden rounded-3xl bg-[#5B1744] text-white p-6 sm:p-7 soft-shadow fade-up">
+    <section class="relative overflow-hidden rounded-3xl bg-[#5B1744] text-white p-6 sm:p-7 soft-shadow fade-up"
+        data-tour-step="1" data-tour-title="Ringkasan Cerdas AI" data-tour-desc="Rangkuman harian otomatis kondisi belajarmu hari ini beserta rekomendasi dan evaluasi dari AI Study.">
         <div class="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-white/5 pointer-events-none"></div>
         <div class="absolute -right-2 -bottom-16 w-40 h-40 rounded-full bg-white/5 pointer-events-none"></div>
         <div class="relative z-10">
@@ -51,11 +52,11 @@
 
     {{-- Stats --}}
     <section class="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-4"
-        data-tour-step="1" data-tour-title="Ringkasan Statistik Belajar" data-tour-desc="Pantau tugas hari ini, total jam belajar, tugas selesai, dan rentetan streak harianmu secara instan.">
+        data-tour-step="2" data-tour-title="Ringkasan Statistik Belajar" data-tour-desc="Pantau tugas hari ini, total jam belajar, tugas selesai, dan rentetan streak harianmu secara instan.">
         @php
             $stats = [
-                ['label' => "Today's Tasks", 'value' => (string) $todayTotal, 'icon' => 'fa-regular fa-circle-check', 'description' => "$todayCompleted completed"],
-                ['label' => 'Study Hours', 'value' => $totalStudyHours . 'h', 'icon' => 'fa-regular fa-clock', 'description' => "$todayStudyMinutes min today"],
+                ['label' => "Today's Tasks", 'value' => "$todayCompleted/$todayTotal", 'icon' => 'fa-regular fa-circle-check', 'description' => "$todayCompleted completed"],
+                ['label' => 'Study Time', 'value' => $totalStudyTimeFormatted ?? '0d', 'icon' => 'fa-regular fa-clock', 'description' => ($todayStudyTimeFormatted ?? '0d').' hari ini'],
                 ['label' => 'Completed', 'value' => (string) $totalCompleted, 'icon' => 'fa-solid fa-chart-line', 'description' => 'All time'],
                 ['label' => 'Study Streak', 'value' => (string) $streak, 'icon' => 'fa-solid fa-fire text-amber-500', 'description' => 'days in a row'],
             ];
@@ -78,7 +79,7 @@
 
     {{-- Today's Tasks Summary --}}
     <section class="bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow fade-up"
-        data-tour-step="2" data-tour-title="Daftar Tugas Hari Ini" data-tour-desc="Lihat dan kelola tugas yang harus diselesaikan hari ini berdasarkan prioritas dan tenggat waktu.">
+        data-tour-step="3" data-tour-title="Daftar Tugas Hari Ini" data-tour-desc="Lihat dan kelola tugas yang harus diselesaikan hari ini berdasarkan prioritas dan tenggat waktu.">
         <div class="flex justify-between items-center mb-5">
             <div>
                 <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">TODAY'S TASKS</p>
@@ -111,11 +112,11 @@
     </section>
 
     {{-- Today's Schedule + Progress --}}
-        <section class="grid md:grid-cols-12 gap-5"
-            data-tour-step="3" data-tour-title="Jadwal Pelajaran Sekolah" data-tour-desc="Pantau jadwal mata pelajaran hari ini dan besok sesuai dengan Class Schedule mingguanmu.">
+    <section class="grid md:grid-cols-12 gap-5">
 
         {{-- JADWAL PELAJARAN SEKOLAH --}}
-        <div class="md:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-6 fade-up">
+        <div class="md:col-span-12 grid grid-cols-1 md:grid-cols-2 gap-6 fade-up"
+            data-tour-step="4" data-tour-title="Jadwal Pelajaran Sekolah" data-tour-desc="Pantau mata pelajaran hari ini dan persiapan esok hari secara otomatis berdasarkan Class Schedule mingguanmu.">
             
             {{-- HARI INI --}}
             <div class="bg-white rounded-3xl border border-gray-100 p-6 soft-shadow">
@@ -188,7 +189,8 @@
         </div>
 
         {{-- Schedule Summary --}}
-        <div class="md:col-span-7 bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow fade-up">
+        <div class="md:col-span-7 bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow fade-up"
+            data-tour-step="5" data-tour-title="Agenda Jadwal Hari Ini" data-tour-desc="Pantau timeline kegiatan dan agenda belajar harianmu secara berurutan beserta status pelaksanaannya.">
             <div class="flex justify-between items-center mb-5">
                 <div>
                     <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">TODAY</p>
@@ -232,7 +234,8 @@
         </div>
 
         {{-- Progress Summary (Study Tasks) --}}
-        <div class="md:col-span-5 bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow flex flex-col justify-between fade-up">
+        <div class="md:col-span-5 bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow flex flex-col justify-between fade-up"
+            data-tour-step="6" data-tour-title="Mulai Sesi Belajar" data-tour-desc="Pilih tugas aktif untuk langsung memulai sesi fokus belajar bertahap atau akses timer ke halaman Track Progress.">
             <div>
                 <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">STUDY SESSION</p>
                 <h2 class="text-lg font-bold text-gray-900 mt-0.5">Mulai Belajar</h2>
@@ -267,7 +270,8 @@
     </section>
 
     {{-- Quick actions --}}
-    <section class="bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow fade-up">
+    <section class="bg-white rounded-3xl border border-gray-100 p-6 sm:p-7 soft-shadow fade-up"
+        data-tour-step="7" data-tour-title="Aksi Cepat (Quick Actions)" data-tour-desc="Akses pintasan instan ke semua modul utama: My Tasks, Schedule, Track Progress, dan Integrasi Akun Google.">
         <div class="mb-5">
             <p class="text-[9px] uppercase tracking-[.2em] text-gray-400 font-bold">QUICK ACTIONS</p>
             <h2 class="text-lg font-bold text-gray-900 mt-0.5">Kelola ruang belajarmu</h2>
